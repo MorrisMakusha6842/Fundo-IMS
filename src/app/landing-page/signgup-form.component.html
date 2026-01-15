@@ -9,7 +9,26 @@
   <div class="right-panel">
     <div class="signup-details">
       <h3>Create your account</h3>
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+          <!-- User image deploy / capture section (moved to top) -->
+          <div class="avatar-section">
+            <div class="avatar-preview circular">
+              <img *ngIf="imagePreview" [src]="imagePreview" alt="avatar preview" />
+              <div *ngIf="!imagePreview" class="avatar-placeholder"></div>
+              <video *ngIf="cameraActive" id="signupCameraVideo" class="camera-video" autoplay muted playsinline></video>
+            </div>
+
+            <div class="avatar-actions">
+              <label class="btn">Upload
+                <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+              </label>
+
+              <button type="button" class="btn" *ngIf="!cameraActive" (click)="startCamera()">Use camera</button>
+              <button type="button" class="btn" *ngIf="cameraActive" (click)="takePhoto()">Take photo</button>
+              <button type="button" class="btn" *ngIf="cameraActive" (click)="stopCamera()">Cancel</button>
+            </div>
+          </div>
         <label>
           Full name
           <input formControlName="fullName" type="text" placeholder="Your full name" />
@@ -43,25 +62,7 @@
           <input [value]="parentData?.email || form.value.email" readonly />
         </label>
 
-        <!-- User image deploy / capture section -->
-        <div class="avatar-section">
-          <div class="avatar-preview">
-            <img *ngIf="imagePreview; else placeholder" [src]="imagePreview" alt="avatar preview" />
-            <ng-template #placeholder>
-              <div class="user-initials">{{ form.value.fullName ? (form.value.fullName.charAt(0) | uppercase) : 'U' }}</div>
-            </ng-template>
-          </div>
-
-          <div class="avatar-actions">
-            <label class="btn">Upload
-              <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
-            </label>
-
-            <label class="btn">Capture
-              <input type="file" accept="image/*" capture="environment" (change)="onFileSelected($event)" hidden />
-            </label>
-          </div>
-        </div>
+        
 
         <div class="server-error" *ngIf="error">
           {{ error }}

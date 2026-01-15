@@ -23,6 +23,8 @@ export class SigngupFormComponent implements OnInit {
 		isFromGoogle = false;
   imageFile?: File | null = null;
   imagePreview?: string | null = null;
+	mediaStream: MediaStream | null = null;
+	cameraActive = false;
 
 			constructor(private fb: FormBuilder, private userService: UserService, private toast: ToastService, private auth: AuthService, private router: Router) {
 			this.form = this.fb.group({
@@ -80,49 +82,115 @@ export class SigngupFormComponent implements OnInit {
 		}
 
 		const { fullName, company, numberPlate, location, email, password, confirmPassword } = this.form.value;
-		if (password !== confirmPassword) {
-			this.error = 'Passwords do not match.';
-			return;
+		// Only validate password match for email/password signup
+		if (!this.isFromGoogle) {
+			if (password !== confirmPassword) {
+				this.error = 'Passwords do not match.';
+				return;
+			}
 		}
 
 		this.submitting = true;
-			try {
-				const profile = { company, numberPlate, location };
+		try {
+			const profile = { company, numberPlate, location };
+			if (this.isFromGoogle) {
+				// User has been authenticated via Google already — update Firestore profile and auth displayName/photoURL
+				const current = this.auth.currentUser;
+				if (!current) {
+					throw new Error('No authenticated Google user found. Please sign in with Google again.');
+				}
+				// upload avatar if provided
+				let photoURL: string | undefined;
+				if (this.imageFile) {
+					try { photoURL = await this.userService.uploadProfileImage(current.uid, this.imageFile); } catch (e) { console.warn('avatar upload failed', e); }
+				}
+				// update auth profile
+				try { await updateProfile(current, { displayName: fullName, photoURL: photoURL || current.photoURL || null }); } catch (e) { /* ignore */ }
+				// persist profile fields to Firestore
+				await this.userService.updateUserProfile(current.uid, { displayName: fullName, company, numberPlate, location, photoURL });
+				this.toast.show('Account information updated', 'success');
+				this.router.navigate(['/app']);
+				return;
+			} else {
+				// Regular email/password signup — create user then persist avatar and profile
 				const cred = await this.userService.createUser(email, password, fullName, profile);
 				this.toast.show('Account created successfully — check your email for verification', 'success');
 
-				// If user provided an avatar image, upload it to Storage and update profile
-				try {
-					if (this.imageFile && cred.user?.uid) {
+				if (this.imageFile && cred.user?.uid) {
+					try {
 						const url = await this.userService.uploadProfileImage(cred.user.uid, this.imageFile);
-						// update auth profile photoURL
 						try { await updateProfile(cred.user, { photoURL: url }); } catch (e) { /* ignore */ }
-						// update Firestore user doc
 						await this.userService.updateUserProfile(cred.user.uid, { photoURL: url });
+					} catch (uploadErr) {
+						console.warn('avatar upload failed', uploadErr);
 					}
-				} catch (uploadErr) {
-					console.warn('avatar upload failed', uploadErr);
 				}
-
-				// Wait for auth state to update (ensure guard sees the logged-in user)
+				// Wait for auth state to update then navigate
 				try {
 					const user = await firstValueFrom(this.auth.user$);
-					if (user) {
-						this.router.navigate(['/app']);
-						return;
-					}
-				} catch (e) {
-					// ignore
-				}
-				// fallback: navigate anyway after small delay
+					if (user) { this.router.navigate(['/app']); return; }
+				} catch (e) { /* ignore */ }
 				setTimeout(() => this.router.navigate(['/app']), 800);
-			} catch (err: any) {
+			}
+		} catch (err: any) {
 			const msg = err?.message || 'Failed to create account';
 			this.error = msg;
 			this.toast.show(msg, 'error');
 		} finally {
 			this.submitting = false;
 		}
+	}
+
+	// Camera helpers
+	async startCamera() {
+		if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+			this.toast.show('Camera not supported on this device/browser', 'error');
+			return;
+		}
+		try {
+			this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+			this.cameraActive = true;
+			// attach stream to video element
+			const video: HTMLVideoElement | null = document.querySelector('#signupCameraVideo');
+			if (video) {
+				video.srcObject = this.mediaStream;
+				await video.play();
+			}
+		} catch (e: any) {
+			this.toast.show('Unable to access camera: ' + (e?.message || e), 'error');
+		}
+	}
+
+	stopCamera() {
+		if (this.mediaStream) {
+			this.mediaStream.getTracks().forEach(t => t.stop());
+			this.mediaStream = null;
+		}
+		const video: HTMLVideoElement | null = document.querySelector('#signupCameraVideo');
+		if (video) {
+			video.pause();
+			video.srcObject = null;
+		}
+		this.cameraActive = false;
+	}
+
+	async takePhoto() {
+		const video: HTMLVideoElement | null = document.querySelector('#signupCameraVideo');
+		if (!video) return;
+		const canvas = document.createElement('canvas');
+		canvas.width = video.videoWidth || 640;
+		canvas.height = video.videoHeight || 480;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+		ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+		const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+		// create a File object from dataUrl
+		const blob = await (await fetch(dataUrl)).blob();
+		const file = new File([blob], `capture_${Date.now()}.jpg`, { type: blob.type });
+		this.imageFile = file;
+		this.imagePreview = dataUrl;
+		// stop camera after capture
+		this.stopCamera();
 	}
 
 }

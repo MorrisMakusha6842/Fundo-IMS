@@ -33,7 +33,7 @@ export class LandingPageComponent {
   }
 
   continue(form: NgForm) {
-    // Attempt to sign in existing user; if not found, continue to signup flow
+    // Do not attempt sign-in here; pass parent form values to the signup child which will create the account
     this.parentError = null;
     if (!form || form.invalid) return;
     const vals = form.value as any;
@@ -41,26 +41,8 @@ export class LandingPageComponent {
       this.parentError = 'Passwords do not match.';
       return;
     }
-
-    // Try to sign in first
-    (async () => {
-      try {
-        await this.auth.signIn(vals.email, vals.password);
-        this.toast.show('Signed in successfully', 'success');
-        this.router.navigate(['/app']);
-      } catch (err: any) {
-        // If user not found, go to signup flow and pass parentData
-        const code = err?.code || '';
-        if (code === 'auth/user-not-found' || err?.message?.includes('No account')) {
-          this.router.navigate(['/signup/client'], { state: { parentData: { email: vals.email, password: vals.password, confirmPassword: vals.confirmPassword } } });
-        } else {
-          // show error (wrong password or other)
-          const msg = err?.message || 'Sign in failed';
-          this.parentError = msg;
-          this.toast.show(msg, 'error');
-        }
-      }
-    })();
+    // Pass the parent form values to the signup child via navigation state
+    this.router.navigate(['/signup/client'], { state: { parentData: { email: vals.email, password: vals.password, confirmPassword: vals.confirmPassword } } });
   }
 }
 

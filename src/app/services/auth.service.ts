@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signOut, User, Auth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail, linkWithCredential } from 'firebase/auth';
+import { serverTimestamp } from 'firebase/firestore';
+import { UserService } from './user.service';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -9,7 +11,7 @@ export class AuthService {
   private auth: Auth;
   private _user = new BehaviorSubject<User | null>(null);
 
-  constructor() {
+  constructor(private userService: UserService) {
     if (!getApps().length) {
       initializeApp(environment.firebase);
     }
@@ -62,6 +64,21 @@ export class AuthService {
     const provider = new GoogleAuthProvider();
     try {
       const cred = await signInWithPopup(this.auth, provider);
+      // Ensure there's a users/{uid} document (merge) so the signup child can update it later
+      try {
+        if (cred?.user?.uid) {
+          await this.userService.updateUserProfile(cred.user.uid, {
+            uid: cred.user.uid,
+            email: cred.user.email || null,
+            displayName: cred.user.displayName || null,
+            photoURL: cred.user.photoURL || null,
+            createdAt: serverTimestamp()
+          });
+        }
+      } catch (e) {
+        // don't fail the sign-in flow if Firestore write fails; the signup child will retry/update
+        console.warn('Failed to ensure user doc after Google sign-in', e);
+      }
       return cred;
     } catch (err: any) {
       // If the account already exists with a different credential, surface more info so the UI
