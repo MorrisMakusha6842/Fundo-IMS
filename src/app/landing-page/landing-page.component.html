@@ -18,16 +18,32 @@
     <h3>Get started for free</h3>
     <p class="subtitle">Enjoy a 14-day trial with full features.</p>
 
-    <form (ngSubmit)="continue()" #signupForm="ngForm">
-      <input type="text" placeholder="Your company name" required />
-      <input type="email" placeholder="Your unique email" required />
-      <input type="password" placeholder="Create a password" required />
-      <input type="password" placeholder="Confirm password" required />
+    <form (ngSubmit)="continue(signupForm)" #signupForm="ngForm" class="landing-signup-form">
+      <input name="email" ngModel #emailRef="ngModel" type="email" placeholder="Your unique email" required />
+      <div class="error" *ngIf="emailRef.touched && emailRef.invalid">
+        <small *ngIf="emailRef.errors?.['required']">Email is required.</small>
+        <small *ngIf="emailRef.errors?.['email']">Enter a valid email.</small>
+      </div>
+
+      <input name="password" ngModel #passwordRef="ngModel" type="password" placeholder="Create a password" required minlength="6" />
+      <div class="error" *ngIf="passwordRef.touched && passwordRef.invalid">
+        <small *ngIf="passwordRef.errors?.['required']">Password is required.</small>
+        <small *ngIf="passwordRef.errors?.['minlength']">Password must be at least 6 characters.</small>
+      </div>
+
+      <input name="confirmPassword" ngModel #confirmRef="ngModel" type="password" placeholder="Confirm password" required />
+      <div class="error" *ngIf="confirmRef.touched && confirmRef.invalid">
+        <small *ngIf="confirmRef.errors?.['required']">Please confirm your password.</small>
+      </div>
+
+      <div class="error" *ngIf="parentError">{{ parentError }}</div>
 
       <!-- CHANGED: Register → Continue -->
-      <button type="submit" class="primary-btn">
-        Continue
-      </button>
+      <button type="submit" class="primary-btn" [disabled]="signupForm.invalid">Continue</button>
+
+      <div class="existing-account">
+        Already have an account? <a routerLink="/login">Log in</a>
+      </div>
     </form>
 
     <div class="divider">or sign up with</div>

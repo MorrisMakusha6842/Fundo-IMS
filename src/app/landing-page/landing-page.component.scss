@@ -82,3 +82,28 @@ form input {
   border-radius: 6px;
   background: white;
 }
+
+/* Styles for the compact signup form shown on the landing page */
+.landing-signup-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-signup-form input {
+  border: 1px solid #e5e7eb;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.existing-account {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.existing-account a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}

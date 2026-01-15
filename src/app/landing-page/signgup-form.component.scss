@@ -1,0 +1,61 @@
+.signup-details {
+  max-width: 420px;
+  margin: 24px auto;
+  padding: 18px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+input[type="text"], input[type="email"], input[type="password"] {
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 6px;
+  box-sizing: border-box;
+}
+
+.error small {
+  color: #b00020;
+  display: block;
+}
+
+.server-error {
+  color: #b00020;
+  margin: 8px 0;
+}
+
+button[type="submit"] {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #1d4ed8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+
+/* Make the form visually match the landing page right-panel */
+.signup-details {
+  box-shadow: 0 6px 20px rgba(2,6,23,0.08);
+  border: 1px solid #eef2ff;
+}
+
+label {
+  font-weight: 600;
+  color: #374151;
+}
+
+input[type="text"], input[type="email"], input[type="password"] {
+  border: 1px solid #e6eefc;
+  background: #fbfdff;
+}
+
+.server-error {
+  background: #fff1f2;
+  border: 1px solid #fecaca;
+  padding: 8px;
+  border-radius: 6px;
+}

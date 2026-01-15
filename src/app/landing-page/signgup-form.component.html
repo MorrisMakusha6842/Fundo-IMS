@@ -1,0 +1,64 @@
+<div class="signup-details">
+  <h2>Create your account</h2>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <label>
+      Full name
+      <input formControlName="fullName" type="text" placeholder="Your full name" />
+    </label>
+    <div class="error" *ngIf="f['fullName'].touched && f['fullName'].invalid">
+  <small *ngIf="f['fullName'].errors?.['required']">Name is required.</small>
+  <small *ngIf="f['fullName'].errors?.['minlength']">Enter a valid name.</small>
+    </div>
+
+    <label>
+      Company <small class="optional">(optional)</small>
+      <input formControlName="company" type="text" placeholder="Your company" />
+    </label>
+
+    <label>
+      Number plate <small class="optional">(optional)</small>
+      <input formControlName="numberPlate" type="text" placeholder="Vehicle number plate" />
+    </label>
+
+    <label>
+      Location
+      <input formControlName="location" type="text" placeholder="Your location / city" />
+    </label>
+    <div class="error" *ngIf="f['location'].touched && f['location'].invalid">
+  <small *ngIf="f['location'].errors?.['required']">Location is required.</small>
+    </div>
+
+    <label>
+      Email
+      <input formControlName="email" type="email" placeholder="you@company.com" />
+    </label>
+    <div class="error" *ngIf="f['email'].touched && f['email'].invalid">
+  <small *ngIf="f['email'].errors?.['required']">Email is required.</small>
+  <small *ngIf="f['email'].errors?.['email']">Enter a valid email.</small>
+    </div>
+
+    <label>
+      Password
+      <input formControlName="password" type="password" placeholder="At least 6 characters" />
+    </label>
+    <div class="error" *ngIf="f['password'].touched && f['password'].invalid">
+  <small *ngIf="f['password'].errors?.['required']">Password is required.</small>
+  <small *ngIf="f['password'].errors?.['minlength']">Password must be at least 6 characters.</small>
+    </div>
+
+    <label>
+      Confirm password
+      <input formControlName="confirmPassword" type="password" placeholder="Repeat password" />
+    </label>
+    <div class="error" *ngIf="f['confirmPassword'].touched && f['confirmPassword'].invalid">
+  <small *ngIf="f['confirmPassword'].errors?.['required']">Confirm your password.</small>
+    </div>
+
+    <div class="server-error" *ngIf="error">
+      {{ error }}
+    </div>
+
+    <button type="submit" [disabled]="submitting">{{ submitting ? 'Creating...' : 'Create account' }}</button>
+  </form>
+</div>

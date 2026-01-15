@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-landing-page',
@@ -11,10 +11,19 @@ import { FormsModule } from '@angular/forms';
 })
 export class LandingPageComponent {
     constructor(private router: Router) {}
+  parentError: string | null = null;
 
-  continue() {
-    // Minimal validation already handled by template
-    this.router.navigate(['/signup/client']);
+  continue(form: NgForm) {
+    // Only continue when parent form is valid. The template also disables the button.
+    this.parentError = null;
+    if (!form || form.invalid) return;
+    const vals = form.value as any;
+    if (vals.password !== vals.confirmPassword) {
+      this.parentError = 'Passwords do not match.';
+      return;
+    }
+    // Pass the parent form values to the signup child via navigation state
+    this.router.navigate(['/signup/client'], { state: { parentData: { email: vals.email, password: vals.password, confirmPassword: vals.confirmPassword } } });
   }
 }
 
