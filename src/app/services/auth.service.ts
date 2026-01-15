@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signOut, User, Auth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut, User, Auth, signInWithEmailAndPassword } from 'firebase/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -29,5 +29,32 @@ export class AuthService {
 
   async signOut() {
     return signOut(this.auth);
+  }
+
+  async signIn(email: string, password: string) {
+    try {
+      const cred = await signInWithEmailAndPassword(this.auth, email, password);
+      return cred;
+    } catch (err: any) {
+      let message = 'Failed to sign in.';
+      if (err?.code) {
+        switch (err.code) {
+          case 'auth/user-not-found':
+            message = 'No account found for this email.';
+            break;
+          case 'auth/wrong-password':
+            message = 'Incorrect password.';
+            break;
+          case 'auth/invalid-email':
+            message = 'Invalid email address.';
+            break;
+          default:
+            message = err.message || message;
+        }
+      } else if (err?.message) {
+        message = err.message;
+      }
+      throw new Error(message);
+    }
   }
 }

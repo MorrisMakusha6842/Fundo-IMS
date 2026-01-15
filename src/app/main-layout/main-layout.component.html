@@ -1,12 +1,45 @@
-<div class="main-container">
-	<header class="main-header">
-		<h2>Welcome</h2>
-		<div>
-			<button class="primary-btn">Dashboard</button>
+<div class="top-nav">
+	<div class="top-nav-inner">
+		<div class="left">
+			<div class="brand">Fundo IMS</div>
 		</div>
-	</header>
 
+		<div class="right">
+			<button class="icon-btn" aria-label="notifications">
+				<!-- SVG style matched to your example (rounded square + inner) -->
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path opacity="0.4" d="M16.19 2H7.82C4.17 2 2 4.17 2 7.81V16.18C2 19.82 4.17 21.99 7.81 21.99H16.18C19.82 21.99 21.99 19.82 21.99 16.18V7.81C22 4.17 19.83 2 16.19 2Z" fill="#292D32"></path>
+					<path d="M16.25 2.0002V12.42C16.25 13.06 16.06 13.54 15.73 13.73C15.39 13.93 14.85 13.83 14.25 13.47L12.93 12.68C12.42 12.37 11.58 12.37 11.07 12.68L9.75 13.47C9.15 13.83 8.61 13.92 8.27 13.73C7.94 13.54 7.75 13.06 7.75 12.42V2.00027C7.77327 2.00009 7.79661 2 7.82 2H16.19C16.21 2 16.23 2.00007 16.25 2.0002Z" fill="#292D32"/>
+				</svg>
+				<span class="badge" *ngIf="notificationsCount>0">{{ notificationsCount }}</span>
+			</button>
+
+			<button class="icon-btn" aria-label="messages">
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path opacity="0.4" d="M16.19 2H7.82C4.17 2 2 4.17 2 7.81V16.18C2 19.82 4.17 21.99 7.81 21.99H16.18C19.82 21.99 21.99 19.82 21.99 16.18V7.81C22 4.17 19.83 2 16.19 2Z" fill="#292D32"></path>
+					<path d="M16.25 2.0002V12.42C16.25 13.06 16.06 13.54 15.73 13.73C15.39 13.93 14.85 13.83 14.25 13.47L12.93 12.68C12.42 12.37 11.58 12.37 11.07 12.68L9.75 13.47C9.15 13.83 8.61 13.92 8.27 13.73C7.94 13.54 7.75 13.06 7.75 12.42V2.00027C7.77327 2.00009 7.79661 2 7.82 2H16.19C16.21 2 16.23 2.00007 16.25 2.0002Z" fill="#292D32"/>
+				</svg>
+				<span class="badge" *ngIf="messagesCount>0">{{ messagesCount }}</span>
+			</button>
+
+			<div class="user-wrap">
+				<button class="user-btn" (click)="toggleUserMenu()" aria-label="user menu">
+					<img *ngIf="userPhotoUrl; else initials" [src]="userPhotoUrl" alt="user" class="user-img"/>
+					<ng-template #initials>
+						<div class="user-initials">U</div>
+					</ng-template>
+				</button>
+
+				<div class="user-menu" *ngIf="showUserMenu">
+					<button class="user-menu-item" (click)="signOut()">Sign out</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="main-container">
 	<div class="main-body">
-		<p>Main layout works — content and dashboard UI will be implemented next.</p>
+		<p>Main layout works — dashboard UI will be implemented next.</p>
 	</div>
 </div>

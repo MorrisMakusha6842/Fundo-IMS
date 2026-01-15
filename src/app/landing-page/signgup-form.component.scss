@@ -1,10 +1,36 @@
 .signup-details {
   max-width: 420px;
-  margin: 24px auto;
+  margin: 0 auto;
   padding: 18px;
   background: #fff;
   border-radius: 8px;
 }
+/* Two-column container to match landing page layout */
+.signup-container {
+  display: flex;
+  min-height: 70vh;
+}
+
+.left-panel {
+  flex: 1;
+  background: #f4f6f8;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.right-panel {
+  flex: 1;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 520px;
+}
+
+.illustration { max-width: 80%; margin: 18px 0 }
+
 
 label {
   display: block;

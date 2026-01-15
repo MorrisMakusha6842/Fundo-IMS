@@ -15,3 +15,65 @@
 .main-body {
   padding-top: 18px;
 }
+
+/* Top nav */
+.top-nav {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  border-bottom: 1px solid #eef2ff;
+  z-index: 50;
+}
+
+.top-nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 24px;
+}
+
+.top-nav .left .brand {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.icon-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.user-wrap { position: relative }
+.user-btn { border: none; background: transparent; cursor: pointer }
+.user-img { width: 40px; height: 40px; border-radius: 999px; object-fit: cover }
+.user-initials { width: 40px; height: 40px; border-radius: 999px; background: #e6eefc; display:flex; align-items:center; justify-content:center; font-weight:700 }
+
+.user-menu { position: absolute; right: 0; top: 54px; background: white; box-shadow: 0 6px 20px rgba(2,6,23,0.08); border-radius: 8px; overflow: hidden }
+.user-menu-item { display: block; width: 140px; padding: 10px 12px; border: none; background: transparent; text-align: left; cursor: pointer }
+
