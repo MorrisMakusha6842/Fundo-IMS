@@ -51,9 +51,9 @@ export class LoginComponent {
   async signInWithGoogle() {
     try {
       const cred = await this.auth.signInWithGoogle();
-      const user = (cred as any).user;
-      // Always route Google sign-ins to the signup form to collect extra details
-      this.router.navigate(['/signup/client'], { state: { fromGoogle: true, googleData: { email: user?.email, displayName: user?.displayName, photoURL: user?.photoURL } } });
+      // On login page, Google is a sign-in flow. After successful popup, go to /app.
+      this.toast.show('Signed in with Google', 'success');
+      this.router.navigate(['/app']);
     } catch (err: any) {
       // If the error is account-exists-with-different-credential, surface helpful info
       if ((err as any)?.code === 'auth/account-exists-with-different-credential') {

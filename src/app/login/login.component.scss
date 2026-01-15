@@ -56,3 +56,11 @@ form input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 6px
 /* Ensure head/subtitle sizes match landing-page */
 .right-panel h3 { font-size: 24px; margin-bottom: 5px }
 .subtitle { color: #6b7280; margin-bottom: 25px }
+
+/* Mobile: hide left panel and make right panel full width for small screens */
+@media (max-width: 640px) {
+  .left-panel { display: none !important }
+  .right-panel { flex: 1; padding: 18px; max-width: 100%; }
+  .illustration { display: none }
+  .signup-container { min-height: auto }
+}
