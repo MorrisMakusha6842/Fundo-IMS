@@ -1,4 +1,40 @@
-<div class="flex flex-row w-full bg-red-200">
-  <p>landing-page works!</p>
-</div>
+<div class="signup-container">
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <h2>Need to manage insurance data?</h2>
+    <p>Find a streamlined solution for your needs!</p>
 
+    <img
+      src="assets/insurance-illustration.svg"
+      alt="Insurance illustration"
+      class="illustration"
+    />
+
+    <small>Access your insurance information anytime!</small>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <h3>Get started for free</h3>
+    <p class="subtitle">Enjoy a 14-day trial with full features.</p>
+
+    <form (ngSubmit)="continue()" #signupForm="ngForm">
+      <input type="text" placeholder="Your company name" required />
+      <input type="email" placeholder="Your unique email" required />
+      <input type="password" placeholder="Create a password" required />
+      <input type="password" placeholder="Confirm password" required />
+
+      <!-- CHANGED: Register → Continue -->
+      <button type="submit" class="primary-btn">
+        Continue
+      </button>
+    </form>
+
+    <div class="divider">or sign up with</div>
+
+    <div class="social-buttons">
+      <button class="google">Google</button>
+      <button class="facebook">Facebook</button>
+    </div>
+  </div>
+</div>
