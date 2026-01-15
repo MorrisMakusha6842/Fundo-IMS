@@ -71,17 +71,27 @@ form input {
 }
 
 .social-buttons {
-  display: flex;
-  gap: 10px;
+  display: block;
+  margin-top: 8px;
 }
 
-.social-buttons button {
-  flex: 1;
-  padding: 10px;
+.social-buttons .google {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
   border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 8px;
   background: white;
+  cursor: pointer;
+  font-weight: 600;
+  width: 100%;
+  justify-content: center;
 }
+
+.social-buttons .google .btn-text { display: inline-block }
+
+.social-buttons .google svg { display: block }
 
 /* Styles for the compact signup form shown on the landing page */
 .landing-signup-form {
