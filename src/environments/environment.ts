@@ -1,11 +1,12 @@
 export const environment = {
   production: false,
   firebase: {
-    apiKey: "AIzaSyD4qUpThhIyB4I24bHXJvFDCa-v_f_XNts",
-    authDomain: "fundo-5fdc5.firebaseapp.com",
-    projectId: "fundo-5fdc5",
-    storageBucket: "fundo-5fdc5.firebasestorage.app",
-    messagingSenderId: "948380954724",
-    appId: "1:948380954724:web:6bf99f61ff9a6a4575ef71"
+    apiKey: "AIzaSyA-C4L3N51xLtsxKHHdHQ_vGcUqfefBFFg",
+    authDomain: "fundo-ims.firebaseapp.com",
+    projectId: "fundo-ims",
+    storageBucket: "fundo-ims.firebasestorage.app",
+    messagingSenderId: "170274951506",
+    appId: "1:170274951506:web:1a1720b09b22f1d2b62a8b",
+    measurementId: "G-9QS0HZQVMD"
   }
 };
