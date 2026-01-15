@@ -37,30 +37,30 @@
           <small *ngIf="f['location'].errors?.['required']">Location is required.</small>
         </div>
 
-        <label>
+        <!-- Email and password are provided in the parent landing form; show email read-only if available -->
+        <label *ngIf="parentData?.email || form.value.email">
           Email
-          <input formControlName="email" type="email" placeholder="you@company.com" />
+          <input [value]="parentData?.email || form.value.email" readonly />
         </label>
-        <div class="error" *ngIf="f['email'].touched && f['email'].invalid">
-          <small *ngIf="f['email'].errors?.['required']">Email is required.</small>
-          <small *ngIf="f['email'].errors?.['email']">Enter a valid email.</small>
-        </div>
 
-        <label>
-          Password
-          <input formControlName="password" type="password" placeholder="At least 6 characters" />
-        </label>
-        <div class="error" *ngIf="f['password'].touched && f['password'].invalid">
-          <small *ngIf="f['password'].errors?.['required']">Password is required.</small>
-          <small *ngIf="f['password'].errors?.['minlength']">Password must be at least 6 characters.</small>
-        </div>
+        <!-- User image deploy / capture section -->
+        <div class="avatar-section">
+          <div class="avatar-preview">
+            <img *ngIf="imagePreview; else placeholder" [src]="imagePreview" alt="avatar preview" />
+            <ng-template #placeholder>
+              <div class="user-initials">{{ form.value.fullName ? (form.value.fullName.charAt(0) | uppercase) : 'U' }}</div>
+            </ng-template>
+          </div>
 
-        <label>
-          Confirm password
-          <input formControlName="confirmPassword" type="password" placeholder="Repeat password" />
-        </label>
-        <div class="error" *ngIf="f['confirmPassword'].touched && f['confirmPassword'].invalid">
-          <small *ngIf="f['confirmPassword'].errors?.['required']">Confirm your password.</small>
+          <div class="avatar-actions">
+            <label class="btn">Upload
+              <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+            </label>
+
+            <label class="btn">Capture
+              <input type="file" accept="image/*" capture="environment" (change)="onFileSelected($event)" hidden />
+            </label>
+          </div>
         </div>
 
         <div class="server-error" *ngIf="error">

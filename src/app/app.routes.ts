@@ -7,7 +7,7 @@ import { LoginComponent } from './login/login.component';
 
 export const routes: Routes = [
   {
-    path: '',
+    path: 'landing-page',
     component: LandingPageComponent
   },
   {
@@ -16,7 +16,7 @@ export const routes: Routes = [
   }
 
   ,{
-    path: 'login',
+    path: '',
     component: LoginComponent
   }
 

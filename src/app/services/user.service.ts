@@ -2,7 +2,8 @@
 import { Injectable } from '@angular/core';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification, Auth } from 'firebase/auth';
-import { getFirestore, doc, setDoc, serverTimestamp, Firestore } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, serverTimestamp, Firestore, updateDoc } from 'firebase/firestore';
+// We do not use Firebase Storage in this build; images will be stored as data URLs in Firestore.
 import { environment } from '../../environments/environment';
 
 export interface ProfileData {
@@ -16,13 +17,13 @@ export class UserService {
 	private auth: Auth;
 	private db: Firestore;
 
-	constructor() {
+    constructor() {
 		// Initialize Firebase app if not already initialized
 		if (!getApps().length) {
 			initializeApp(environment.firebase);
 		}
 		this.auth = getAuth();
-		this.db = getFirestore();
+	    this.db = getFirestore();
 	}
 
 	/**
@@ -78,5 +79,48 @@ export class UserService {
 			throw new Error(message);
 		}
 	}
+
+		/**
+		 * Save a profile image as a data URL in the user's Firestore document and return that data URL.
+		 * Note: storing large images in Firestore is not ideal for production; this follows the repo request
+		 * to avoid Firebase Storage for now. Consider switching to Storage for production.
+		 */
+		async uploadProfileImage(uid: string, file: File): Promise<string> {
+			try {
+				const dataUrl = await this.fileToDataUrl(file);
+				// store it on the user doc under `avatarDataUrl`
+				const userRef = doc(this.db, 'users', uid);
+				await setDoc(userRef, { avatarDataUrl: dataUrl }, { merge: true });
+				return dataUrl;
+			} catch (err) {
+				console.warn('uploadProfileImage failed (firestore)', err);
+				throw err;
+			}
+		}
+
+		private fileToDataUrl(file: File): Promise<string> {
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onload = () => resolve(reader.result as string);
+				reader.onerror = (e) => reject(e);
+				reader.readAsDataURL(file);
+			});
+		}
+
+		/** Update the user's Firestore profile document with additional fields (merge) */
+		async updateUserProfile(uid: string, data: Record<string, any>) {
+			try {
+				const userRef = doc(this.db, 'users', uid);
+				await updateDoc(userRef, data);
+			} catch (err) {
+				// if doc doesn't exist, set it
+				try {
+					const userRef = doc(this.db, 'users', uid);
+					await setDoc(userRef, { uid, ...data }, { merge: true });
+				} catch (e) {
+					console.warn('updateUserProfile failed', e);
+				}
+			}
+		}
 
 }

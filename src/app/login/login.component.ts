@@ -47,4 +47,28 @@ export class LoginComponent {
       this.submitting = false;
     }
   }
+
+  async signInWithGoogle() {
+    try {
+      const cred = await this.auth.signInWithGoogle();
+      const user = (cred as any).user;
+      // Always route Google sign-ins to the signup form to collect extra details
+      this.router.navigate(['/signup/client'], { state: { fromGoogle: true, googleData: { email: user?.email, displayName: user?.displayName, photoURL: user?.photoURL } } });
+    } catch (err: any) {
+      // If the error is account-exists-with-different-credential, surface helpful info
+      if ((err as any)?.code === 'auth/account-exists-with-different-credential') {
+        const email = (err as any).email;
+        this.toast.show('An account exists with a different sign-in method for ' + (email || 'this email') + '. Please sign in with your original method and link Google.', 'warn');
+        return;
+      }
+      const msg = err?.message || 'Google sign-in failed';
+      this.error = msg;
+      this.toast.show(msg, 'error');
+    }
+  }
+
+  navigateTo(target: 'landing-page' | 'login') {
+    if (target === 'landing-page') this.router.navigate(['/landing-page']);
+    else this.router.navigate(['/']);
+  }
 }

@@ -30,3 +30,29 @@ form input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 6px
 .divider { text-align:center; margin: 12px 0 }
 .existing-account { color: #6b7280; margin-top: 8px }
 .existing-account a { color: #2563eb; font-weight: 600 }
+
+/* Make the Google button visually match the landing page's social button */
+.social-buttons {
+  display: block;
+  margin-top: 8px;
+}
+.social-buttons .google {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+  width: 100%;
+  justify-content: center;
+  color: #111827;
+}
+.social-buttons .google .btn-text { display: inline-block }
+.social-buttons .google svg { display: block }
+
+/* Ensure head/subtitle sizes match landing-page */
+.right-panel h3 { font-size: 24px; margin-bottom: 5px }
+.subtitle { color: #6b7280; margin-bottom: 25px }

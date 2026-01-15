@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signOut, User, Auth, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut, User, Auth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail, linkWithCredential } from 'firebase/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -54,6 +54,55 @@ export class AuthService {
       } else if (err?.message) {
         message = err.message;
       }
+      throw new Error(message);
+    }
+  }
+
+  async signInWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    try {
+      const cred = await signInWithPopup(this.auth, provider);
+      return cred;
+    } catch (err: any) {
+      // If the account already exists with a different credential, surface more info so the UI
+      // can perform linking (e.g., sign in with email/password then link the Google credential).
+      if (err?.code === 'auth/account-exists-with-different-credential') {
+        const email = err?.customData?.email || err?.email || null;
+        const pendingCred = err?.credential || null;
+        let methods: string[] = [];
+        try {
+          if (email) methods = await fetchSignInMethodsForEmail(this.auth, email);
+        } catch (e) {
+          // ignore
+        }
+        const e = new Error('Account exists with a different credential');
+        (e as any).code = err.code;
+        (e as any).email = email;
+        (e as any).pendingCredential = pendingCred;
+        (e as any).methods = methods;
+        throw e;
+      }
+      let message = 'Google sign-in failed.';
+      if (err?.message) message = err.message;
+      throw new Error(message);
+    }
+  }
+
+  /**
+   * Link a pending Google credential to an existing email/password account.
+   * The caller should have obtained a pendingCredential from a previous failed popup attempt
+   * (error.credential) and prompt the user to sign in with their password to confirm.
+   */
+  async linkGoogleCredentialToEmail(pendingCredential: any, email: string, password: string) {
+    try {
+      // Sign in the existing account
+      const emailCred = await signInWithEmailAndPassword(this.auth, email, password);
+      // Link the pending Google credential to the signed-in user
+      await linkWithCredential(emailCred.user, pendingCredential);
+      return true;
+    } catch (err: any) {
+      let message = 'Failed to link accounts.';
+      if (err?.message) message = err.message;
       throw new Error(message);
     }
   }
