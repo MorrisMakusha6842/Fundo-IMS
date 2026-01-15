@@ -1,5 +1,5 @@
 # Fundo-IMS
-Insurance & E-learning Management System
+Insurance Management System
 
 This project was generated with Angular CLI version 18.0.7.
 
