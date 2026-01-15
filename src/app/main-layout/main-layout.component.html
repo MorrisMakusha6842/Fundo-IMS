@@ -4,6 +4,14 @@
 			<div class="brand">Fundo IMS</div>
 		</div>
 
+		<div class="center-search">
+			<div class="search-box">
+				<input type="search" placeholder="Search here" aria-label="Search" />
+				<!-- search icon -->
+				<svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21 21l-4.35-4.35" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+			</div>
+		</div>
+
 		<div class="right">
 			<button class="icon-btn" aria-label="notifications">
 				<!-- SVG style matched to your example (rounded square + inner) -->
@@ -31,6 +39,8 @@
 				</button>
 
 				<div class="user-menu" *ngIf="showUserMenu">
+					<button class="user-menu-item" (click)="navigateTo('/settings')">Account settings</button>
+					<hr />
 					<button class="user-menu-item" (click)="signOut()">Sign out</button>
 				</div>
 			</div>
@@ -38,8 +48,26 @@
 	</div>
 </div>
 
-<div class="main-container">
-	<div class="main-body">
-		<p>Main layout works — dashboard UI will be implemented next.</p>
-	</div>
+<div class="app-shell">
+  <aside class="side-nav">
+    <ul>
+      <li (click)="navigateTo('/home')">Home</li>
+	  <li (click)="navigateTo('/dashboard')">Dashboard</li>
+      <li (click)="navigateTo('/policies')">Policies</li>
+      <li (click)="navigateTo('/analytics')">Analytics & Reporting</li>
+      <li (click)="navigateTo('/vehicle-register')">Vehicle Register</li>
+      <li (click)="navigateTo('/user-management')">User Management</li>
+      <li (click)="navigateTo('/billing')">Billing</li>
+      <li (click)="navigateTo('/notifications')">Notifications</li>
+      <li (click)="navigateTo('/settings')">Settings</li>
+    </ul>
+  </aside>
+
+  <main class="main-content">
+    <div class="main-container">
+      <div class="main-body">
+        <p>Main layout works — dashboard UI will be implemented next.</p>
+      </div>
+    </div>
+  </main>
 </div>

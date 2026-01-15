@@ -24,6 +24,11 @@ export class MainLayoutComponent {
     });
   }
 
+  navigateTo(path: string) {
+    // convenience router wrapper for sidebar links
+    this.router.navigate([path]);
+  }
+
   toggleUserMenu() {
     this.showUserMenu = !this.showUserMenu;
   }

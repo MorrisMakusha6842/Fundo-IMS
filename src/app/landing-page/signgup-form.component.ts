@@ -25,6 +25,9 @@ export class SigngupFormComponent implements OnInit {
   imagePreview?: string | null = null;
 	mediaStream: MediaStream | null = null;
 	cameraActive = false;
+	cameraModalOpen = false;
+	tempImagePreview?: string | null = null;
+	tempFile?: File | null = null;
 
 			constructor(private fb: FormBuilder, private userService: UserService, private toast: ToastService, private auth: AuthService, private router: Router) {
 			this.form = this.fb.group({
@@ -150,8 +153,8 @@ export class SigngupFormComponent implements OnInit {
 		try {
 			this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
 			this.cameraActive = true;
-			// attach stream to video element
-			const video: HTMLVideoElement | null = document.querySelector('#signupCameraVideo');
+					// attach stream to modal video element
+					const video: HTMLVideoElement | null = document.querySelector('#signupCameraModalVideo');
 			if (video) {
 				video.srcObject = this.mediaStream;
 				await video.play();
@@ -166,7 +169,7 @@ export class SigngupFormComponent implements OnInit {
 			this.mediaStream.getTracks().forEach(t => t.stop());
 			this.mediaStream = null;
 		}
-		const video: HTMLVideoElement | null = document.querySelector('#signupCameraVideo');
+			const video: HTMLVideoElement | null = document.querySelector('#signupCameraModalVideo');
 		if (video) {
 			video.pause();
 			video.srcObject = null;
@@ -175,7 +178,7 @@ export class SigngupFormComponent implements OnInit {
 	}
 
 	async takePhoto() {
-		const video: HTMLVideoElement | null = document.querySelector('#signupCameraVideo');
+			const video: HTMLVideoElement | null = document.querySelector('#signupCameraModalVideo');
 		if (!video) return;
 		const canvas = document.createElement('canvas');
 		canvas.width = video.videoWidth || 640;
@@ -187,10 +190,32 @@ export class SigngupFormComponent implements OnInit {
 		// create a File object from dataUrl
 		const blob = await (await fetch(dataUrl)).blob();
 		const file = new File([blob], `capture_${Date.now()}.jpg`, { type: blob.type });
-		this.imageFile = file;
-		this.imagePreview = dataUrl;
-		// stop camera after capture
-		this.stopCamera();
+			// set temporary preview (user can Save or Retake in modal)
+			this.tempImagePreview = dataUrl;
+			this.tempFile = file;
 	}
+
+		openCameraModal() {
+			this.cameraModalOpen = true;
+			this.tempImagePreview = null;
+			this.tempFile = null;
+			this.startCamera();
+		}
+
+		async savePhoto() {
+			if (!this.tempImagePreview || !this.tempFile) return;
+			this.imagePreview = this.tempImagePreview;
+			this.imageFile = this.tempFile;
+			this.tempImagePreview = null;
+			this.tempFile = null;
+			this.cameraModalOpen = false;
+			this.stopCamera();
+		}
+
+		retake() {
+			this.tempImagePreview = null;
+			this.tempFile = null;
+			// keep camera running
+		}
 
 }

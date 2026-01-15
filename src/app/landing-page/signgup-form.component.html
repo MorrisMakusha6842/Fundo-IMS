@@ -16,17 +16,31 @@
             <div class="avatar-preview circular">
               <img *ngIf="imagePreview" [src]="imagePreview" alt="avatar preview" />
               <div *ngIf="!imagePreview" class="avatar-placeholder"></div>
-              <video *ngIf="cameraActive" id="signupCameraVideo" class="camera-video" autoplay muted playsinline></video>
             </div>
 
             <div class="avatar-actions">
-              <label class="btn">Upload
+              <label class="btn inline-btn">Upload
                 <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
               </label>
 
-              <button type="button" class="btn" *ngIf="!cameraActive" (click)="startCamera()">Use camera</button>
-              <button type="button" class="btn" *ngIf="cameraActive" (click)="takePhoto()">Take photo</button>
-              <button type="button" class="btn" *ngIf="cameraActive" (click)="stopCamera()">Cancel</button>
+              <button type="button" class="btn inline-btn" (click)="openCameraModal()">Open camera</button>
+            </div>
+          </div>
+
+          <!-- Camera modal -->
+          <div class="camera-modal" *ngIf="cameraModalOpen">
+            <div class="camera-backdrop" (click)="stopCamera(); cameraModalOpen=false"></div>
+            <div class="camera-dialog">
+              <div class="camera-preview">
+                <video id="signupCameraModalVideo" autoplay muted playsinline></video>
+                <img *ngIf="tempImagePreview" [src]="tempImagePreview" alt="capture preview" class="capture-preview" />
+              </div>
+              <div class="camera-controls">
+                <button type="button" class="btn" (click)="takePhoto()">Capture</button>
+                <button type="button" class="btn" *ngIf="tempImagePreview" (click)="savePhoto()">Save</button>
+                <button type="button" class="btn" *ngIf="tempImagePreview" (click)="retake()">Retake</button>
+                <button type="button" class="btn" (click)="stopCamera(); cameraModalOpen=false">Cancel</button>
+              </div>
             </div>
           </div>
         <label>
