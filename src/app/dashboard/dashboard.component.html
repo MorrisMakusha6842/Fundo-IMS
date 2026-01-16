@@ -1,1 +1,116 @@
-<p>dashboard works!</p>
+<div class="dashboard">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Welcome, UserName</h1>
+    <span>Insurance management system overview</span>
+  </div>
+
+  <!-- KPI SECTION -->
+  <div class="grid grid-3">
+    <div class="card kpi">
+      <h3>Total Users</h3>
+      <div class="value">1,284</div>
+    </div>
+    <div class="card kpi">
+      <h3>Registered Vehicles</h3>
+      <div class="value">3,762</div>
+    </div>
+    <div class="card kpi">
+      <h3>Expiring Policies</h3>
+      <div class="value">146</div>
+    </div>
+  </div>
+
+  <br>
+
+  <!-- ANALYTICS -->
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>Active vs Expired Policies</h3>
+      <svg class="chart" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="70" fill="#e5e7eb"/>
+        <path d="M100 100 L100 30 A70 70 0 1 1 30 100 Z" fill="#4f46e5"/>
+      </svg>
+    </div>
+
+    <div class="card kpi">
+      <h3>Payments Received</h3>
+      <div class="value">$248,900</div>
+    </div>
+
+    <div class="card kpi">
+      <h3>Pending Renewals</h3>
+      <div class="value">89</div>
+    </div>
+  </div>
+
+  <br>
+
+  <!-- TRENDS -->
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Renewal vs Lapse Rate</h3>
+      <svg class="chart" viewBox="0 0 400 200">
+        <polyline
+          points="10,140 80,120 150,90 220,100 300,70"
+          fill="none"
+          stroke="#4f46e5"
+          stroke-width="3"/>
+        <polyline
+          points="10,160 80,150 150,140 220,150 300,160"
+          fill="none"
+          stroke="#9aa3ab"
+          stroke-width="2"/>
+      </svg>
+    </div>
+
+    <div class="card">
+      <h3>Monthly Policy Registration</h3>
+      <svg class="chart" viewBox="0 0 400 200">
+        <rect x="20" y="100" width="30" height="80" fill="#4f46e5"/>
+        <rect x="70" y="80" width="30" height="100" fill="#4f46e5"/>
+        <rect x="120" y="60" width="30" height="120" fill="#4f46e5"/>
+        <rect x="170" y="90" width="30" height="90" fill="#4f46e5"/>
+        <rect x="220" y="70" width="30" height="110" fill="#4f46e5"/>
+      </svg>
+    </div>
+  </div>
+
+  <br>
+
+  <!-- ACTIVITY LOG -->
+  <!-- ACTIVITY LOG -->
+<div class="card">
+  <h3>Activity Log</h3>
+
+  <table class="activity-table">
+    <thead>
+      <tr>
+        <th>Action</th>
+        <th>Source</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Policy renewed for vehicle ZW-7843</td>
+        <td>System</td>
+        <td class="activity-time">2 hours ago</td>
+      </tr>
+      <tr>
+        <td>New insurance policy registered</td>
+        <td>Admin</td>
+        <td class="activity-time">Today</td>
+      </tr>
+      <tr>
+        <td>Policy expired – renewal reminder sent</td>
+        <td>Automated</td>
+        <td class="activity-time">Yesterday</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</div>
+

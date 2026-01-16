@@ -1,0 +1,164 @@
+<!-- MODAL OVERLAY -->
+<div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="account-init-title">
+
+  <div class="modal-card" #modalCard tabindex="0">
+
+    <!-- MODAL HEADER -->
+    <div class="modal-header">
+      <h2 id="account-init-title">Account Activation</h2>
+      <p>Complete the steps below to activate your insurance account</p>
+    </div>
+
+    <!-- ACCORDION COLUMN -->
+    <div class="accordion">
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+        <!-- STEP 1: Agreement -->
+        <details open>
+          <summary>
+            <span class="step">Step 1</span>
+            User Service Agreement
+          </summary>
+
+          <div class="accordion-content">
+            <div class="usa-box">
+              <p>
+                This User Service Agreement (“Agreement”) governs your use of the
+                insurance services provided by the firm. By proceeding, you
+                acknowledge compliance with underwriting, disclosure, and
+                regulatory obligations as required by law.
+              </p>
+              <p>
+                The firm reserves the right to suspend or terminate coverage in
+                the event of misrepresentation, fraud, or non-compliance.
+              </p>
+            </div>
+
+            <label class="checkbox">
+              <input type="radio" formControlName="usaStatus" [value]="'agreed'" />
+              I agree to the User Service Agreement
+            </label>
+
+            <label class="checkbox">
+              <input type="radio" formControlName="usaStatus" [value]="'disagreed'" />
+              I do not agree to the User Service Agreement
+            </label>
+          </div>
+        </details>
+
+        <!-- STEP 2: Vehicle Registration -->
+        <details>
+          <summary>
+            <span class="step">Step 2</span>
+            Vehicle Registration – Basic Information
+          </summary>
+
+          <div class="accordion-content grid-2">
+
+            <div class="field">
+              <label>Vehicle Make</label>
+              <input type="text" formControlName="vehicleMake" />
+            </div>
+
+            <div class="field">
+              <label>Vehicle Class</label>
+              <input type="text" formControlName="vehicleClass" />
+            </div>
+
+            <div class="field">
+              <label>Number Plate</label>
+              <input type="text" formControlName="numberPlate" />
+            </div>
+
+            <div class="field">
+              <label>Year</label>
+              <input type="number" formControlName="year" />
+            </div>
+
+            <div class="field">
+              <label>Body Type</label>
+              <select formControlName="bodyType">
+                <option value="">Select</option>
+                <option>Sedan</option>
+                <option>SUV</option>
+                <option>Hatchback</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Garaging Address</label>
+              <input type="text" formControlName="garagingAddress" />
+            </div>
+
+            <div class="field">
+              <label>VIN</label>
+              <input type="text" formControlName="vin" />
+            </div>
+
+            <div class="field">
+              <label>Primary Use</label>
+              <select formControlName="primaryUse">
+                <option value="">Select</option>
+                <option>Commuting</option>
+                <option>Business</option>
+                <option>Pleasure</option>
+                <option>Goods Transport</option>
+              </select>
+            </div>
+
+          </div>
+        </details>
+
+        <!-- STEP 3: Additional docs & value -->
+        <details>
+          <summary>
+            <span class="step">Step 3</span>
+            Vehicle Registration – Compliance & Documents
+          </summary>
+
+          <div class="accordion-content grid-2">
+            <div class="field">
+              <label>Safety / Anti-Theft Features</label>
+              <select multiple>
+                <option>Alarm</option>
+                <option>Immobilizer</option>
+                <option>Tracking Device</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Current Vehicle Value</label>
+              <input type="text" formControlName="currentValue" placeholder="Purchase price or market value" />
+            </div>
+
+            <div class="field upload">
+              <label>Radio Licence Document</label>
+              <input type="file" />
+            </div>
+
+            <div class="field upload">
+              <label>Insurance Policy Document</label>
+              <input type="file" />
+            </div>
+
+            <div class="field upload">
+              <label>Vehicle Inspection Document</label>
+              <input type="file" />
+            </div>
+
+          </div>
+        </details>
+
+        <!-- MODAL FOOTER -->
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="onClose()" [disabled]="submitting">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="submitting">{{ submitting ? 'Submitting...' : 'Submit for Activation' }}</button>
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+</div>

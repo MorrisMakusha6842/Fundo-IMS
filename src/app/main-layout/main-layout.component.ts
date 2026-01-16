@@ -1,13 +1,16 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { AccountInitialisingComponent } from './account-initialising.component';
+import { UserService } from '../services/user.service';
+import { VehicleRegisterService } from '../services/vehicle-register.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, AccountInitialisingComponent],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
 })
@@ -19,13 +22,60 @@ export class MainLayoutComponent {
   userDisplayName: string | null = null;
   sideNavCollapsed = false;
   mobileMenuOpen = false;
+  showAccountInit = false;
 
-  constructor(private auth: AuthService, private toast: ToastService, private router: Router) {
+  constructor(
+    private auth: AuthService,
+    private toast: ToastService,
+    private router: Router,
+    private userService: UserService,
+    private vehicleService: VehicleRegisterService
+  ) {
     // subscribe to auth user to show photo and name if available
     this.auth.user$.subscribe(u => {
       this.userPhotoUrl = u?.photoURL || null;
       this.userDisplayName = u?.displayName || u?.email || 'User';
+      // check if we should display the account-initialising modal for newly signed in users
+      if (u?.uid) {
+        this.checkUserInit(u.uid);
+      } else {
+        this.showAccountInit = false;
+      }
     });
+  }
+
+  private async checkUserInit(uid: string) {
+    try {
+      const profile = await this.userService.getUserProfile(uid);
+      // Determine usa agreement status (stored under a 'usa' object or as a top-level usaStatus)
+      const usaAgreed = !!(
+        profile && (
+          (profile['usa'] && profile['usa']['usaStatus'] === 'agreed') ||
+          profile['usaStatus'] === 'agreed'
+        )
+      );
+
+      // Check for existing vehicle-register record for this user
+  const vehicle = await this.vehicleService.getByUserId(uid);
+
+      // Show modal if either agreement not given or vehicle data missing
+      this.showAccountInit = !(usaAgreed && !!vehicle);
+    } catch (err) {
+      console.warn('Failed to check user init', err);
+      // be conservative: if we cannot check, don't block access; hide modal
+      this.showAccountInit = false;
+    }
+  }
+
+  async onAccountInitClose() {
+    // Close modal; the modal itself should have written usa status and vehicle data.
+    this.showAccountInit = false;
+    // Re-check in case data wasn't written synchronously
+    const uid = this.auth.currentUser?.uid;
+    if (uid) {
+      // schedule a short re-check
+      setTimeout(() => void this.checkUserInit(uid), 400);
+    }
   }
 
   navigateTo(path: string) {

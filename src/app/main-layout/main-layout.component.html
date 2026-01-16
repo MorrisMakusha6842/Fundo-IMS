@@ -56,6 +56,9 @@
 	</div>
 </div>
 
+<!-- Account initialising modal (shown for new users who haven't completed setup) -->
+<app-account-initialising *ngIf="showAccountInit" (close)="onAccountInitClose()"></app-account-initialising>
+
 <!-- mobile drawer and backdrop -->
 <div class="mobile-drawer" [class.open]="mobileMenuOpen">
 	<div class="mobile-drawer-header">

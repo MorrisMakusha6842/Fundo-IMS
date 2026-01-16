@@ -1,0 +1,75 @@
+/* FILTERS */
+.filter-label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 14px 0 6px;
+}
+
+.filter-select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 14px;
+}
+
+/* STATUS BADGES */
+.status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status.expired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status.pending {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+/* ACTION BUTTONS */
+.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* RED SUSPEND BUTTON */
+.btn.suspend {
+  background: #dc2626;
+  color: #fff;
+  margin-right: 6px;
+}
+
+.btn.suspend:hover {
+  background: #b91c1c;
+}
+
+/* VIEW BUTTON */
+.btn.view {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.btn.view:hover {
+  background: #cbd5f5;
+}

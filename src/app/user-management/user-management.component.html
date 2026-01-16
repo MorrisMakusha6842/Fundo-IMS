@@ -1,1 +1,71 @@
-<p>user-management works!</p>
+<div class="dashboard">
+
+  <div class="grid grid-4">
+
+    <!-- FILTERS -->
+    <div class="card">
+      <h3>Filters</h3>
+
+      <label class="filter-label">Policy Status</label>
+      <select class="filter-select">
+        <option>All</option>
+        <option>Active</option>
+        <option>Expired</option>
+        <option>Pending</option>
+      </select>
+
+      <label class="filter-label">Client Type</label>
+      <select class="filter-select">
+        <option>All</option>
+        <option>Individual</option>
+        <option>Corporate</option>
+      </select>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card" style="grid-column: span 3;">
+      <h3>Client Management</h3>
+
+      <table class="activity-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Contact Information</th>
+            <th>Policy Status</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Jane Smith</td>
+            <td>jane.smith"&#64;"example.com</td>
+            <td><span class="status active">Active</span></td>
+            <td class="actions">
+              <button class="btn suspend">Suspend</button>
+              <button class="btn view">View</button>
+            </td>
+          </tr>
+          <tr>
+            <td>John Doe</td>
+            <td>john.doe"&#64;"example.com</td>
+            <td><span class="status expired">Expired</span></td>
+            <td class="actions">
+              <button class="btn suspend">Suspend</button>
+              <button class="btn view">View</button>
+            </td>
+          </tr>
+          <tr>
+            <td>Alex Johnson</td>
+            <td>alex.johnson"&#64;"example.com</td>
+            <td><span class="status pending">Pending</span></td>
+            <td class="actions">
+              <button class="btn suspend">Suspend</button>
+              <button class="btn view">View</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+</div>
