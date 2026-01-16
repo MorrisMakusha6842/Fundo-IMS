@@ -112,7 +112,7 @@ export class SigngupFormComponent implements OnInit {
 				// persist profile fields to Firestore
 				await this.userService.updateUserProfile(current.uid, { displayName: fullName, company, numberPlate, location, photoURL });
 				this.toast.show('Account information updated', 'success');
-				this.router.navigate(['/app']);
+				this.router.navigate(['/main-layout']);
 				return;
 			} else {
 				// Regular email/password signup — create user then persist avatar and profile
@@ -131,9 +131,9 @@ export class SigngupFormComponent implements OnInit {
 				// Wait for auth state to update then navigate
 				try {
 					const user = await firstValueFrom(this.auth.user$);
-					if (user) { this.router.navigate(['/app']); return; }
+						if (user) { this.router.navigate(['/main-layout']); return; }
 				} catch (e) { /* ignore */ }
-				setTimeout(() => this.router.navigate(['/app']), 800);
+				setTimeout(() => this.router.navigate(['/main-layout']), 800);
 			}
 		} catch (err: any) {
 			const msg = err?.message || 'Failed to create account';

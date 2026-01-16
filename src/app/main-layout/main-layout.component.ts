@@ -32,16 +32,19 @@ export class MainLayoutComponent {
     // convenience router wrapper for sidebar links
     // ensure child routes are navigated under /app so MainLayout stays mounted
     if (!path) { return }
-    if (path.startsWith('/app')) {
-      this.router.navigate([path]);
+    // if a full URL-like path is provided, use navigateByUrl for clarity
+    if (path.startsWith('/')) {
+      // ensure top-level `/home` becomes `/main-layout/home` unless already /main-layout
+      if (path.startsWith('/main-layout')) {
+        this.router.navigateByUrl(path);
+      } else {
+        this.router.navigateByUrl(`/main-layout${path}`);
+      }
       return;
     }
-    if (path.startsWith('/')) {
-      // '/home' -> '/app/home'
-      this.router.navigate(['/app', path.slice(1)]);
-    } else {
-      this.router.navigate(['/app', path]);
-    }
+
+    // otherwise treat as a child under /main-layout
+    this.router.navigate(['/main-layout', path]);
   }
 
   toggleSideNav() {

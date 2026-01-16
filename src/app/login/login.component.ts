@@ -37,8 +37,8 @@ export class LoginComponent {
       const { email, password } = this.form.value;
       await this.auth.signIn(email, password);
       this.toast.show('Signed in successfully', 'success');
-      // wait shortly for auth state; then navigate to main app
-      setTimeout(() => this.router.navigate(['/app']), 300);
+  // wait shortly for auth state; then navigate to main app
+  setTimeout(() => this.router.navigate(['/main-layout']), 300);
     } catch (err: any) {
       const msg = err?.message || 'Sign in failed';
       this.error = msg;
@@ -51,9 +51,9 @@ export class LoginComponent {
   async signInWithGoogle() {
     try {
       const cred = await this.auth.signInWithGoogle();
-      // On login page, Google is a sign-in flow. After successful popup, go to /app.
+  // On login page, Google is a sign-in flow. After successful popup, go to main layout.
       this.toast.show('Signed in with Google', 'success');
-      this.router.navigate(['/app']);
+  this.router.navigate(['/main-layout']);
     } catch (err: any) {
       // If the error is account-exists-with-different-credential, surface helpful info
       if ((err as any)?.code === 'auth/account-exists-with-different-credential') {
