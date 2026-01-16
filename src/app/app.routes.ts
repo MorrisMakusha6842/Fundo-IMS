@@ -3,7 +3,17 @@ import { LandingPageComponent } from './landing-page/landing-page.component';
 import { SigngupFormComponent } from './landing-page/signgup-form.component';
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 import { AuthGuard } from './guards/auth.guard';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
+import { NotificationsComponent } from './notifications/notifications.component';
+import { ReminderComponent } from './reminder/reminder.component';
+import { AnalyticsComponent } from './analytics/analytics.component';
+import { BillingComponent } from './billing/billing.component';
+import { PoliciesComponent } from './policies/policies.component';
+import { SettingsComponent } from './settings/settings.component';
+import { UserManagementComponent } from './user-management/user-management.component';
+import { VehicleRegisterComponent } from './vehicle-register/vehicle-register.component';
 
 export const routes: Routes = [
   {
@@ -24,8 +34,73 @@ export const routes: Routes = [
     path: 'app',
     component: MainLayoutComponent,
     canActivate: [AuthGuard]
+  }, 
+  // New component wch should be Protected routes under MainLayoutComponent
+  {
+    path: 'home',
+    component: HomeComponent,
+    canActivate: [AuthGuard]
+  }, 
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    canActivate: [AuthGuard]
+  }, 
+  {
+    path: 'notifications',
+    component: NotificationsComponent,
+    canActivate: [AuthGuard]
+  }, 
+  {
+    path: 'reminder',
+    component: ReminderComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'analytics',
+    component: AnalyticsComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'billing',
+    component: BillingComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'billing',
+    component: BillingComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'policies',
+    component: PoliciesComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'settings',
+    component: SettingsComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'user-management',
+    component: UserManagementComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'user-management',
+    component: UserManagementComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'vehicle-register',
+    component: VehicleRegisterComponent,
+    canActivate: [AuthGuard]
+  },
+  // Fallback route here 
+  {
+    path: '**',
+    component: LandingPageComponent
   }
-
 ];
 
 
