@@ -16,6 +16,7 @@ export class MainLayoutComponent {
   notificationsCount = 3; // placeholder counts; replace with real data source
   messagesCount = 1;
   userPhotoUrl: string | null = null;
+  sideNavCollapsed = false;
 
   constructor(private auth: AuthService, private toast: ToastService, private router: Router) {
     // subscribe to auth user to show photo if available
@@ -27,6 +28,10 @@ export class MainLayoutComponent {
   navigateTo(path: string) {
     // convenience router wrapper for sidebar links
     this.router.navigate([path]);
+  }
+
+  toggleSideNav() {
+    this.sideNavCollapsed = !this.sideNavCollapsed;
   }
 
   toggleUserMenu() {

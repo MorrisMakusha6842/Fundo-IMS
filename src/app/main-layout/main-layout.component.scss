@@ -34,6 +34,8 @@
   padding: 10px 24px;
 }
 
+.top-nav-inner .left { display:flex; align-items:center; gap:12px }
+
 .top-nav .left .brand {
   font-weight: 700;
   color: #0f172a;
@@ -88,6 +90,11 @@
   border-right: 1px solid #eef2ff;
   padding: 18px 12px;
 }
+.side-nav.collapsed { width: 72px }
+.side-nav ul { transition: width .28s ease }
+.side-nav.collapsed .label { opacity: 0; width: 0; margin-left: 0; pointer-events: none }
+.side-nav.collapsed .nav-icon { display: inline-flex; justify-content:center }
+.side-nav li { transition: background .18s }
 .side-nav ul { list-style: none; padding: 0; margin: 0 }
 .side-nav li { padding: 10px 12px; border-radius: 6px; cursor: pointer; color: #0f172a; margin-bottom: 6px; font-weight: 600 }
 .side-nav li:hover { background: #f1f5f9 }
@@ -98,4 +105,35 @@
 .search-box { position: relative; width: 420px }
 .search-box input { width: 100%; padding: 10px 12px 10px 38px; border: 1px solid #e5e7eb; border-radius: 4px; height: 40px; box-sizing: border-box }
 .search-box .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none }
+
+/* Toggle button styling */
+.side-toggle { border: none; background: transparent; display: inline-flex; align-items: center; gap:8px; margin-right:8px; cursor: pointer }
+.side-toggle .toggle-icon { width: 24px; height: 24px; color: #000; transition: transform .32s ease }
+.side-toggle.rotated .toggle-icon { transform: rotate(180deg) }
+
+/* nav icon color */
+.nav-icon svg, .top-icon { color: #000; }
+
+/* make side nav items inline with their labels and shrink svg visuals */
+.side-nav li { display:flex; align-items:center; gap:12px; }
+.nav-icon { width: 36px; display:inline-flex; justify-content:center; align-items:center }
+.nav-icon svg { width: 18px; height: 18px; }
+.side-nav .label { display: inline-block }
+
+/* hide side nav on small screens */
+@media (max-width: 640px) { .side-nav { display: none } }
+
+/* mobile tweaks */
+@media (max-width: 640px) {
+  .top-nav-inner { padding: 8px 12px }
+  .main-container { padding-left: 12px; padding-right: 12px }
+  /* hide the side-toggle, search and user avatar on mobile */
+  .side-toggle { display: none }
+  .search-box { display: none }
+  .user-wrap { display: none }
+}
+
+/* mobile-only helper: visible by default (mobile), hidden at sm and above */
+.mobile-only { display: block }
+@media (min-width: 640px) { .mobile-only { display: none } }
 
