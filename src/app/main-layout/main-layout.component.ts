@@ -16,22 +16,44 @@ export class MainLayoutComponent {
   notificationsCount = 3; // placeholder counts; replace with real data source
   messagesCount = 1;
   userPhotoUrl: string | null = null;
+  userDisplayName: string | null = null;
   sideNavCollapsed = false;
+  mobileMenuOpen = false;
 
   constructor(private auth: AuthService, private toast: ToastService, private router: Router) {
-    // subscribe to auth user to show photo if available
+    // subscribe to auth user to show photo and name if available
     this.auth.user$.subscribe(u => {
       this.userPhotoUrl = u?.photoURL || null;
+      this.userDisplayName = u?.displayName || u?.email || 'User';
     });
   }
 
   navigateTo(path: string) {
     // convenience router wrapper for sidebar links
-    this.router.navigate([path]);
+    // ensure child routes are navigated under /app so MainLayout stays mounted
+    if (!path) { return }
+    if (path.startsWith('/app')) {
+      this.router.navigate([path]);
+      return;
+    }
+    if (path.startsWith('/')) {
+      // '/home' -> '/app/home'
+      this.router.navigate(['/app', path.slice(1)]);
+    } else {
+      this.router.navigate(['/app', path]);
+    }
   }
 
   toggleSideNav() {
     this.sideNavCollapsed = !this.sideNavCollapsed;
+  }
+
+  toggleMobileMenu() {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
+  closeMobileMenu() {
+    this.mobileMenuOpen = false;
   }
 
   toggleUserMenu() {

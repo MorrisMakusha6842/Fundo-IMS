@@ -97,6 +97,7 @@
 .side-nav li { transition: background .18s }
 .side-nav ul { list-style: none; padding: 0; margin: 0 }
 .side-nav li { padding: 10px 12px; border-radius: 6px; cursor: pointer; color: #0f172a; margin-bottom: 6px; font-weight: 600 }
+.side-nav li { padding: 6px 10px; border-radius: 6px; cursor: pointer; color: #0f172a; margin-bottom: 2px; font-weight: 600 }
 .side-nav li:hover { background: #f1f5f9 }
 .main-content { flex: 1; padding: 24px }
 
@@ -116,9 +117,20 @@
 
 /* make side nav items inline with their labels and shrink svg visuals */
 .side-nav li { display:flex; align-items:center; gap:12px; }
-.nav-icon { width: 36px; display:inline-flex; justify-content:center; align-items:center }
-.nav-icon svg { width: 18px; height: 18px; }
-.side-nav .label { display: inline-block }
+.nav-icon { width: 32px; display:inline-flex; justify-content:center; align-items:center }
+.nav-icon img, .nav-icon svg { width: 16px; height: 16px; }
+.side-nav .label { display: inline-block; font-size: 13px; }
+
+/* small animation for hamburger and toggle */
+.mobile-only svg { transition: transform .22s ease, opacity .22s ease }
+.mobile-only:active svg { transform: scale(.92) rotate(6deg); opacity: .9 }
+.side-toggle .toggle-icon { transition: transform .32s ease, color .2s ease }
+.side-toggle:hover .toggle-icon { transform: rotate(12deg) }
+
+/* top icon image styling */
+.top-icon-img { display:inline-block; vertical-align:middle }
+.help-btn { padding:6px }
+.help-btn .top-icon { vertical-align: middle }
 
 /* hide side nav on small screens */
 @media (max-width: 640px) { .side-nav { display: none } }
@@ -136,4 +148,42 @@
 /* mobile-only helper: visible by default (mobile), hidden at sm and above */
 .mobile-only { display: block }
 @media (min-width: 640px) { .mobile-only { display: none } }
+
+/* Mobile drawer styles */
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 80vw;
+  background: #fff;
+  transform: translateX(-110%);
+  transition: transform .28s cubic-bezier(.2,.9,.2,1);
+  z-index: 80;
+  box-shadow: 4px 0 24px rgba(2,6,23,0.12);
+  display: flex;
+  flex-direction: column;
+}
+.mobile-drawer.open { transform: translateX(0) }
+.drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.36); z-index: 70 }
+.mobile-drawer-header { padding: 18px; border-bottom: 1px solid #eef2ff }
+.mobile-user { display:flex; align-items:center; gap:12px }
+.mobile-user-img { width: 48px; height:48px; border-radius:999px; object-fit:cover }
+.mobile-user-initials { width:48px; height:48px; border-radius:999px; display:flex; align-items:center; justify-content:center; background:#e6eefc; font-weight:700 }
+.mobile-user-name { font-weight:700; font-size:15px }
+.mobile-nav { padding: 12px }
+.mobile-nav ul { list-style:none; padding:0; margin:0 }
+.mobile-nav li { padding: 10px 6px; border-radius:6px }
+.mobile-nav a { display:block; color:#0f172a; text-decoration:none; font-weight:600; padding: 8px 6px; border-radius:6px }
+.mobile-nav a:hover { background:#f1f5f9 }
+.mobile-drawer-footer { margin-top:auto; padding:12px; border-top:1px solid #eef2ff }
+.logout-btn { width:100%; padding:10px; border:none; background:#ef4444; color:white; border-radius:6px; cursor:pointer }
+
+/* hamburger animation */
+.hamburger { width:40px; height:40px; display:inline-flex; align-items:center; justify-content:center; padding:8px; border-radius:8px; background:transparent; border:none }
+.hamburger span { display:block; width:18px; height:2px; background:#0f172a; margin:3px 0; transition: transform .22s ease, opacity .18s ease }
+.hamburger.open span:nth-child(1) { transform: translateY(5px) rotate(45deg) }
+.hamburger.open span:nth-child(2) { opacity:0 }
+.hamburger.open span:nth-child(3) { transform: translateY(-5px) rotate(-45deg) }
 

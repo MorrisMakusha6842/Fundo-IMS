@@ -33,74 +33,23 @@ export const routes: Routes = [
   ,{
     path: 'app',
     component: MainLayoutComponent,
-    canActivate: [AuthGuard]
-  }, 
-  // New component wch should be Protected routes under MainLayoutComponent
-  {
-    path: 'home',
-    component: HomeComponent,
-    canActivate: [AuthGuard]
-  }, 
-  {
-    path: 'dashboard',
-    component: DashboardComponent,
-    canActivate: [AuthGuard]
-  }, 
-  {
-    path: 'notifications',
-    component: NotificationsComponent,
-    canActivate: [AuthGuard]
-  }, 
-  {
-    path: 'reminder',
-    component: ReminderComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'analytics',
-    component: AnalyticsComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'billing',
-    component: BillingComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'billing',
-    component: BillingComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'policies',
-    component: PoliciesComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'settings',
-    component: SettingsComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'user-management',
-    component: UserManagementComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'user-management',
-    component: UserManagementComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'vehicle-register',
-    component: VehicleRegisterComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard],
+    children: [
+      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      { path: 'home', component: HomeComponent },
+      { path: 'dashboard', component: DashboardComponent },
+      { path: 'notifications', component: NotificationsComponent },
+      { path: 'reminder', component: ReminderComponent },
+      { path: 'analytics', component: AnalyticsComponent },
+      { path: 'billing', component: BillingComponent },
+      { path: 'policies', component: PoliciesComponent },
+      { path: 'settings', component: SettingsComponent },
+      { path: 'user-management', component: UserManagementComponent },
+      { path: 'vehicle-register', component: VehicleRegisterComponent }
+    ]
   },
   // Fallback route here 
-  {
-    path: '**',
-    component: LandingPageComponent
-  }
+  
 ];
 
 
