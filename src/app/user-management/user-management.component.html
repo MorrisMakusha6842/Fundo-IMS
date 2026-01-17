@@ -1,11 +1,23 @@
-<div class="dashboard">
+<!-- HEADER -->
+<div class="header">
+  <h1>User Management</h1>
+  <button class="btn-create" (click)="openCreateModal()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+      <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+    </svg>
+    New User
+  </button>
+</div>
 
-  <div class="grid grid-4">
-
-    <!-- FILTERS -->
-    <div class="card">
-      <h3>Filters</h3>
-
+<div class="container">
+  <!-- FILTERS -->
+  <div class="filters">
+    <div class="filter-group">
+      <label class="filter-label">Search</label>
+      <input type="text" [formControl]="searchControl" placeholder="Name or Email" class="filter-select"
+        style="min-width: 200px;">
+    </div>
+    <div class="filter-group">
       <label class="filter-label">Policy Status</label>
       <select class="filter-select">
         <option>All</option>
@@ -13,7 +25,8 @@
         <option>Expired</option>
         <option>Pending</option>
       </select>
-
+    </div>
+    <div class="filter-group">
       <label class="filter-label">Client Type</label>
       <select class="filter-select">
         <option>All</option>
@@ -21,51 +34,174 @@
         <option>Corporate</option>
       </select>
     </div>
+  </div>
 
-    <!-- TABLE -->
-    <div class="card" style="grid-column: span 3;">
-      <h3>Client Management</h3>
+  <!-- USER TABLE -->
+  <div class="user-table-card">
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Contact Information</th>
+          <th>Role</th>
+          <th>Policy Status</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers">
+          <td>
+            <div class="user-info">
+              <div class="user-avatar">{{ getInitials(user.displayName) }}</div>
+              <span>{{ user.displayName || 'Unknown' }}</span>
+            </div>
+          </td>
+          <td>{{ user.email }}</td>
+          <td>{{ (user.role || 'Client') | titlecase }}</td>
+          <td><span class="status" [ngClass]="user.status?.toLowerCase() || 'active'">{{ user.status || 'Active'
+              }}</span></td>
+          <td class="actions">
+            <button class="btn-icon" (click)="openViewModal(user)" title="View">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fill-rule="evenodd"
+                  d="M.458 10C3.32 4.943 7.522 3 10 3s6.68 1.943 9.542 7c-2.862 5.057-7.022 7-9.542 7S3.32 15.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button class="btn-icon delete" title="Suspend">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+                <path fill-rule="evenodd"
+                  d="M10 1.944A11.954 11.954 0 012.166 5.026a10.052 10.052 0 00-1.026 5.474c.068 2.01.63 3.93 1.594 5.592A11.954 11.954 0 0110 18.056a11.954 11.954 0 017.834-9.962 10.052 10.052 0 00-1.026-5.474A11.954 11.954 0 0110 1.944zM10 15a5 5 0 100-10 5 5 0 000 10z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="filteredUsers.length === 0 && !isLoading">
+          <td colspan="5" style="text-align: center; padding: 24px; color: #86868b;">No users found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
-      <table class="activity-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Contact Information</th>
-            <th>Policy Status</th>
-            <th style="text-align:right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Jane Smith</td>
-            <td>jane.smith"&#64;"example.com</td>
-            <td><span class="status active">Active</span></td>
-            <td class="actions">
-              <button class="btn suspend">Suspend</button>
-              <button class="btn view">View</button>
-            </td>
-          </tr>
-          <tr>
-            <td>John Doe</td>
-            <td>john.doe"&#64;"example.com</td>
-            <td><span class="status expired">Expired</span></td>
-            <td class="actions">
-              <button class="btn suspend">Suspend</button>
-              <button class="btn view">View</button>
-            </td>
-          </tr>
-          <tr>
-            <td>Alex Johnson</td>
-            <td>alex.johnson"&#64;"example.com</td>
-            <td><span class="status pending">Pending</span></td>
-            <td class="actions">
-              <button class="btn suspend">Suspend</button>
-              <button class="btn view">View</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+<!-- MODALS -->
 
+<!-- View User Modal -->
+<div class="modal-overlay" *ngIf="isViewModalOpen">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>User Details</h2>
+      <button class="btn-close" (click)="closeViewModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path
+            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
     </div>
+    <div class="modal-body" *ngIf="selectedUser">
+      <!-- User Data & Vehicle Data will be populated here -->
+      <div class="detail-section">
+        <h4>Personal Information</h4>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Full Name</label>
+            <p>{{ selectedUser.displayName || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Email Address</label>
+            <p>{{ selectedUser.email }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Role</label>
+            <p>{{ selectedUser.role || 'Client' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>Company</label>
+            <p>{{ selectedUser.company || 'N/A' }}</p>
+          </div>
+          <div class="detail-item">
+            <label>USA Status</label>
+            <p>{{ selectedUser.usa?.usaStatus || 'N/A' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h4>Vehicle Information</h4>
+        <div *ngIf="selectedUserVehicles && selectedUserVehicles.length > 0; else noVehicle">
+          <div *ngFor="let vehicle of selectedUserVehicles; let i = index" style="margin-bottom: 16px;">
+            <h5 style="margin: 0 0 8px 0; color: #666; font-size: 13px; font-weight: 600;">Vehicle {{ i + 1 }}</h5>
+            <div class="detail-grid">
+              <div class="detail-item"><label>Make</label>
+                <p>{{ vehicle.make || vehicle.vehicleMake || 'N/A' }}</p>
+              </div>
+              <div class="detail-item"><label>Number Plate</label>
+                <p>{{ vehicle.numberPlate || 'N/A' }}</p>
+              </div>
+              <div class="detail-item"><label>Body Type</label>
+                <p>{{ vehicle.bodyType || 'N/A' }}</p>
+              </div>
+              <div class="detail-item"><label>Policy Status</label>
+                <p>{{ vehicle.policyStatus || 'Uninsured' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noVehicle>
+          <p style="color: #86868b; font-size: 14px;">No vehicle registered for this user.</p>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal-overlay" *ngIf="isCreateModalOpen">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Create New User</h2>
+      <button class="btn-close" (click)="closeCreateModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path
+            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+    <form class="modal-body" [formGroup]="createUserForm" (ngSubmit)="onCreateUser()">
+      <div class="field">
+        <label>Full Name *</label>
+        <input type="text" formControlName="displayName" placeholder="e.g. John Doe" />
+      </div>
+      <div class="field">
+        <label>Email Address *</label>
+        <input type="email" formControlName="email" placeholder="john@example.com" />
+      </div>
+      <div class="field">
+        <label>Password * (min. 6 characters)</label>
+        <input type="password" formControlName="password" placeholder="••••••••" />
+      </div>
+      <div class="field">
+        <label>Role *</label>
+        <select formControlName="role">
+          <option value="client">Client</option>
+          <option value="agent">Agent</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Company (Optional)</label>
+        <input type="text" formControlName="company" />
+      </div>
+      <div class="field">
+        <label>Location (Optional)</label>
+        <input type="text" formControlName="location" />
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeCreateModal()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="createUserForm.invalid">Create User</button>
+      </div>
+    </form>
   </div>
 </div>
