@@ -8,6 +8,7 @@ import {
 	serverTimestamp,
 	Firestore,
 	updateDoc,
+	deleteDoc,
 	getDoc,
 	DocumentData
 } from 'firebase/firestore';
@@ -170,6 +171,17 @@ export class UserService {
 				console.warn('updateUserProfile failed', e);
 				throw e;
 			}
+		}
+	}
+
+	/** Delete a user document from Firestore */
+	async deleteUser(uid: string) {
+		try {
+			const userRef = doc(this.db, 'users', uid);
+			await deleteDoc(userRef);
+		} catch (err) {
+			console.warn('deleteUser failed', err);
+			throw err;
 		}
 	}
 }
