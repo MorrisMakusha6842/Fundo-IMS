@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification, Auth } from 'firebase/auth';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, updateProfile, sendEmailVerification, Auth, signOut } from 'firebase/auth';
 import {
 	getFirestore,
 	doc,
@@ -53,8 +53,23 @@ export class UserService {
 
 	/** Create an auth user, send verification, and write a basic users/{uid} doc. */
 	async createUser(email: string, password: string, displayName?: string, profile?: ProfileData) {
+		// Use a secondary app instance if a user is already logged in (e.g. Admin creating a client)
+		// to prevent the current session from being replaced by the new user.
+		let authInstance = this.auth;
+		let secondaryApp: FirebaseApp | null = null;
+
+		if (this.auth.currentUser) {
+			const appName = 'secondaryUserCreationApp';
+			try {
+				secondaryApp = getApp(appName);
+			} catch (e) {
+				secondaryApp = initializeApp(environment.firebase, appName);
+			}
+			authInstance = getAuth(secondaryApp);
+		}
+
 		try {
-			const userCred = await createUserWithEmailAndPassword(this.auth, email, password);
+			const userCred = await createUserWithEmailAndPassword(authInstance, email, password);
 			if (displayName) {
 				try {
 					await updateProfile(userCred.user, { displayName });
@@ -88,6 +103,11 @@ export class UserService {
 				);
 			} catch (fireErr) {
 				console.warn('Failed to persist profile to Firestore', fireErr);
+			}
+
+			// If we used a secondary app, sign out to clean up that temporary session
+			if (secondaryApp) {
+				await signOut(authInstance);
 			}
 
 			return userCred;

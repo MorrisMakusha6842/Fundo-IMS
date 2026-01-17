@@ -30,7 +30,7 @@ export class UserManagementComponent implements OnInit {
   // Selected Data
   // Pagination
   currentPage = 1;
-  pageSize = 10;
+  pageSize = 25;
 
   selectedUser: any = null;
   selectedUserVehicles: any[] = [];
@@ -158,27 +158,6 @@ export class UserManagementComponent implements OnInit {
 
   closeCreateModal() {
     this.isCreateModalOpen = false;
-  }
-
-  async onCreateUser() {
-    if (this.createUserForm.invalid) return;
-    this.isLoading = true;
-    try {
-      const { email, password, displayName, role, company, location } = this.createUserForm.value;
-      const cred = await this.userService.createUser(email, password, displayName, { company, location });
-
-      if (cred.user) {
-        await this.userService.updateUserProfile(cred.user.uid, { role });
-      }
-
-      this.closeCreateModal();
-      await this.fetchUsers();
-    } catch (error) {
-      console.error('Create user error', error);
-      alert('Failed to create user: ' + (error as any).message);
-    } finally {
-      this.isLoading = false;
-    }
   }
 
   getInitials(name: string): string {
