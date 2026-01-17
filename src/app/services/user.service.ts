@@ -18,6 +18,11 @@ export interface ProfileData {
 	company?: string;
 	numberPlate?: string;
 	location?: string;
+	role?: string;
+	usa?: {
+		usaStatus: string;
+		agreedAt: number;
+	};
 }
 
 @Injectable({ providedIn: 'root' })
@@ -75,6 +80,8 @@ export class UserService {
 						company: profile?.company || null,
 						numberPlate: profile?.numberPlate || null,
 						location: profile?.location || null,
+						role: profile?.role || 'client',
+						usa: profile?.usa || null,
 						createdAt: serverTimestamp()
 					},
 					{ merge: true }

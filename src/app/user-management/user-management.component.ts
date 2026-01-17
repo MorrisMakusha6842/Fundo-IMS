@@ -28,6 +28,10 @@ export class UserManagementComponent implements OnInit {
   isCreateModalOpen = false;
 
   // Selected Data
+  // Pagination
+  currentPage = 1;
+  pageSize = 10;
+
   selectedUser: any = null;
   selectedUserVehicles: any[] = [];
 
@@ -68,8 +72,9 @@ export class UserManagementComponent implements OnInit {
   }
 
   filterUsers(term: string | null) {
+    this.currentPage = 1;
     const lowerTerm = (term || '').toLowerCase();
-    this.filteredUsers = this.users.filter(user =>
+    this.filteredUsers = this.users.filter(user => 
       (user.displayName || '').toLowerCase().includes(lowerTerm) ||
       (user.email || '').toLowerCase().includes(lowerTerm)
     );
@@ -89,6 +94,61 @@ export class UserManagementComponent implements OnInit {
     this.isViewModalOpen = false;
     this.selectedUser = null;
     this.selectedUserVehicles = [];
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredUsers.length / this.pageSize);
+  }
+
+  get paginatedUsers(): any[] {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return this.filteredUsers.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  changePage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  async onRoleChange(event: any, uid: string) {
+    const newRole = event.target.value;
+    try {
+      await this.userService.updateUserProfile(uid, { role: newRole });
+      const user = this.users.find(u => u.uid === uid);
+      if (user) user.role = newRole;
+      if (this.selectedUser?.uid === uid) this.selectedUser.role = newRole;
+    } catch (error) {
+      console.error('Error updating role:', error);
+    }
+  }
+
+  async onCreateUser() {
+    if (this.createUserForm.invalid) return;
+    this.isLoading = true;
+    try {
+      const { email, password, displayName, role, company, location } = this.createUserForm.value;
+      
+      const profileData = {
+        company,
+        location,
+        role,
+        usa: {
+          usaStatus: 'agreed',
+          agreedAt: Date.now()
+        }
+      };
+
+      await this.userService.createUser(email, password, displayName, profileData);
+      
+      this.closeCreateModal();
+      await this.fetchUsers();
+    } catch (error) {
+      console.error('Create user error', error);
+      alert('Failed to create user: ' + (error as any).message);
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   openCreateModal() {

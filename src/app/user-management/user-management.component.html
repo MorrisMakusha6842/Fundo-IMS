@@ -49,7 +49,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of filteredUsers">
+        <tr *ngFor="let user of paginatedUsers">
           <td>
             <div class="user-info">
               <div class="user-avatar">{{ getInitials(user.displayName) }}</div>
@@ -78,11 +78,18 @@
             </button>
           </td>
         </tr>
-        <tr *ngIf="filteredUsers.length === 0 && !isLoading">
+        <tr *ngIf="paginatedUsers.length === 0 && !isLoading">
           <td colspan="5" style="text-align: center; padding: 24px; color: #86868b;">No users found.</td>
         </tr>
       </tbody>
     </table>
+    
+    <!-- PAGINATION -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn-page" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">Previous</button>
+      <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button class="btn-page" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">Next</button>
+    </div>
   </div>
 </div>
 
@@ -115,7 +122,11 @@
           </div>
           <div class="detail-item">
             <label>Role</label>
-            <p>{{ selectedUser.role || 'Client' }}</p>
+            <select [value]="selectedUser.role || 'client'" (change)="onRoleChange($event, selectedUser.uid)" class="role-select">
+              <option value="client">Client</option>
+              <option value="agent">Agent</option>
+              <option value="admin">Admin</option>
+            </select>
           </div>
           <div class="detail-item">
             <label>Company</label>
