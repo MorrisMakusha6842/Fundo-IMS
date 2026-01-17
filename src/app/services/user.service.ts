@@ -17,13 +17,15 @@ import { environment } from '../../environments/environment';
 
 export interface ProfileData {
 	company?: string;
-	numberPlate?: string;
 	location?: string;
 	role?: string;
 	usa?: {
 		usaStatus: string;
 		agreedAt: number;
 	};
+	nationalId?: string;
+	accountType?: string;
+	phoneNumber?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -94,10 +96,12 @@ export class UserService {
 						email: userCred.user.email,
 						displayName: userCred.user.displayName || displayName || null,
 						company: profile?.company || null,
-						numberPlate: profile?.numberPlate || null,
 						location: profile?.location || null,
 						role: profile?.role || 'client',
 						usa: profile?.usa || null,
+						nationalId: profile?.nationalId || null,
+						accountType: profile?.accountType || 'individual',
+						phoneNumber: profile?.phoneNumber || null,
 						createdAt: serverTimestamp()
 					},
 					{ merge: true }

@@ -1,12 +1,24 @@
-imports: [CommonModule, ReactiveFormsModule],
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
+import { Firestore, collection, query, orderBy, getDocs, getFirestore } from 'firebase/firestore';
+import { UserService } from '../services/user.service';
+import { VehicleRegisterService } from '../services/vehicle-register.service';
+import { ToastService } from '../services/toast.service';
+
+@Component({
+  selector: 'app-user-management',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './user-management.component.html',
-    styleUrl: './user-management.component.scss'
+  styleUrl: './user-management.component.scss'
 })
 export class UserManagementComponent implements OnInit {
   private userService = inject(UserService);
   private firestore = getFirestore();
   private vehicleService = inject(VehicleRegisterService);
   private fb = inject(FormBuilder);
+  private toast = inject(ToastService);
 
   users: any[] = [];
   filteredUsers: any[] = [];
@@ -18,39 +30,159 @@ export class UserManagementComponent implements OnInit {
   isCreateModalOpen = false;
 
   // Selected Data
-...
-}
+  selectedUser: any = null;
+  selectedUserVehicles: any[] = [];
+
+  // Pagination
+  currentPage = 1;
+  pageSize = 25;
+
+  createUserForm!: FormGroup;
+
+  async ngOnInit() {
+    this.createUserForm = this.fb.group({
+      displayName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      role: ['client', Validators.required],
+      company: [''],
+      location: ['']
+    });
+
+    this.searchControl.valueChanges.subscribe(val => {
+      this.filterUsers(val);
+    });
+
+    await this.fetchUsers();
   }
 
-filterUsers(term: string | null) {
-  this.currentPage = 1;
-  const lowerTerm = (term || '').toLowerCase();
-  this.filteredUsers = this.users.filter(user =>
-    (user.displayName || '').toLowerCase().includes(lowerTerm) ||
-    (user.email || '').toLowerCase().includes(lowerTerm)
-  );
-}
-
-  async onDeleteUser(user: any) {
-  if (confirm(`Are you sure you want to delete user ${user.displayName || 'Unknown'}? This action cannot be undone.`)) {
+  async fetchUsers() {
     this.isLoading = true;
     try {
-      await this.userService.deleteUser(user.uid);
-      await this.fetchUsers();
+      const usersRef = collection(this.firestore, 'users');
+      const q = query(usersRef, orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q).catch(() => getDocs(usersRef));
+
+      this.users = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+      this.filteredUsers = [...this.users];
+      this.filterUsers(this.searchControl.value);
     } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Failed to delete user.');
+      console.error('Error fetching users:', error);
+      this.toast.show('Failed to fetch users', 'error');
     } finally {
       this.isLoading = false;
     }
   }
-}
+
+  filterUsers(term: string | null) {
+    this.currentPage = 1;
+    const lowerTerm = (term || '').toLowerCase();
+    this.filteredUsers = this.users.filter(user =>
+      (user.displayName || '').toLowerCase().includes(lowerTerm) ||
+      (user.email || '').toLowerCase().includes(lowerTerm)
+    );
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredUsers.length / this.pageSize);
+  }
+
+  get paginatedUsers(): any[] {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return this.filteredUsers.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  changePage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
 
   async openViewModal(user: any) {
-  this.selectedUser = user;
-  this.selectedUserVehicles = [];
-  this.isViewModalOpen = true;
+    this.selectedUser = user;
+    this.selectedUserVehicles = [];
+    this.isViewModalOpen = true;
 
-  if (user && user.uid) {
-    this.selectedUserVehicles = await this.vehicleService.getByUserId(user.uid);
+    if (user && user.uid) {
+      this.selectedUserVehicles = await this.vehicleService.getByUserId(user.uid);
+    }
   }
+
+  closeViewModal() {
+    this.isViewModalOpen = false;
+    this.selectedUser = null;
+    this.selectedUserVehicles = [];
+  }
+
+  openCreateModal() {
+    this.createUserForm.reset({ role: 'client' });
+    this.isCreateModalOpen = true;
+  }
+
+  closeCreateModal() {
+    this.isCreateModalOpen = false;
+  }
+
+  async onCreateUser() {
+    if (this.createUserForm.invalid) return;
+    this.isLoading = true;
+    try {
+      const { email, password, displayName, role, company, location } = this.createUserForm.value;
+
+      const profileData = {
+        company,
+        location,
+        role,
+        usa: {
+          usaStatus: 'agreed',
+          agreedAt: Date.now()
+        }
+      };
+
+      await this.userService.createUser(email, password, displayName, profileData);
+
+      this.toast.show('User created successfully', 'success');
+      this.closeCreateModal();
+      await this.fetchUsers();
+    } catch (error: any) {
+      console.error('Create user error', error);
+      this.toast.show('Failed to create user: ' + (error.message || error), 'error');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async onDeleteUser(user: any) {
+    if (confirm(`Are you sure you want to delete user ${user.displayName || 'Unknown'}? This action cannot be undone.`)) {
+      this.isLoading = true;
+      try {
+        await this.userService.deleteUser(user.uid);
+        this.toast.show('User deleted successfully', 'success');
+        await this.fetchUsers();
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        this.toast.show('Failed to delete user', 'error');
+      } finally {
+        this.isLoading = false;
+      }
+    }
+  }
+
+  async onRoleChange(event: any, uid: string) {
+    const newRole = event.target.value;
+    try {
+      await this.userService.updateUserProfile(uid, { role: newRole });
+      const user = this.users.find(u => u.uid === uid);
+      if (user) user.role = newRole;
+      if (this.selectedUser?.uid === uid) this.selectedUser.role = newRole;
+      this.toast.show('User role updated', 'success');
+    } catch (error) {
+      console.error('Error updating role:', error);
+      this.toast.show('Failed to update role', 'error');
+    }
+  }
+
+  getInitials(name: string): string {
+    return name ? name.charAt(0).toUpperCase() : '?';
+  }
+}

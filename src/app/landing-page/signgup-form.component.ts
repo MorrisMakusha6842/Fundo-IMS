@@ -32,8 +32,10 @@ export class SigngupFormComponent implements OnInit {
 			constructor(private fb: FormBuilder, private userService: UserService, private toast: ToastService, private auth: AuthService, private router: Router) {
 			this.form = this.fb.group({
 						fullName: ['', [Validators.required, Validators.minLength(2)]],
+						nationalId: ['', [Validators.required, Validators.minLength(5)]],
+						accountType: ['individual', [Validators.required]],
 						company: ['', []],
-						numberPlate: ['', []],
+						phoneNumber: ['', [Validators.required, Validators.pattern(/^\+?[0-9\s\-]{10,}$/)]],
 				location: ['', [Validators.required, Validators.minLength(2)]],
 				email: ['', [Validators.required, Validators.email]],
 				password: ['', [Validators.required, Validators.minLength(6)]],
@@ -84,7 +86,7 @@ export class SigngupFormComponent implements OnInit {
 			return;
 		}
 
-		const { fullName, company, numberPlate, location, email, password, confirmPassword } = this.form.value;
+		const { fullName, nationalId, accountType, company, phoneNumber, location, email, password, confirmPassword } = this.form.value;
 		// Only validate password match for email/password signup
 		if (!this.isFromGoogle) {
 			if (password !== confirmPassword) {
@@ -95,7 +97,7 @@ export class SigngupFormComponent implements OnInit {
 
 		this.submitting = true;
 		try {
-			const profile = { company, numberPlate, location };
+			const profile = { company, location, nationalId, accountType, phoneNumber };
 			if (this.isFromGoogle) {
 				// User has been authenticated via Google already — update Firestore profile and auth displayName/photoURL
 				const current = this.auth.currentUser;
@@ -110,7 +112,7 @@ export class SigngupFormComponent implements OnInit {
 				// update auth profile
 				try { await updateProfile(current, { displayName: fullName, photoURL: photoURL || current.photoURL || null }); } catch (e) { /* ignore */ }
 				// persist profile fields to Firestore
-				await this.userService.updateUserProfile(current.uid, { displayName: fullName, company, numberPlate, location, photoURL });
+				await this.userService.updateUserProfile(current.uid, { displayName: fullName, company, location, photoURL, nationalId, accountType, phoneNumber });
 				this.toast.show('Account information updated', 'success');
 				this.router.navigate(['/main-layout']);
 				return;
