@@ -23,7 +23,6 @@ export class MainLayoutComponent {
   sideNavCollapsed = false;
   mobileMenuOpen = false;
   showAccountInit = false;
-  assetRegistryOpen = false;
 
   constructor(
     private auth: AuthService,
@@ -112,14 +111,6 @@ export class MainLayoutComponent {
 
   toggleUserMenu() {
     this.showUserMenu = !this.showUserMenu;
-  }
-
-  toggleAssetRegistry() {
-    this.assetRegistryOpen = !this.assetRegistryOpen;
-  }
-
-  get isAssetRegistryActive(): boolean {
-    return this.router.url.includes('asset-registry') || this.router.url.includes('registry-manager') || this.router.url.includes('registry-management');
   }
 
   async signOut() {

@@ -15,7 +15,6 @@ import { SettingsComponent } from './settings/settings.component';
 import { UserManagementComponent } from './user-management/user-management.component';
 import { VehicleRegisterComponent } from './vehicle-register/vehicle-register.component';
 import { AssetRegistryComponent } from './asset-registry/asset-registry.component';
-import { RegistryManagerComponent } from './asset-registry/registry-manager/registry-manager.component';
 
 export const routes: Routes = [
   {
@@ -49,7 +48,6 @@ export const routes: Routes = [
       { path: 'user-management', component: UserManagementComponent },
       { path: 'vehicle-register', component: VehicleRegisterComponent },
       { path: 'asset-registry', component: AssetRegistryComponent },
-      { path: 'registry-manager', component: RegistryManagerComponent }
     ]
   },
   // Fallback route here 

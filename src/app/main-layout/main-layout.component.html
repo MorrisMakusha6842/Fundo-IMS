@@ -74,16 +74,6 @@
 		<ul>
 			<li><a routerLink="dashboard" (click)="closeMobileMenu()">Dashboard</a></li>
 			<li><a routerLink="analytics" (click)="closeMobileMenu()">Reporting</a></li>
-			<li>
-				<div class="mobile-accordion-toggle" (click)="toggleAssetRegistry()">
-					<span>Asset Registry</span>
-					<svg class="chevron" [class.rotated]="assetRegistryOpen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-				</div>
-				<div class="accordion-content" *ngIf="assetRegistryOpen">
-					<a routerLink="asset-registry" (click)="closeMobileMenu()">Add Assets</a>
-					<a routerLink="registry-management" (click)="closeMobileMenu()">Assets Management</a>
-				</div>
-			</li>
 			<li><a routerLink="vehicle-register" (click)="closeMobileMenu()">Register</a></li>
 			<li><a routerLink="reminder" (click)="closeMobileMenu()">Reminder</a></li>
 			<li><a routerLink="user-management" (click)="closeMobileMenu()">User Management</a></li>
@@ -127,23 +117,12 @@
 				</a>
 			</li>
 			<li>
-				<div class="nav-link accordion-toggle" [class.active]="isAssetRegistryActive" (click)="toggleAssetRegistry()">
-					<div style="display:flex; align-items:center; gap:10px;">
-						<span class="nav-icon">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="8" rx="2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
-						</span>
-						<span class="label">Asset Registry</span>
-					</div>
-					<svg class="chevron" [class.rotated]="assetRegistryOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-				</div>
-				<div class="accordion-content" *ngIf="assetRegistryOpen">
-					<a class="nav-link" routerLink="asset-registry" routerLinkActive="active" style="padding-left: 44px; font-size: 12px;">
-						<span class="label">Add Assets</span>
-					</a>
-					<a class="nav-link" routerLink="registry-management" routerLinkActive="active" style="padding-left: 44px; font-size: 12px;">
-						<span class="label">Assets Management</span>
-					</a>
-				</div>
+				<a class="nav-link" routerLink="asset-registry" routerLinkActive="active" (click)="closeMobileMenu()">
+					<span class="nav-icon">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="8" rx="2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>
+					</span>
+					<span class="label">Asset Registry</span>
+				</a>
 			</li>
 			<li>
 				<a class="nav-link" routerLink="user-management" routerLinkActive="active" (click)="closeMobileMenu()">

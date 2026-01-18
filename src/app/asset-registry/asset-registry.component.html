@@ -1,1 +1,109 @@
-<p>asset-registry works!</p>
+<div class="asset-registry">
+    <div class="header">
+        <h1>Manage Client Assets</h1>
+        <button class="btn-create" (click)="openAddAssetModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+                <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+            </svg>
+            Add Assets
+        </button>
+    </div>
+
+    <table class="asset-table">
+        <thead>
+            <tr>
+                <th>S.No</th>
+                <th>Status</th>
+                <th>Asset</th>
+                <th>Client</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let asset of assets; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>
+                    <span [ngClass]="{
+            'status-active': asset.status === 'active',
+            'status-pending': asset.status === 'pending',
+            'status-retired': asset.status === 'retired'
+          }">
+                        {{ asset.status | titlecase }}
+                    </span>
+                </td>
+                <td>{{ asset.assetName }} ({{ asset.type }})</td>
+                <td>{{ asset.clientName }}</td>
+                <td>
+                    <button class="btn-view" (click)="openCoverageModal(asset)">
+                        View Coverage
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Modal -->
+    <div class="modal-backdrop" *ngIf="selectedAsset">
+        <div class="modal">
+            <h3>Coverage Policies for {{ selectedAsset.assetName }}</h3>
+            <table class="modal-table">
+                <thead>
+                    <tr>
+                        <th>Policy ID</th>
+                        <th>Policy Type</th>
+                        <th>Sum Assured</th>
+                        <th>Tenure</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let policy of selectedAsset.policies">
+                        <td>{{ policy.policyId }}</td>
+                        <td>{{ policy.policyType }}</td>
+                        <td>{{ policy.sumAssured | currency }}</td>
+                        <td>{{ policy.tenureMonths }} months</td>
+                        <td>{{ policy.status | titlecase }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn-close" (click)="closeCoverageModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Add Asset Modal -->
+    <div class="modal-backdrop" *ngIf="isAddAssetModalOpen">
+        <div class="modal">
+            <h3>Add New Asset</h3>
+            <form [formGroup]="addAssetForm" (ngSubmit)="onAddAsset()">
+                <div style="margin-bottom: 12px;">
+                    <label style="display:block; font-size: 12px; color: #666; margin-bottom: 4px;">Asset Name</label>
+                    <input type="text" formControlName="assetName" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display:block; font-size: 12px; color: #666; margin-bottom: 4px;">Type</label>
+                    <select formControlName="type" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="Vehicle">Vehicle</option>
+                        <option value="Property">Property</option>
+                        <option value="Equipment">Equipment</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display:block; font-size: 12px; color: #666; margin-bottom: 4px;">Client Name</label>
+                    <input type="text" formControlName="clientName" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display:block; font-size: 12px; color: #666; margin-bottom: 4px;">Status</label>
+                    <select formControlName="status" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="retired">Retired</option>
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn-close" (click)="closeAddAssetModal()">Cancel</button>
+                    <button type="submit" [disabled]="addAssetForm.invalid" style="padding: 8px 16px; background: #0071e3; color: white; border: none; border-radius: 4px; cursor: pointer;">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
