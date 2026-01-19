@@ -1,11 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AccountInitialisingComponent } from './account-initialising.component';
 import { UserService } from '../services/user.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
-import { Firestore, collection, query, where, limit, getDocs } from '@angular/fire/firestore';
+import { Firestore } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-main-layout',
@@ -14,104 +14,44 @@ import { Firestore, collection, query, where, limit, getDocs } from '@angular/fi
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
 })
-export class MainLayoutComponent {
-  showUserMenu = false;
-  notificationsCount = 3; // placeholder counts; replace with real data source
-  messagesCount = 1;
-  userPhotoUrl: string | null = null;
-  userDisplayName: string | null = null;
+export class MainLayoutComponent implements OnInit {
   sideNavCollapsed = false;
   mobileMenuOpen = false;
+  showUserMenu = false;
+
+  userPhotoUrl: string | null = null;
+  userDisplayName: string | null = null;
+
+  // Account init state
   showAccountInit = false;
   isCheckingInit = false;
 
+  // Services
+  private auth = inject(AuthService);
+  private toast = inject(ToastService);
+  private router = inject(Router);
+  private userService = inject(UserService);
   private firestore = inject(Firestore);
 
-  constructor(
-    private auth: AuthService,
-    private toast: ToastService,
-    private router: Router,
-    private userService: UserService
-  ) {
+  // Expose user role for template
+  userRole$ = this.auth.userRole$;
+
+  constructor() { }
+
+  ngOnInit() {
     // subscribe to auth user to show photo and name if available
     this.auth.user$.subscribe(u => {
-      this.userPhotoUrl = u?.photoURL || null;
-      this.userDisplayName = u?.displayName || u?.email || 'User';
-      // check if we should display the account-initialising modal for newly signed in users
-      if (u?.uid) {
+      if (u) {
+        this.userPhotoUrl = u.photoURL;
+        this.userDisplayName = u.displayName || u.email;
         this.checkUserInit(u.uid);
       } else {
+        this.userPhotoUrl = null;
+        this.userDisplayName = null;
         this.showAccountInit = false;
         this.isCheckingInit = false;
       }
     });
-  }
-
-  private async checkUserInit(uid: string) {
-    try {
-      const profile = await this.userService.getUserProfile(uid);
-
-      // Only show for clients
-      const role = profile?.['role'] || 'client';
-      if (role !== 'client') {
-        this.isCheckingInit = false;
-        this.showAccountInit = false;
-        return;
-      }
-      this.isCheckingInit = true;
-
-      // Determine usa agreement status (stored under a 'usa' object or as a top-level usaStatus)
-      const usaAgreed = !!(
-        profile && (
-          (profile['usa'] && profile['usa']['usaStatus'] === 'agreed') ||
-          profile['usaStatus'] === 'agreed'
-        )
-      );
-
-      // Check for existing vehicle record in 'assets/{uid}/vehicles' collection for this user
-      const q = query(collection(this.firestore, 'assets', uid, 'vehicles'), limit(1));
-      const snapshot = await getDocs(q);
-      const vehicle = !snapshot.empty;
-
-      // Show modal if either agreement not given or vehicle data missing
-      this.showAccountInit = !(usaAgreed && !!vehicle);
-    } catch (err) {
-      console.warn('Failed to check user init', err);
-      // be conservative: if we cannot check, don't block access; hide modal
-      this.showAccountInit = false;
-    } finally {
-      this.isCheckingInit = false;
-    }
-  }
-
-  async onAccountInitClose() {
-    // Close modal; the modal itself should have written usa status and vehicle data.
-    this.showAccountInit = false;
-    // Re-check in case data wasn't written synchronously
-    const uid = this.auth.currentUser?.uid;
-    if (uid) {
-      // schedule a short re-check
-      setTimeout(() => void this.checkUserInit(uid), 400);
-    }
-  }
-
-  navigateTo(path: string) {
-    // convenience router wrapper for sidebar links
-    // ensure child routes are navigated under /app so MainLayout stays mounted
-    if (!path) { return }
-    // if a full URL-like path is provided, use navigateByUrl for clarity
-    if (path.startsWith('/')) {
-      // ensure top-level `/home` becomes `/main-layout/home` unless already /main-layout
-      if (path.startsWith('/main-layout')) {
-        this.router.navigateByUrl(path);
-      } else {
-        this.router.navigateByUrl(`/main-layout${path}`);
-      }
-      return;
-    }
-
-    // otherwise treat as a child under /main-layout
-    this.router.navigate(['/main-layout', path]);
   }
 
   toggleSideNav() {
@@ -130,13 +70,53 @@ export class MainLayoutComponent {
     this.showUserMenu = !this.showUserMenu;
   }
 
+  navigateTo(path: string) {
+    this.router.navigate([path]);
+    this.showUserMenu = false;
+    this.mobileMenuOpen = false;
+  }
+
   async signOut() {
     try {
       await this.auth.signOut();
-      this.toast.show('Signed out', 'info');
       this.router.navigate(['/']);
-    } catch (err: any) {
-      this.toast.show(err?.message || 'Failed to sign out', 'error');
+    } catch (error) {
+      console.error('Sign out failed', error);
+    }
+  }
+
+  private async checkUserInit(uid: string) {
+    this.isCheckingInit = true;
+    try {
+      const profile = await this.userService.getUserProfile(uid);
+
+      // Only show for clients
+      const role = profile?.['role'] || 'client';
+      if (role !== 'client') {
+        this.isCheckingInit = false;
+        this.showAccountInit = false;
+        return;
+      }
+
+      // Check for USA agreement in profile (usa map with usaStatus)
+      const usaAgreed = profile?.['usa']?.['usaStatus'] === 'agreed';
+      this.showAccountInit = !usaAgreed;
+    } catch (err) {
+      console.warn('Failed to check user init', err);
+      // be conservative: if we cannot check, don't block access; hide modal
+      this.showAccountInit = false;
+    } finally {
+      this.isCheckingInit = false;
+    }
+  }
+
+  async onAccountInitClose() {
+    // Close modal; the modal itself should have written usa status and vehicle data.
+    this.showAccountInit = false;
+    // Re-check in case data wasn't written synchronously
+    const user = this.auth.currentUser;
+    if (user) {
+      this.checkUserInit(user.uid);
     }
   }
 }

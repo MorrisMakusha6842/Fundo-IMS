@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, doc, updateDoc, collectionGroup, getDocs, query, deleteDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, doc, updateDoc, collectionGroup, query, deleteDoc, collectionData } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
 
 export interface VehicleAsset {
     garagingAddress: string;
@@ -53,16 +54,11 @@ export class AssetsService {
         }
     }
 
-    async getAllVehicles(): Promise<VehicleAsset[]> {
-        try {
-            // Use collectionGroup to query all 'vehicles' subcollections across all assets
-            const vehiclesQuery = query(collectionGroup(this.firestore, 'vehicles'));
-            const querySnapshot = await getDocs(vehiclesQuery);
-            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as unknown as VehicleAsset));
-        } catch (e) {
-            console.error("Error fetching vehicles: ", e);
-            return [];
-        }
+    getAllVehicles(): Observable<VehicleAsset[]> {
+        // Use collectionGroup to query all 'vehicles' subcollections across all assets
+        const vehiclesQuery = query(collectionGroup(this.firestore, 'vehicles'));
+        // Returns an observable that emits whenever the data changes
+        return collectionData(vehiclesQuery, { idField: 'id' }) as Observable<VehicleAsset[]>;
     }
 
     async deleteVehicle(uid: string, vehicleId: string): Promise<void> {

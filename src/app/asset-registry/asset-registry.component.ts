@@ -1,5 +1,5 @@
 
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { serverTimestamp, Bytes } from '@angular/fire/firestore';
@@ -7,6 +7,7 @@ import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { UserService } from '../services/user.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-asset-registry',
@@ -15,7 +16,7 @@ import { UserService } from '../services/user.service';
   templateUrl: './asset-registry.component.html',
   styleUrls: ['./asset-registry.component.scss']
 })
-export class AssetRegistryComponent implements OnInit {
+export class AssetRegistryComponent implements OnInit, OnDestroy {
   assets: any[] = [];
   selectedAsset: any = null;
   isAddAssetModalOpen = false;
@@ -28,6 +29,7 @@ export class AssetRegistryComponent implements OnInit {
   private authService = inject(AuthService);
   private toast = inject(ToastService);
   private userService = inject(UserService);
+  private assetsSubscription?: Subscription;
 
   // Main form containing an array of vehicles
   addAssetForm: FormGroup = this.fb.group({
@@ -40,54 +42,63 @@ export class AssetRegistryComponent implements OnInit {
     this.addVehicle();
   }
 
-  async fetchAssets() {
-    this.isLoading = true;
-    try {
-      const vehicles = await this.assetsService.getAllVehicles();
-      const userCache = new Map<string, string>();
-      // Map to display format if needed, or just assign
-      this.assets = await Promise.all(vehicles.map(async v => {
-        // Convert stored binary Bytes back to Base64 Data URL for display
-        const displayDocuments = v.documents?.map((doc: any) => {
-          if (doc.storageData && typeof doc.storageData.toBase64 === 'function') {
-            return { ...doc, dataUrl: `data:${doc.type};base64,${doc.storageData.toBase64()}` };
-          }
-          return doc;
-        });
+  ngOnDestroy(): void {
+    if (this.assetsSubscription) {
+      this.assetsSubscription.unsubscribe();
+    }
+  }
 
-        let clientName = 'Unknown';
-        const ownerId = v.uid || v.userId;
-        if (ownerId) {
-          if (userCache.has(ownerId)) {
-            clientName = userCache.get(ownerId)!;
-          } else {
-            try {
-              const userDoc = await this.userService.getUserProfile(ownerId);
-              if (userDoc) {
-                clientName = userDoc['displayName'] || userDoc['email'] || 'Unknown';
+  fetchAssets() {
+    this.isLoading = true;
+    this.assetsSubscription = this.assetsService.getAllVehicles().subscribe({
+      next: async (vehicles) => {
+        const userCache = new Map<string, string>();
+        
+        // Process vehicles (async mapping for user profiles)
+        this.assets = await Promise.all(vehicles.map(async (v: any) => {
+          // Convert stored binary Bytes back to Base64 Data URL for display
+          const displayDocuments = v.documents?.map((doc: any) => {
+            if (doc.storageData && typeof doc.storageData.toBase64 === 'function') {
+              return { ...doc, dataUrl: `data:${doc.type};base64,${doc.storageData.toBase64()}` };
+            }
+            return doc;
+          });
+
+          let clientName = 'Unknown';
+          const ownerId = v.uid || v.userId;
+          if (ownerId) {
+            if (userCache.has(ownerId)) {
+              clientName = userCache.get(ownerId)!;
+            } else {
+              try {
+                const userDoc = await this.userService.getUserProfile(ownerId);
+                if (userDoc) {
+                  clientName = userDoc['displayName'] || userDoc['email'] || 'Unknown';
+                }
+                userCache.set(ownerId, clientName);
+              } catch (e) {
+                console.warn('Error fetching user profile', e);
               }
-              userCache.set(ownerId, clientName);
-            } catch (e) {
-              console.warn('Error fetching user profile', e);
             }
           }
-        }
 
-        return {
-          ...v,
-          documents: displayDocuments,
-          assetName: `${v.year} ${v.make}`,
-          type: 'Vehicle',
-          clientName: clientName,
-          status: v.status || 'Active'
-        }
-      }));
-    } catch (error) {
-      console.error('Error fetching assets', error);
-      this.toast.show('Failed to load assets', 'error');
-    } finally {
-      this.isLoading = false;
-    }
+          return {
+            ...v,
+            documents: displayDocuments,
+            assetName: `${v.year} ${v.make}`,
+            type: 'Vehicle',
+            clientName: clientName,
+            status: v.status || 'Active'
+          }
+        }));
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error fetching assets', error);
+        this.toast.show('Failed to load assets', 'error');
+        this.isLoading = false;
+      }
+    });
   }
 
   openAddAssetModal() {

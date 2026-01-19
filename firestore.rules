@@ -41,10 +41,27 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Policies (Top-level collection)
+    match /policies/{policyId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // --- Collection Group Queries ---
+    // Explicitly allow Admin/Agent to query ALL vehicles across the database
+    match /{path=**}/vehicles/{vehicleId} {
+      allow read: if request.auth != null && (isAdmin() || isAgent());
+    }
+    // Explicitly allow authenticated users to query ALL policies
+    match /{path=**}/policies/{policyId} {
+      allow read: if request.auth != null;
+    }
+
     // Assets (Vehicles)
     match /assets/{userId}/vehicles/{vehicleId} {
-      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || isAgent());
-      
+      allow get: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || isAgent());
+      allow list: if request.auth != null && (isAdmin() || isAgent());
+
       // Create: Must be authenticated and assigning the vehicle to themselves (unless Admin/Agent)
       allow create: if request.auth != null && (request.auth.uid == userId || isAdmin() || isAgent());
       
