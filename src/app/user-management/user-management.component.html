@@ -49,6 +49,13 @@
         </tr>
       </thead>
       <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="5">
+            <div class="loading-spinner-container">
+              <div class="loading-spinner"></div>
+            </div>
+          </td>
+        </tr>
         <tr *ngFor="let user of paginatedUsers">
           <td>
             <div class="user-info">

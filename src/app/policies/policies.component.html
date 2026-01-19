@@ -1,1 +1,226 @@
-<p>policies works!</p>
+<!-- HEADER -->
+<div class="header">
+  <h1>Policy Management</h1>
+  <div class="header-actions">
+    <!-- Add Sub Category Button -->
+    <button class="btn-create secondary" (click)="openSubCategoryModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd"
+          d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z"
+          clip-rule="evenodd" />
+      </svg>
+      Add Sub Category
+    </button>
+
+    <!-- Create Policy Button -->
+    <button class="btn-create" (click)="openCreatePolicyModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+      </svg>
+      New Policy
+    </button>
+  </div>
+</div>
+
+<!-- KPI GRID -->
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="label">Total Policies</div>
+    <h3>1,248</h3>
+    <div class="trend up">↑ 12% vs last month</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">Active Policies</div>
+    <h3>1,156</h3>
+    <div class="trend up">↑ 8% vs last month</div>
+  </div>
+  <div class="kpi-card">
+    <div class="label">Pending Approval</div>
+    <h3>42</h3>
+    <div class="trend down">↓ 2% vs last month</div>
+  </div>
+  <div class="kpi-card">
+    <div class="card-header-row">
+      <div class="label">Policies Sub Categories</div>
+      <button class="btn-icon-small" (click)="openSubCategoryListModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+          <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+        </svg>
+      </button>
+    </div>
+    <h3>{{ (subCategories$ | async)?.length || 0 }}</h3>
+    <div class="trend">Manage Categories</div>
+  </div>
+</div>
+
+<!-- POLICY TABLE -->
+<div class="table-card">
+  <table class="policy-table">
+    <thead>
+      <tr>
+        <th>Policy Name</th>
+        <th>Category</th>
+        <th>Sub Category</th>
+        <th>Packages</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Loading Spinner -->
+      <tr *ngIf="isLoading">
+        <td colspan="6">
+          <div class="loading-spinner-container">
+            <div class="loading-spinner"></div>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Data Rows -->
+      <tr *ngFor="let policy of policies$ | async">
+        <td>{{ policy.policyName }}</td>
+        <td>{{ policy.parentCategory || 'General' }}</td>
+        <td>{{ policy.subCategoryName || 'N/A' }}</td>
+        <td style="font-size: 11px; color: #666; max-width: 200px;">
+          <span *ngFor="let pkg of policy.packages; let isLast=last">{{ pkg.name }}<span *ngIf="!isLast">, </span></span>
+          <span *ngIf="!policy.packages?.length">-</span>
+        </td>
+        <td><span class="badge" [ngClass]="policy.status?.toLowerCase()">{{ policy.status }}</span></td>
+        <td>
+          <button class="btn-secondary" style="padding: 4px 8px; font-size: 12px;">Edit</button>
+        </td>
+      </tr>
+
+      <!-- Empty State -->
+      <tr *ngIf="!isLoading && (policies$ | async)?.length === 0">
+        <td colspan="6" style="text-align: center; padding: 24px; color: #86868b;">No policies found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- CREATE SUB CATEGORY MODAL -->
+<div class="modal-overlay" *ngIf="isSubCategoryModalOpen">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Add Sub Category</h2>
+      <button class="btn-close" (click)="closeSubCategoryModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path
+            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+    <form [formGroup]="subCategoryForm" (ngSubmit)="onCreateSubCategory()">
+      <div class="modal-body">
+        <div class="field">
+          <label>Sub Category Name</label>
+          <input type="text" formControlName="name" placeholder="e.g. Private Car, Commercial Truck" />
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea formControlName="description" placeholder="Brief description of this sub-category"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeSubCategoryModal()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="subCategoryForm.invalid || isSubmitting">
+          {{ isSubmitting ? 'Creating...' : 'Create Sub Category' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- LIST SUB CATEGORIES MODAL -->
+<div class="modal-overlay" *ngIf="isSubCategoryListModalOpen">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Sub Categories</h2>
+      <button class="btn-close" (click)="closeSubCategoryListModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <table class="policy-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sub of subCategories$ | async">
+            <td>{{ sub.name }}</td>
+            <td>{{ sub.description || '-' }}</td>
+            <td><span class="badge active">Active</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE POLICY MODAL -->
+<div class="modal-overlay" *ngIf="isCreatePolicyModalOpen">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Create New Policy</h2>
+      <button class="btn-close" (click)="closeCreatePolicyModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path
+            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+    <form [formGroup]="createPolicyForm" (ngSubmit)="onCreatePolicy()">
+      <div class="modal-body">
+        <div class="field">
+          <label>Category (Sub Category)</label>
+          <select formControlName="subCategory">
+            <option value="" disabled>Select a category</option>
+            <option *ngFor="let sub of subCategories$ | async" [value]="sub.id">{{ sub.name }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Policy Name</label>
+          <input type="text" formControlName="policyName" placeholder="e.g. Motor Comprehensive" />
+        </div>
+
+        <!-- Dynamic Packages Section -->
+        <div class="packages-section">
+          <div class="section-header">
+            <h3>Packages</h3>
+            <button type="button" class="btn-secondary small" (click)="addPackage()">+ Add Package</button>
+          </div>
+          
+          <div formArrayName="packages">
+            <div *ngFor="let pkg of packages.controls; let i=index" [formGroupName]="i" class="package-card">
+              <div class="package-header">
+                <span>Package {{ i + 1 }}</span>
+                <button type="button" class="btn-icon delete" (click)="removePackage(i)" *ngIf="packages.length > 1">×</button>
+              </div>
+              <div class="field">
+                <label>Package Name</label>
+                <input type="text" formControlName="name" placeholder="e.g. Gold, Silver" />
+              </div>
+              <div class="field">
+                <label>Coverages (comma separated)</label>
+                <textarea formControlName="coverages" placeholder="e.g. Towing, Windscreen, Theft"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeCreatePolicyModal()">Cancel</button>
+        <button type="submit" class="btn-primary" [disabled]="createPolicyForm.invalid || isSubmitting">
+          {{ isSubmitting ? 'Creating...' : 'Create Policy' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

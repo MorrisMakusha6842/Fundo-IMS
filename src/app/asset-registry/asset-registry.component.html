@@ -48,7 +48,14 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let asset of assets">
+                <tr *ngIf="isLoading">
+                    <td colspan="4">
+                        <div class="loading-spinner-container">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr *ngFor="let asset of assets" [hidden]="isLoading">
                     <td>
                         <div class="asset-info">
                             <div class="asset-avatar">{{ asset.assetName?.charAt(0) || 'A' }}</div>
@@ -69,14 +76,18 @@
                                     clip-rule="evenodd" />
                             </svg>
                         </button>
-                        <button class="btn-icon delete" (click)="onDeleteAsset(asset)" title="Delete Asset" style="color: #ef4444;">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        <button class="btn-icon delete" (click)="onDeleteAsset(asset)" title="Delete Asset"
+                            style="color: #ef4444;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20"
+                                height="20">
+                                <path fill-rule="evenodd"
+                                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                                    clip-rule="evenodd" />
                             </svg>
                         </button>
                     </td>
                 </tr>
-                <tr *ngIf="assets.length === 0">
+                <tr *ngIf="!isLoading && assets.length === 0">
                     <td colspan="4" style="text-align: center; padding: 24px; color: #86868b;">No assets found.</td>
                 </tr>
             </tbody>
@@ -102,16 +113,33 @@
             <div class="detail-section">
                 <h4>Basic Information</h4>
                 <div class="detail-grid">
-                    <div class="detail-item"><label>Make & Model</label><p>{{ selectedAsset.make }}</p></div>
-                    <div class="detail-item"><label>Year</label><p>{{ selectedAsset.year }}</p></div>
-                    <div class="detail-item"><label>Number Plate</label><p>{{ selectedAsset.numberPlate }}</p></div>
-                    <div class="detail-item"><label>VIN</label><p>{{ selectedAsset.vin }}</p></div>
-                    <div class="detail-item"><label>Body Type</label><p>{{ selectedAsset.bodyType }}</p></div>
-                    <div class="detail-item"><label>Vehicle Class</label><p>{{ selectedAsset.vehicleClass }}</p></div>
-                    <div class="detail-item"><label>Primary Use</label><p>{{ selectedAsset.primaryUse }}</p></div>
-                    <div class="detail-item"><label>Garaging Address</label><p>{{ selectedAsset.garagingAddress }}</p></div>
+                    <div class="detail-item"><label>Make & Model</label>
+                        <p>{{ selectedAsset.make }}</p>
+                    </div>
+                    <div class="detail-item"><label>Year</label>
+                        <p>{{ selectedAsset.year }}</p>
+                    </div>
+                    <div class="detail-item"><label>Number Plate</label>
+                        <p>{{ selectedAsset.numberPlate }}</p>
+                    </div>
+                    <div class="detail-item"><label>VIN</label>
+                        <p>{{ selectedAsset.vin }}</p>
+                    </div>
+                    <div class="detail-item"><label>Body Type</label>
+                        <p>{{ selectedAsset.bodyType }}</p>
+                    </div>
+                    <div class="detail-item"><label>Vehicle Class</label>
+                        <p>{{ selectedAsset.vehicleClass }}</p>
+                    </div>
+                    <div class="detail-item"><label>Primary Use</label>
+                        <p>{{ selectedAsset.primaryUse }}</p>
+                    </div>
+                    <div class="detail-item"><label>Garaging Address</label>
+                        <p>{{ selectedAsset.garagingAddress }}</p>
+                    </div>
                     <div class="detail-item"><label>Status</label>
-                        <span class="status" [ngClass]="selectedAsset.status?.toLowerCase()">{{ selectedAsset.status || 'Pending' }}</span>
+                        <span class="status" [ngClass]="selectedAsset.status?.toLowerCase()">{{ selectedAsset.status ||
+                            'Pending' }}</span>
                     </div>
                 </div>
             </div>
@@ -119,10 +147,18 @@
             <div class="detail-section">
                 <h4>Compliance & Safety</h4>
                 <div class="detail-grid">
-                    <div class="detail-item"><label>Asset Value</label><p>{{ selectedAsset.assetValue | currency }}</p></div>
-                    <div class="detail-item"><label>Safety Features</label><p>{{ selectedAsset.safetyFeatures || 'None' }}</p></div>
-                    <div class="detail-item"><label>Policy Deployment</label><p>{{ selectedAsset.policyDeploymentDate || 'N/A' }}</p></div>
-                    <div class="detail-item"><label>Policy Expiry</label><p>{{ selectedAsset.policyExpiryDate || 'N/A' }}</p></div>
+                    <div class="detail-item"><label>Asset Value</label>
+                        <p>{{ selectedAsset.assetValue | currency }}</p>
+                    </div>
+                    <div class="detail-item"><label>Safety Features</label>
+                        <p>{{ selectedAsset.safetyFeatures || 'None' }}</p>
+                    </div>
+                    <div class="detail-item"><label>Policy Deployment</label>
+                        <p>{{ selectedAsset.policyDeploymentDate || 'N/A' }}</p>
+                    </div>
+                    <div class="detail-item"><label>Policy Expiry</label>
+                        <p>{{ selectedAsset.policyExpiryDate || 'N/A' }}</p>
+                    </div>
                 </div>
             </div>
 
@@ -320,7 +356,8 @@
                 </button>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-secondary" (click)="closeAddAssetModal()" [disabled]="isSubmitting">Cancel</button>
+                <button type="button" class="btn-secondary" (click)="closeAddAssetModal()"
+                    [disabled]="isSubmitting">Cancel</button>
                 <button type="submit" class="btn-primary" [disabled]="addAssetForm.invalid || isSubmitting">
                     <span *ngIf="isSubmitting" class="spinner"></span>
                     {{ isSubmitting ? 'Saving...' : 'Add Asset' }}

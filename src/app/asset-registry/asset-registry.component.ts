@@ -2,10 +2,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
-import { serverTimestamp } from '@angular/fire/firestore';
+import { serverTimestamp, Bytes } from '@angular/fire/firestore';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
+import { UserService } from '../services/user.service';
 
 @Component({
   selector: 'app-asset-registry',
@@ -20,11 +21,13 @@ export class AssetRegistryComponent implements OnInit {
   isAddAssetModalOpen = false;
   isViewModalOpen = false;
   isSubmitting = false;
+  isLoading = true;
 
   private fb = inject(FormBuilder);
   private assetsService = inject(AssetsService);
   private authService = inject(AuthService);
   private toast = inject(ToastService);
+  private userService = inject(UserService);
 
   // Main form containing an array of vehicles
   addAssetForm: FormGroup = this.fb.group({
@@ -38,19 +41,52 @@ export class AssetRegistryComponent implements OnInit {
   }
 
   async fetchAssets() {
+    this.isLoading = true;
     try {
       const vehicles = await this.assetsService.getAllVehicles();
+      const userCache = new Map<string, string>();
       // Map to display format if needed, or just assign
-      this.assets = vehicles.map(v => ({
-        ...v,
-        assetName: `${v.year} ${v.make}`,
-        type: 'Vehicle',
-        clientName: 'Self', // Or fetch user details if needed
-        status: 'Active' // Default status
+      this.assets = await Promise.all(vehicles.map(async v => {
+        // Convert stored binary Bytes back to Base64 Data URL for display
+        const displayDocuments = v.documents?.map((doc: any) => {
+          if (doc.storageData && typeof doc.storageData.toBase64 === 'function') {
+            return { ...doc, dataUrl: `data:${doc.type};base64,${doc.storageData.toBase64()}` };
+          }
+          return doc;
+        });
+
+        let clientName = 'Unknown';
+        const ownerId = v.uid || v.userId;
+        if (ownerId) {
+          if (userCache.has(ownerId)) {
+            clientName = userCache.get(ownerId)!;
+          } else {
+            try {
+              const userDoc = await this.userService.getUserProfile(ownerId);
+              if (userDoc) {
+                clientName = userDoc['displayName'] || userDoc['email'] || 'Unknown';
+              }
+              userCache.set(ownerId, clientName);
+            } catch (e) {
+              console.warn('Error fetching user profile', e);
+            }
+          }
+        }
+
+        return {
+          ...v,
+          documents: displayDocuments,
+          assetName: `${v.year} ${v.make}`,
+          type: 'Vehicle',
+          clientName: clientName,
+          status: v.status || 'Active'
+        }
       }));
     } catch (error) {
       console.error('Error fetching assets', error);
       this.toast.show('Failed to load assets', 'error');
+    } finally {
+      this.isLoading = false;
     }
   }
 
@@ -109,18 +145,20 @@ export class AssetRegistryComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       try {
-        const dataUrl = await this.fileToDataUrl(file);
+        // Process file: Compress if image, check size if other
+        const processed = await this.processFile(file);
+
         // Patch the specific control in the specific form group
         this.vehicles.at(index).patchValue({
           [controlName]: {
             name: file.name,
-            type: file.type,
-            dataUrl: dataUrl
+            type: processed.type,
+            storageData: processed.storageData
           }
         });
-      } catch (e) {
+      } catch (e: any) {
         console.error('File read error', e);
-        this.toast.show('Error reading file', 'error');
+        this.toast.show(e.message || 'Error reading file', 'error');
       }
     }
   }
@@ -131,6 +169,80 @@ export class AssetRegistryComponent implements OnInit {
       reader.onload = () => resolve(reader.result as string);
       reader.onerror = (e) => reject(e);
       reader.readAsDataURL(file);
+    });
+  }
+
+  private async processFile(file: File): Promise<{ type: string, storageData: Bytes }> {
+    let dataUrl: string;
+
+    // 1. Compress if image
+    if (file.type.startsWith('image/')) {
+      dataUrl = await this.compressImage(file);
+    } else {
+      // Non-images: check size
+      if (file.size > 250 * 1024) {
+        throw new Error(`File ${file.name} is too large (>250KB). Please use an image or a smaller file.`);
+      }
+      dataUrl = await this.fileToDataUrl(file);
+    }
+
+    // 2. Convert Base64 DataURL to Firestore Bytes (Binary)
+    // This removes the 33% Base64 overhead for storage
+    const bytes = this.dataURItoBytes(dataUrl);
+
+    return { type: file.type, storageData: bytes };
+  }
+
+  private dataURItoBytes(dataURI: string): Bytes {
+    // data:image/jpeg;base64,.....
+    const base64 = dataURI.split(',')[1];
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return Bytes.fromUint8Array(byteArray);
+  }
+
+  private compressImage(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event: any) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1024;
+          const MAX_HEIGHT = 1024;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Compress to JPEG with 0.6 quality
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          resolve(dataUrl);
+        };
+        img.onerror = (error) => reject(error);
+      };
+      reader.onerror = (error) => reject(error);
     });
   }
 
@@ -158,7 +270,7 @@ export class AssetRegistryComponent implements OnInit {
           docs.push({
             name: v.vehicleRegistrationBook.name,
             type: v.vehicleRegistrationBook.type,
-            dataUrl: v.vehicleRegistrationBook.dataUrl,
+            storageData: v.vehicleRegistrationBook.storageData,
             field: 'Vehicle Registration Book'
           });
         }
@@ -166,7 +278,7 @@ export class AssetRegistryComponent implements OnInit {
           docs.push({
             name: v.radioLicense.name,
             type: v.radioLicense.type,
-            dataUrl: v.radioLicense.dataUrl,
+            storageData: v.radioLicense.storageData,
             field: 'Radio License'
           });
         }
@@ -174,7 +286,7 @@ export class AssetRegistryComponent implements OnInit {
           docs.push({
             name: v.driversLicense.name,
             type: v.driversLicense.type,
-            dataUrl: v.driversLicense.dataUrl,
+            storageData: v.driversLicense.storageData,
             field: 'Drivers License'
           });
         }
@@ -182,7 +294,7 @@ export class AssetRegistryComponent implements OnInit {
           docs.push({
             name: v.insurancePolicy.name,
             type: v.insurancePolicy.type,
-            dataUrl: v.insurancePolicy.dataUrl,
+            storageData: v.insurancePolicy.storageData,
             field: 'Insurance Policy'
           });
         }
@@ -190,7 +302,7 @@ export class AssetRegistryComponent implements OnInit {
           docs.push({
             name: v.vehicleDocumentation.name,
             type: v.vehicleDocumentation.type,
-            dataUrl: v.vehicleDocumentation.dataUrl,
+            storageData: v.vehicleDocumentation.storageData,
             field: 'Vehicle Documentation'
           });
         }

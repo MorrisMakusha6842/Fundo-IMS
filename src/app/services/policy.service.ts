@@ -1,0 +1,44 @@
+import { Injectable, inject } from '@angular/core';
+import { Firestore, collection, addDoc, collectionData, doc, query, where, collectionGroup } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
+
+@Injectable({
+    providedIn: 'root'
+})
+export class PolicyService {
+    private firestore = inject(Firestore);
+
+    /**
+     * Fetches all Sub Categories (which act as the main categories).
+     * Collection: sub-categories
+     */
+    getSubCategories(): Observable<any[]> {
+        const colRef = collection(this.firestore, 'sub-categories');
+        return collectionData(colRef, { idField: 'id' });
+    }
+
+    /**
+     * Adds a new Sub Category.
+     */
+    async addSubCategory(data: any) {
+        const colRef = collection(this.firestore, 'sub-categories');
+        return addDoc(colRef, data);
+    }
+
+    /**
+     * Adds a policy to a specific sub-category.
+     * Path: sub-categories/{subCategoryId}/policies/{autoId}
+     */
+    async addPolicy(subCategoryId: string, policyData: any) {
+        const colRef = collection(this.firestore, `sub-categories/${subCategoryId}/policies`);
+        return addDoc(colRef, policyData);
+    }
+
+    /**
+     * Fetches all policies across all sub-categories using a Collection Group Query.
+     */
+    getAllPolicies(): Observable<any[]> {
+        const q = query(collectionGroup(this.firestore, 'policies'));
+        return collectionData(q, { idField: 'id' });
+    }
+}

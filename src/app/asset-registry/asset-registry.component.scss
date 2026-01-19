@@ -484,6 +484,24 @@
     }
 }
 
+/* LOADING SPINNER (Table) */
+.loading-spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 0;
+    width: 100%;
+}
+
+.loading-spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid rgba(0, 113, 227, 0.1);
+    border-radius: 50%;
+    border-top-color: #0071e3;
+    animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 /* SPINNER */
 .spinner {
     display: inline-block;

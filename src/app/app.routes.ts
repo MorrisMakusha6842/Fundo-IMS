@@ -26,12 +26,12 @@ export const routes: Routes = [
     component: SigngupFormComponent
   }
 
-  ,{
+  , {
     path: '',
     component: LoginComponent
   }
 
-  ,{
+  , {
     path: 'main-layout',
     component: MainLayoutComponent,
     canActivate: [AuthGuard],
@@ -51,7 +51,7 @@ export const routes: Routes = [
     ]
   },
   // Fallback route here 
-  
+
 ];
 
 
