@@ -26,12 +26,12 @@
 <div class="kpi-grid">
   <div class="kpi-card">
     <div class="label">Total Policies</div>
-    <h3>1,248</h3>
+    <h3>{{ totalPolicies }}</h3>
     <div class="trend up">↑ 12% vs last month</div>
   </div>
   <div class="kpi-card">
     <div class="label">Active Policies</div>
-    <h3>1,156</h3>
+    <h3>{{ activePolicies }}</h3>
     <div class="trend up">↑ 8% vs last month</div>
   </div>
   <div class="kpi-card">
@@ -55,11 +55,17 @@
 
 <!-- POLICY TABLE -->
 <div class="table-card">
+  <!-- Search Bar -->
+  <div style="padding: 16px; border-bottom: 1px solid #e5e5ea;">
+    <input type="text" [formControl]="searchControl" placeholder="Search policies by name..." 
+           style="width: 100%; max-width: 300px; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px;">
+  </div>
+
   <table class="policy-table">
     <thead>
       <tr>
         <th>Policy Name</th>
-        <th>Category</th>
+        <!-- Removed Category Column -->
         <th>Sub Category</th>
         <th>Packages</th>
         <th>Status</th>
@@ -77,9 +83,8 @@
       </tr>
 
       <!-- Data Rows -->
-      <tr *ngFor="let policy of policies$ | async">
+      <tr *ngFor="let policy of filteredPolicies$ | async">
         <td>{{ policy.policyName }}</td>
-        <td>{{ policy.parentCategory || 'General' }}</td>
         <td>{{ policy.subCategoryName || 'N/A' }}</td>
         <td style="font-size: 11px; color: #666; max-width: 200px;">
           <span *ngFor="let pkg of policy.packages; let isLast=last">{{ pkg.name }}<span *ngIf="!isLast">, </span></span>
@@ -87,12 +92,17 @@
         </td>
         <td><span class="badge" [ngClass]="policy.status?.toLowerCase()">{{ policy.status }}</span></td>
         <td>
-          <button class="btn-secondary" style="padding: 4px 8px; font-size: 12px;">Edit</button>
+          <button class="btn-secondary" style="padding: 4px 8px; font-size: 12px;" (click)="openEditPolicyModal(policy)">Edit</button>
+          <button class="btn-icon delete" (click)="onDeletePolicy(policy)" title="Delete Policy" style="color: #ef4444; margin-left: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </button>
         </td>
       </tr>
 
       <!-- Empty State -->
-      <tr *ngIf="!isLoading && (policies$ | async)?.length === 0">
+      <tr *ngIf="!isLoading && (filteredPolicies$ | async)?.length === 0">
         <td colspan="6" style="text-align: center; padding: 24px; color: #86868b;">No policies found.</td>
       </tr>
     </tbody>
@@ -132,6 +142,51 @@
   </div>
 </div>
 
+<!-- EDIT POLICY MODAL -->
+<div class="modal-overlay" *ngIf="isEditPolicyModalOpen && selectedPolicy">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>Edit Policy</h2>
+      <button class="btn-close" (click)="closeEditPolicyModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Policy Name</label>
+        <input type="text" [value]="selectedPolicy.policyName" disabled style="background: #f5f5f7; color: #666;" />
+      </div>
+      <div class="field">
+        <label>Sub Category</label>
+        <input type="text" [value]="selectedPolicy.subCategoryName" disabled style="background: #f5f5f7; color: #666;" />
+      </div>
+      
+      <div class="field">
+        <label>Packages</label>
+        <div style="background: #f5f5f7; padding: 12px; border-radius: 8px; color: #666; font-size: 13px;">
+          <div *ngFor="let pkg of selectedPolicy.packages" style="margin-bottom: 8px;">
+            <strong>{{ pkg.name }}</strong>: {{ pkg.coverages?.join(', ') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <select [formControl]="editStatusControl">
+          <option value="active">Active</option>
+          <option value="terminated">Terminated</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeEditPolicyModal()">Cancel</button>
+      <button type="button" class="btn-primary" (click)="onUpdatePolicyStatus()">Update Status</button>
+    </div>
+  </div>
+</div>
+
 <!-- LIST SUB CATEGORIES MODAL -->
 <div class="modal-overlay" *ngIf="isSubCategoryListModalOpen">
   <div class="modal-card">
@@ -150,6 +205,7 @@
             <th>Name</th>
             <th>Description</th>
             <th>Status</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -157,6 +213,13 @@
             <td>{{ sub.name }}</td>
             <td>{{ sub.description || '-' }}</td>
             <td><span class="badge active">Active</span></td>
+            <td style="text-align: right;">
+              <button class="btn-icon delete" (click)="onDeleteSubCategory(sub.id)" title="Delete Category" style="color: #ef4444;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -176,7 +239,7 @@
         </svg>
       </button>
     </div>
-    <form [formGroup]="createPolicyForm" (ngSubmit)="onCreatePolicy()">
+    <form class="modal-form-content" [formGroup]="createPolicyForm" (ngSubmit)="onCreatePolicy()">
       <div class="modal-body">
         <div class="field">
           <label>Category (Sub Category)</label>

@@ -34,24 +34,21 @@ export const routes: Routes = [
   , {
     path: 'main-layout',
     component: MainLayoutComponent,
-    canActivate: [AuthGuard],
     children: [
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
-      { path: 'home', component: HomeComponent },
-      { path: 'dashboard', component: DashboardComponent },
-      { path: 'notifications', component: NotificationsComponent },
-      { path: 'reminder', component: ReminderComponent },
-      { path: 'analytics', component: AnalyticsComponent },
-      { path: 'billing', component: BillingComponent },
-      { path: 'policies', component: PoliciesComponent },
-      { path: 'settings', component: SettingsComponent },
-      { path: 'user-management', component: UserManagementComponent },
-      { path: 'vehicle-register', component: VehicleRegisterComponent },
-      { path: 'asset-registry', component: AssetRegistryComponent },
+      { path: '', redirectTo: 'home', pathMatch: 'full' }, // No guard needed for redirect
+      { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
+      { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
+      { path: 'notifications', component: NotificationsComponent, canActivate: [AuthGuard] },
+      { path: 'reminder', component: ReminderComponent, canActivate: [AuthGuard] },
+      { path: 'analytics', component: AnalyticsComponent, canActivate: [AuthGuard] },
+      { path: 'billing', component: BillingComponent, canActivate: [AuthGuard] },
+      { path: 'policies', component: PoliciesComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
+      { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },
+      { path: 'user-management', component: UserManagementComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
+      { path: 'vehicle-register', component: VehicleRegisterComponent, canActivate: [AuthGuard] },
+      { path: 'asset-registry', component: AssetRegistryComponent, canActivate: [AuthGuard] },
     ]
   },
   // Fallback route here 
 
 ];
-
-

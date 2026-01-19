@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AccountInitialisingComponent } from './account-initialising.component';
 import { UserService } from '../services/user.service';
-import { VehicleRegisterService } from '../services/vehicle-register.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
+import { Firestore, collection, query, where, limit, getDocs } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-main-layout',
@@ -23,13 +23,15 @@ export class MainLayoutComponent {
   sideNavCollapsed = false;
   mobileMenuOpen = false;
   showAccountInit = false;
+  isCheckingInit = false;
+
+  private firestore = inject(Firestore);
 
   constructor(
     private auth: AuthService,
     private toast: ToastService,
     private router: Router,
-    private userService: UserService,
-    private vehicleService: VehicleRegisterService
+    private userService: UserService
   ) {
     // subscribe to auth user to show photo and name if available
     this.auth.user$.subscribe(u => {
@@ -40,6 +42,7 @@ export class MainLayoutComponent {
         this.checkUserInit(u.uid);
       } else {
         this.showAccountInit = false;
+        this.isCheckingInit = false;
       }
     });
   }
@@ -47,6 +50,16 @@ export class MainLayoutComponent {
   private async checkUserInit(uid: string) {
     try {
       const profile = await this.userService.getUserProfile(uid);
+
+      // Only show for clients
+      const role = profile?.['role'] || 'client';
+      if (role !== 'client') {
+        this.isCheckingInit = false;
+        this.showAccountInit = false;
+        return;
+      }
+      this.isCheckingInit = true;
+
       // Determine usa agreement status (stored under a 'usa' object or as a top-level usaStatus)
       const usaAgreed = !!(
         profile && (
@@ -55,8 +68,10 @@ export class MainLayoutComponent {
         )
       );
 
-      // Check for existing vehicle-register record for this user
-  const vehicle = await this.vehicleService.getByUserId(uid);
+      // Check for existing vehicle record in 'assets/{uid}/vehicles' collection for this user
+      const q = query(collection(this.firestore, 'assets', uid, 'vehicles'), limit(1));
+      const snapshot = await getDocs(q);
+      const vehicle = !snapshot.empty;
 
       // Show modal if either agreement not given or vehicle data missing
       this.showAccountInit = !(usaAgreed && !!vehicle);
@@ -64,6 +79,8 @@ export class MainLayoutComponent {
       console.warn('Failed to check user init', err);
       // be conservative: if we cannot check, don't block access; hide modal
       this.showAccountInit = false;
+    } finally {
+      this.isCheckingInit = false;
     }
   }
 

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, addDoc, collectionData, doc, query, where, collectionGroup } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, doc, query, where, collectionGroup, deleteDoc, updateDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -40,5 +40,29 @@ export class PolicyService {
     getAllPolicies(): Observable<any[]> {
         const q = query(collectionGroup(this.firestore, 'policies'));
         return collectionData(q, { idField: 'id' });
+    }
+
+    /**
+     * Deletes a sub-category.
+     */
+    async deleteSubCategory(id: string) {
+        const docRef = doc(this.firestore, 'sub-categories', id);
+        return deleteDoc(docRef);
+    }
+
+    /**
+     * Deletes a policy from a sub-category.
+     */
+    async deletePolicy(subCategoryId: string, policyId: string) {
+        const docRef = doc(this.firestore, `sub-categories/${subCategoryId}/policies`, policyId);
+        return deleteDoc(docRef);
+    }
+
+    /**
+     * Updates a policy document.
+     */
+    async updatePolicy(subCategoryId: string, policyId: string, data: any) {
+        const docRef = doc(this.firestore, `sub-categories/${subCategoryId}/policies`, policyId);
+        return updateDoc(docRef, data);
     }
 }

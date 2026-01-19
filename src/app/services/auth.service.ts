@@ -10,6 +10,7 @@ import { environment } from '../../environments/environment';
 export class AuthService {
   private auth: Auth;
   private _user = new BehaviorSubject<User | null>(null);
+  private _userRole = new BehaviorSubject<string | null>(null);
 
   constructor(private userService: UserService) {
     if (!getApps().length) {
@@ -18,11 +19,29 @@ export class AuthService {
     this.auth = getAuth();
     // Initialize with currentUser if already available, then listen for changes
     this._user.next(this.auth.currentUser || null);
-    onAuthStateChanged(this.auth, (user) => this._user.next(user));
+    onAuthStateChanged(this.auth, async (user) => {
+      this._user.next(user);
+      if (user) {
+        try {
+          const profile = await this.userService.getUserProfile(user.uid);
+          const role = profile ? profile['role'] : 'client';
+          this._userRole.next(role);
+        } catch (e) {
+          console.error('Error fetching user role', e);
+          this._userRole.next('client');
+        }
+      } else {
+        this._userRole.next(null);
+      }
+    });
   }
 
   get user$(): Observable<User | null> {
     return this._user.asObservable();
+  }
+
+  get userRole$(): Observable<string | null> {
+    return this._userRole.asObservable();
   }
 
   get currentUser(): User | null {

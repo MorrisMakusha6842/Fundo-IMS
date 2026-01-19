@@ -266,6 +266,7 @@
 .modal-body {
   padding: 24px;
   overflow-y: auto;
+  flex: 1; /* Ensures body takes available space for scrolling */
 }
 
 .modal-footer {
@@ -274,6 +275,14 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+/* Fix for modal content scrolling */
+.modal-form-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Prevents flexbox overflow issues */
 }
 
 /* FORM STYLES */

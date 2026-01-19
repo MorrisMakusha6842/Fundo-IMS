@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Output, Input, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, EventEmitter, Output, Input, OnInit, OnDestroy, AfterViewInit, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { UserService } from '../services/user.service';
 import { AuthService } from '../services/auth.service';
-import { VehicleRegisterService } from '../services/vehicle-register.service';
+import { AssetsService } from '../services/assets.service';
 import { ToastService } from '../services/toast.service';
+import { serverTimestamp } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-account-initialising',
@@ -16,6 +17,7 @@ import { ToastService } from '../services/toast.service';
 export class AccountInitialisingComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Optional input to control visibility externally */
   @Input() open = true;
+  @Input() isLoading = false;
   /** Emitted when the user closes the modal (completed or cancels) */
   @Output() close = new EventEmitter<void>();
   submitting = false;
@@ -32,29 +34,20 @@ export class AccountInitialisingComponent implements OnInit, AfterViewInit, OnDe
     bodyType: [''],
     garagingAddress: [''],
     vin: [''],
-    primaryUse: [''] ,
-    currentValue: ['']
+    primaryUse: ['']
   });
+
+  private assetsService = inject(AssetsService);
 
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
     private auth: AuthService,
-    private vehicleService: VehicleRegisterService,
     private toast: ToastService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // no-op
-  }
-
-  private fileToDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (e) => reject(e);
-      reader.readAsDataURL(file);
-    });
   }
 
   ngAfterViewInit(): void {
@@ -95,22 +88,6 @@ export class AccountInitialisingComponent implements OnInit, AfterViewInit, OnDe
       // persist usa status under a 'usa' object on the user doc
       await this.userService.updateUserProfile(uid, { usa: { usaStatus: 'agreed', agreedAt: Date.now() } });
 
-      // create vehicle-register doc with uid as id
-      // gather file inputs (radio licence, insurance, inspection) and convert to data URLs
-      const fileInputs: NodeListOf<HTMLInputElement> = document.querySelectorAll('.modal-card input[type=file]');
-      const docs: Array<Record<string, any>> = [];
-      for (let i = 0; i < fileInputs.length; i++) {
-        const f = fileInputs[i];
-        if (f.files && f.files.length) {
-          try {
-            const dataUrl = await this.fileToDataUrl(f.files[0]);
-            docs.push({ name: f.files[0].name, field: f.previousElementSibling?.textContent?.trim() || `file${i}`, dataUrl });
-          } catch (e) {
-            console.warn('failed to read file input', e);
-          }
-        }
-      }
-
       const vehicleData: Record<string, any> = {
         make: this.form.get('vehicleMake')?.value,
         vehicleClass: this.form.get('vehicleClass')?.value,
@@ -120,11 +97,16 @@ export class AccountInitialisingComponent implements OnInit, AfterViewInit, OnDe
         garagingAddress: this.form.get('garagingAddress')?.value,
         vin: this.form.get('vin')?.value,
         primaryUse: this.form.get('primaryUse')?.value,
-        currentValue: this.form.get('currentValue')?.value
+        assetValue: '0', // Default since step 3 is removed
+        safetyFeatures: '', // Default since step 3 is removed
+        uid: uid,
+        userId: uid,
+        createdAt: serverTimestamp(),
+        status: 'Pending',
+        documents: []
       };
 
-      if (docs.length) vehicleData['documents'] = docs;
-      await this.vehicleService.createOrUpdate(uid, vehicleData);
+      await this.assetsService.addVehicleAsset(vehicleData as any);
 
       this.toast.show('Account activation submitted', 'success');
       // emit close so parent can hide modal and re-check
