@@ -1,1 +1,80 @@
-<p>notifications works!</p>
+<div class="flex h-screen bg-gray-100">
+
+  <!-- LEFT PANEL: USERS LIST -->
+  <aside class="w-1/4 bg-white border-r border-gray-200 flex flex-col">
+    <div class="p-4 border-b font-semibold text-gray-700">
+      Conversations
+    </div>
+
+    <ul class="flex-1 overflow-y-auto">
+      <!-- User item -->
+      <li class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100 bg-gray-50">
+        <div class="w-10 h-10 rounded-full bg-gray-300"></div>
+        <div class="flex-1">
+          <p class="font-medium text-sm">John Doe</p>
+          <p class="text-xs text-gray-500 truncate">Last message preview...</p>
+        </div>
+      </li>
+
+      <li class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100">
+        <div class="w-10 h-10 rounded-full bg-gray-300"></div>
+        <div class="flex-1">
+          <p class="font-medium text-sm">Admin Support</p>
+          <p class="text-xs text-gray-500 truncate">Your asset was approved</p>
+        </div>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- RIGHT PANEL: CHAT -->
+  <section class="flex-1 flex flex-col">
+
+    <!-- CHAT HEADER -->
+    <header class="h-16 bg-white border-b border-gray-200 flex items-center px-6">
+      <div class="w-10 h-10 rounded-full bg-gray-300 mr-3"></div>
+      <div>
+        <p class="font-semibold text-sm">Admin Support</p>
+        <p class="text-xs text-gray-500">Online</p>
+      </div>
+    </header>
+
+    <!-- CHAT MESSAGES -->
+    <main class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
+
+      <!-- RECEIVED MESSAGE -->
+      <div class="flex justify-start">
+        <div class="max-w-md bg-white px-4 py-2 rounded-lg shadow-sm">
+          <p class="text-sm text-gray-800">
+            Your vehicle has been approved. A proforma invoice is available.
+          </p>
+          <span class="text-xs text-gray-400 block mt-1">09:12</span>
+        </div>
+      </div>
+
+      <!-- SENT MESSAGE -->
+      <div class="flex justify-end">
+        <div class="max-w-md bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm">
+          <p class="text-sm">
+            Thank you. I will review and proceed with payment.
+          </p>
+          <span class="text-xs text-blue-200 block mt-1 text-right">09:13</span>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- MESSAGE INPUT -->
+    <footer class="h-20 bg-white border-t border-gray-200 flex items-center px-4 gap-3">
+      <input
+        type="text"
+        placeholder="Type a message..."
+        class="flex-1 h-11 px-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <button
+        class="h-11 px-6 rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+        Send
+      </button>
+    </footer>
+
+  </section>
+</div>

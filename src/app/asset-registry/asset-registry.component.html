@@ -189,6 +189,56 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Asset Documentation Section -->
+            <div class="detail-section">
+                <h4>Asset Documentation</h4>
+                <div *ngIf="selectedAsset.documents && selectedAsset.documents.length > 0" class="documents-grid">
+                    <div *ngFor="let doc of selectedAsset.documents" class="document-item">
+                        <div class="document-preview">
+                            <img *ngIf="doc.type?.startsWith('image/')" [src]="doc.dataUrl" alt="{{doc.field}}"
+                                class="doc-thumbnail">
+                            <div *ngIf="!doc.type?.startsWith('image/')" class="doc-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                    width="48" height="48">
+                                    <path fill-rule="evenodd"
+                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="document-info">
+                            <h5>{{ doc.field || doc.name }}</h5>
+                            <p class="doc-name">{{ doc.name }}</p>
+                            <a *ngIf="doc.dataUrl" [href]="doc.dataUrl" [download]="doc.name" class="doc-download">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                    width="16" height="16">
+                                    <path fill-rule="evenodd"
+                                        d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <p *ngIf="!selectedAsset.documents || selectedAsset.documents.length === 0" class="no-documents">
+                    No documents attached to this asset
+                </p>
+            </div>
+
+            <!-- Approval Section (Only for non-Active assets) -->
+            <div class="approval-section" *ngIf="selectedAsset.status !== 'Active'">
+                <button class="btn-approve" (click)="openApprovalModal(selectedAsset)">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20"
+                        height="20">
+                        <path fill-rule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    Approve Asset
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -364,5 +414,37 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal-overlay" *ngIf="isApprovalModalOpen">
+    <div class="modal-card modal-small">
+        <div class="modal-header">
+            <h2>Approve Asset</h2>
+            <button class="btn-close" (click)="closeApprovalModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+                    <path
+                        d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="approval-info" *ngIf="pendingApprovalAsset">
+                <p><strong>Asset:</strong> {{ pendingApprovalAsset.assetName }}</p>
+                <p><strong>Client:</strong> {{ pendingApprovalAsset.clientName }}</p>
+            </div>
+            <div class="field">
+                <label>Assured Value ($)</label>
+                <input type="number" [(ngModel)]="assuredValue" placeholder="Enter assured value" min="0" step="100">
+                <p class="field-hint">Set the insured/assured value for this asset</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeApprovalModal()">Cancel</button>
+            <button type="button" class="btn-primary" (click)="onSendApproval()" [disabled]="assuredValue <= 0">
+                Send Approval
+            </button>
+        </div>
     </div>
 </div>

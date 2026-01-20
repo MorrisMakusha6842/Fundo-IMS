@@ -1,6 +1,7 @@
 
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { serverTimestamp, Bytes } from '@angular/fire/firestore';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
@@ -12,7 +13,7 @@ import { Subscription, switchMap, of } from 'rxjs';
 @Component({
   selector: 'app-asset-registry',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './asset-registry.component.html',
   styleUrls: ['./asset-registry.component.scss']
 })
@@ -23,6 +24,11 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
   isViewModalOpen = false;
   isSubmitting = false;
   isLoading = true;
+
+  // Approval workflow
+  isApprovalModalOpen = false;
+  assuredValue: number = 0;
+  pendingApprovalAsset: any = null;
 
   private fb = inject(FormBuilder);
   private assetsService = inject(AssetsService);
@@ -50,7 +56,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
 
   fetchAssets() {
     this.isLoading = true;
-    
+
     // Switch stream based on role: Admin/Agent gets all, Client gets their own
     this.assetsSubscription = this.authService.userRole$.pipe(
       switchMap(role => {
@@ -63,7 +69,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: async (vehicles) => {
         const userCache = new Map<string, string>();
-        
+
         // Process vehicles (async mapping for user profiles)
         this.assets = await Promise.all(vehicles.map(async (v: any) => {
           // Convert stored binary Bytes back to Base64 Data URL for display
@@ -392,6 +398,53 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
         console.error('Error deleting asset', error);
         this.toast.show('Failed to delete asset', 'error');
       }
+    }
+  }
+
+  // Approval workflow methods
+  openApprovalModal(asset: any) {
+    this.pendingApprovalAsset = asset;
+    this.assuredValue = parseFloat(asset.assetValue) || 0;
+    this.isApprovalModalOpen = true;
+  }
+
+  closeApprovalModal() {
+    this.isApprovalModalOpen = false;
+    this.pendingApprovalAsset = null;
+    this.assuredValue = 0;
+  }
+
+  async onSendApproval() {
+    if (!this.pendingApprovalAsset || this.assuredValue <= 0) {
+      this.toast.show('Please enter a valid assured value', 'error');
+      return;
+    }
+
+    try {
+      await this.assetsService.approveAsset(
+        this.pendingApprovalAsset.uid,
+        this.pendingApprovalAsset.id,
+        this.assuredValue
+      );
+
+      // Update local asset status
+      const assetIndex = this.assets.findIndex(a => a.id === this.pendingApprovalAsset.id);
+      if (assetIndex !== -1) {
+        this.assets[assetIndex].status = 'Active';
+        this.assets[assetIndex].assuredValue = this.assuredValue;
+      }
+
+      // Update selected asset if it's the same one
+      if (this.selectedAsset?.id === this.pendingApprovalAsset.id) {
+        this.selectedAsset.status = 'Active';
+        this.selectedAsset.assuredValue = this.assuredValue;
+      }
+
+      this.toast.show('Asset approved successfully', 'success');
+      this.closeApprovalModal();
+    } catch (error) {
+      console.error('Error approving asset', error);
+      this.toast.show('Failed to approve asset', 'error');
     }
   }
 }

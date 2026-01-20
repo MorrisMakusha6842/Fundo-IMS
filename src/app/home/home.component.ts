@@ -39,7 +39,19 @@ export class HomeComponent implements OnInit {
   claimDescription: string = '';
   claimType: string = 'Accident'; // Default
 
+  // Accordion State
+  isPendingExpanded: boolean = false;
+  isActiveExpanded: boolean = false;
+  isExpiringExpanded: boolean = false;
+  isLapsedExpanded: boolean = false;
+
+  // Dummy Data
+  expiringPolicies: any[] = [];
+  lapsedPolicies: any[] = [];
+
   ngOnInit() {
+    this.generateDummyData();
+
     this.subCategories$ = this.policyService.getSubCategories();
 
     this.filteredPolicies$ = this.selectedCategory$.pipe(
@@ -77,6 +89,23 @@ export class HomeComponent implements OnInit {
       this.isLoadingAssets = false;
     });
   }
+
+  generateDummyData() {
+    this.expiringPolicies = [
+      { policyId: 'POL-8821', policyName: 'Comprehensive Cover', asset: 'Toyota Hilux', expiryDate: '2026-02-15', status: 'Expiring Soon' },
+      { policyId: 'POL-9932', policyName: 'Third Party Fire & Theft', asset: 'Honda Fit', expiryDate: '2026-02-28', status: 'Expiring Soon' }
+    ];
+
+    this.lapsedPolicies = [
+      { policyId: 'POL-1102', policyName: 'Full Cover', asset: 'Nissan Note', expiryDate: '2025-12-10', status: 'Lapsed' },
+      { policyId: 'POL-3321', policyName: 'Third Party Only', asset: 'Mazda Demio', expiryDate: '2025-11-05', status: 'Lapsed' }
+    ];
+  }
+
+  togglePending() { this.isPendingExpanded = !this.isPendingExpanded; }
+  toggleActive() { this.isActiveExpanded = !this.isActiveExpanded; }
+  toggleExpiring() { this.isExpiringExpanded = !this.isExpiringExpanded; }
+  toggleLapsed() { this.isLapsedExpanded = !this.isLapsedExpanded; }
 
   updateAssetPagination(allAssets: VehicleAsset[]) {
     const startIndex = (this.assetPage - 1) * this.assetPageSize;
