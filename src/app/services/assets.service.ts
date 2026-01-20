@@ -20,6 +20,7 @@ export interface VehicleAsset {
     policyExpiryDate?: string;
     documents?: any[]; // Array to hold file data (name, type, dataUrl)
     status: 'Pending' | 'Approved' | 'Rejected';
+    id?: string; // Add optional ID
 }
 
 @Injectable({

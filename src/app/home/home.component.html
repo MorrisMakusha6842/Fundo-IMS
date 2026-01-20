@@ -120,53 +120,198 @@
 
         <!-- Request a Claim -->
         <section class="bg-white rounded-xl shadow p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">
+            <h2 class="text-lg font-medium text-gray-900 mb-6">
                 Request a Claim
             </h2>
 
-            <!-- Claim Type -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <label class="flex items-center gap-2">
-                    <input type="radio" name="claimType" class="text-indigo-600">
-                    <span class="text-sm">Accident</span>
-                </label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Column 1: Asset Selection -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">Select Asset</h3>
 
-                <label class="flex items-center gap-2">
-                    <input type="radio" name="claimType" class="text-indigo-600">
-                    <span class="text-sm">Theft</span>
-                </label>
+                    <div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Asset</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Applied Policy</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Expiring Policy</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200"
+                                *ngIf="!isLoadingAssets; else loadingTable">
+                                <tr *ngIf="paginatedAssets.length === 0">
+                                    <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        No assets found. Please add a vehicle first.
+                                    </td>
+                                </tr>
+                                <tr *ngFor="let asset of paginatedAssets" (click)="onSelectAsset(asset)"
+                                    class="hover:bg-indigo-50 cursor-pointer transition-colors"
+                                    [class.bg-indigo-50]="selectedAsset?.id === asset.id">
 
-                <label class="flex items-center gap-2">
-                    <input type="radio" name="claimType" class="text-indigo-600">
-                    <span class="text-sm">Damage</span>
-                </label>
+                                    <!-- Asset Column (Stacked) -->
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-col">
+                                            <span class="font-medium text-gray-900">{{ asset.make }}</span>
+                                            <span class="text-xs text-gray-500 font-mono my-1">{{ asset.numberPlate
+                                                }}</span>
+                                            <span class="text-xs text-gray-400">{{ asset.year }} • {{ asset.bodyType
+                                                }}</span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Applied Policy Column -->
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <ng-container *ngIf="hasAppliedPolicy(asset); else addPolicyBtn">
+                                            <span
+                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Active
+                                            </span>
+                                        </ng-container>
+                                        <ng-template #addPolicyBtn>
+                                            <button
+                                                class="text-xs font-medium text-indigo-600 hover:text-indigo-900 border border-indigo-200 px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100">
+                                                + ADD POLICY
+                                            </button>
+                                        </ng-template>
+                                    </td>
+
+                                    <!-- Expiring Policy Column -->
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                            [ngClass]="getExpiryStatus(asset) === 'UP TO DATE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                                            {{ getExpiryStatus(asset) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Loading State for Table -->
+                        <ng-template #loadingTable>
+                            <div class="p-6 space-y-4">
+                                <div class="animate-pulse flex space-x-4">
+                                    <div class="flex-1 space-y-4 py-1">
+                                        <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                                        <div class="space-y-2">
+                                            <div class="h-4 bg-gray-200 rounded"></div>
+                                            <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-template>
+
+                        <!-- Paginator -->
+                        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6"
+                            *ngIf="totalAssets > 0">
+                            <div class="flex-1 flex justify-between sm:hidden">
+                                <button (click)="prevAssetPage()" [disabled]="assetPage === 1"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                                    Previous
+                                </button>
+                                <button (click)="nextAssetPage()" [disabled]="assetPage === totalAssetPages"
+                                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                                    Next
+                                </button>
+                            </div>
+                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-700">
+                                        Showing page <span class="font-medium">{{ assetPage }}</span> of <span
+                                            class="font-medium">{{ totalAssetPages }}</span>
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                                        aria-label="Pagination">
+                                        <button (click)="prevAssetPage()" [disabled]="assetPage === 1"
+                                            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                                            <span class="sr-only">Previous</span>
+                                            <!-- Heroicon name: solid/chevron-left -->
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd"
+                                                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                        <button (click)="nextAssetPage()" [disabled]="assetPage === totalAssetPages"
+                                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                                            <span class="sr-only">Next</span>
+                                            <!-- Heroicon name: solid/chevron-right -->
+                                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                fill="currentColor" aria-hidden="true">
+                                                <path fill-rule="evenodd"
+                                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2: Claim Details -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">Claim Details</h3>
+
+                    <!-- Claim Type -->
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Issue Type</label>
+                    <div class="grid grid-cols-3 gap-3 mb-6">
+                        <label class="claim-type-option">
+                            <input type="radio" name="claimType" value="Accident" [(ngModel)]="claimType"
+                                class="sr-only">
+                            <span class="option-content">Accident</span>
+                        </label>
+
+                        <label class="claim-type-option">
+                            <input type="radio" name="claimType" value="Theft" [(ngModel)]="claimType" class="sr-only">
+                            <span class="option-content">Theft</span>
+                        </label>
+
+                        <label class="claim-type-option">
+                            <input type="radio" name="claimType" value="Damage" [(ngModel)]="claimType" class="sr-only">
+                            <span class="option-content">Damage</span>
+                        </label>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea [(ngModel)]="claimDescription" rows="4"
+                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3 border"
+                            placeholder="Please describe what happened..."></textarea>
+                    </div>
+
+                    <!-- Selected Asset Summary (Optional visual confirmation) -->
+                    <div *ngIf="selectedAsset"
+                        class="mb-4 p-3 bg-indigo-50 rounded-lg text-sm text-indigo-800 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Claiming for: <strong>{{ selectedAsset.make }} ({{ selectedAsset.numberPlate }})</strong>
+                    </div>
+
+                    <button (click)="onSubmitClaim()" [disabled]="!selectedAsset || !claimDescription"
+                        class="w-full bg-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        Submit Claim Request
+                    </button>
+                    <p *ngIf="!selectedAsset" class="text-xs text-red-500 mt-2 text-center">
+                        * Please select an asset to proceed.
+                    </p>
+                </div>
             </div>
-
-            <!-- Select Policy -->
-            <table class="min-w-full text-sm border rounded">
-                <thead class="bg-gray-50 text-gray-500">
-                    <tr>
-                        <th class="p-2"></th>
-                        <th>Policy</th>
-                        <th>Asset</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y">
-                    <tr>
-                        <td class="p-2">
-                            <input type="radio" name="policySelect">
-                        </td>
-                        <td>POL-00123</td>
-                        <td>Toyota Hilux</td>
-                        <td>Active</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <button class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">
-                Continue Claim
-            </button>
         </section>
 
         <!-- Expiration Summary -->
@@ -187,7 +332,7 @@
             </div>
         </section>
 
-        
+
 
     </div>
 </div>
