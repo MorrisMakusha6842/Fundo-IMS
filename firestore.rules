@@ -60,7 +60,7 @@ service cloud.firestore {
     // Assets (Vehicles)
     match /assets/{userId}/vehicles/{vehicleId} {
       allow get: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || isAgent());
-      allow list: if request.auth != null && (isAdmin() || isAgent());
+      allow list: if request.auth != null && (isAdmin() || isAgent() || request.auth.uid == userId);
 
       // Create: Must be authenticated and assigning the vehicle to themselves (unless Admin/Agent)
       allow create: if request.auth != null && (request.auth.uid == userId || isAdmin() || isAgent());

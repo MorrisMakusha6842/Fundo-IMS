@@ -61,6 +61,12 @@ export class AssetsService {
         return collectionData(vehiclesQuery, { idField: 'id' }) as Observable<VehicleAsset[]>;
     }
 
+    getUserVehicles(userId: string): Observable<VehicleAsset[]> {
+        // Query the specific 'vehicles' subcollection for a single user
+        const vehiclesCollection = collection(this.firestore, 'assets', userId, 'vehicles');
+        return collectionData(vehiclesCollection, { idField: 'id' }) as Observable<VehicleAsset[]>;
+    }
+
     async deleteVehicle(uid: string, vehicleId: string): Promise<void> {
         try {
             const docRef = doc(this.firestore, 'assets', uid, 'vehicles', vehicleId);

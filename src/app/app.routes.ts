@@ -46,7 +46,7 @@ export const routes: Routes = [
       { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },
       { path: 'user-management', component: UserManagementComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
       { path: 'vehicle-register', component: VehicleRegisterComponent, canActivate: [AuthGuard] },
-      { path: 'asset-registry', component: AssetRegistryComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
+      { path: 'asset-registry', component: AssetRegistryComponent, canActivate: [AuthGuard] },
     ]
   },
   // Fallback route here 

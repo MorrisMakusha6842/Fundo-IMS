@@ -1,1 +1,193 @@
-<p>home works!</p>
+<div class="host-wrapper">
+    <div class="max-w-7xl mx-auto space-y-8">
+
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>Welcome, User</h1>
+                <p>Manage your policies, claims, and requests</p>
+            </div>
+        </div>
+
+        <!-- Sub-Categories Filter Carousel -->
+        <div class="carousel-container" *ngIf="subCategories$ | async as subCategories">
+            <button class="filter-pill" [class.active]="(selectedCategory$ | async) === null"
+                (click)="selectCategory('')">
+                All
+            </button>
+            <button class="filter-pill" *ngFor="let cat of subCategories"
+                [class.active]="(selectedCategory$ | async) === cat.id" (click)="selectCategory(cat.id)">
+                {{ cat.name }}
+            </button>
+        </div>
+
+        <!-- Available Policies -->
+        <!-- Available Policies Carousel -->
+        <section>
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Available Policies</h2>
+            <div class="carousel-container" *ngIf="filteredPolicies$ | async as policies">
+                <!-- Loading State -->
+                <div *ngIf="policies.length === 0" class="p-4 text-gray-500 text-sm">
+                    No policies available for this category.
+                </div>
+
+                <!-- Policy Card -->
+                <div class="policy-card" *ngFor="let policy of policies">
+                    <div class="card-content">
+                        <h3>{{ policy.policyName || policy.name || 'Unnamed Policy' }}</h3>
+                        <p class="description">{{ policy.description || 'Comprehensive coverage for your needs.' }}</p>
+                    </div>
+                    <div class="bottom-panel">
+                        <span>View Policy</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16"
+                            height="16">
+                            <path fill-rule="evenodd"
+                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Active Policies -->
+        <section class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">
+                Active Policies
+            </h2>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="text-left text-gray-500 border-b">
+                        <tr>
+                            <th class="py-2">Policy No</th>
+                            <th>Asset</th>
+                            <th>Status</th>
+                            <th>Expiry</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr>
+                            <td class="py-3">POL-00123</td>
+                            <td>Toyota Hilux</td>
+                            <td>
+                                <span class="px-2 py-1 text-xs rounded bg-green-100 text-green-700">
+                                    Active
+                                </span>
+                            </td>
+                            <td>12 Mar 2026</td>
+                            <td class="text-right">
+                                <button class="text-indigo-600 text-sm">
+                                    View
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Pending Approvals -->
+        <section class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">
+                Pending Approvals
+            </h2>
+
+            <table class="min-w-full text-sm">
+                <thead class="text-gray-500 border-b">
+                    <tr>
+                        <th class="py-2">Request Type</th>
+                        <th>Reference</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    <tr>
+                        <td>Claim</td>
+                        <td>CLM-0098</td>
+                        <td>
+                            <span class="px-2 py-1 text-xs rounded bg-yellow-100 text-yellow-700">
+                                Pending Review
+                            </span>
+                        </td>
+                        <td>18 Jan 2026</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Request a Claim -->
+        <section class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">
+                Request a Claim
+            </h2>
+
+            <!-- Claim Type -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <label class="flex items-center gap-2">
+                    <input type="radio" name="claimType" class="text-indigo-600">
+                    <span class="text-sm">Accident</span>
+                </label>
+
+                <label class="flex items-center gap-2">
+                    <input type="radio" name="claimType" class="text-indigo-600">
+                    <span class="text-sm">Theft</span>
+                </label>
+
+                <label class="flex items-center gap-2">
+                    <input type="radio" name="claimType" class="text-indigo-600">
+                    <span class="text-sm">Damage</span>
+                </label>
+            </div>
+
+            <!-- Select Policy -->
+            <table class="min-w-full text-sm border rounded">
+                <thead class="bg-gray-50 text-gray-500">
+                    <tr>
+                        <th class="p-2"></th>
+                        <th>Policy</th>
+                        <th>Asset</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y">
+                    <tr>
+                        <td class="p-2">
+                            <input type="radio" name="policySelect">
+                        </td>
+                        <td>POL-00123</td>
+                        <td>Toyota Hilux</td>
+                        <td>Active</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <button class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm">
+                Continue Claim
+            </button>
+        </section>
+
+        <!-- Expiration Summary -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-xl shadow">
+                <p class="text-sm text-gray-500">Expiring Soon</p>
+                <p class="text-2xl font-semibold text-gray-900">2</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow">
+                <p class="text-sm text-gray-500">Active Policies</p>
+                <p class="text-2xl font-semibold text-gray-900">5</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow">
+                <p class="text-sm text-gray-500">Lapsed</p>
+                <p class="text-2xl font-semibold text-gray-900">1</p>
+            </div>
+        </section>
+
+        
+
+    </div>
+</div>

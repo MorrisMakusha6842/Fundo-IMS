@@ -24,20 +24,34 @@
 
 <!-- KPI GRID -->
 <div class="kpi-grid">
+  <!-- Merged Policy Stats Card -->
   <div class="kpi-card">
-    <div class="label">Total Policies</div>
-    <h3>{{ totalPolicies }}</h3>
-    <div class="trend up">↑ 12% vs last month</div>
+    <div class="combined-stats-card">
+      <div class="stat-group">
+        <div class="label">Total Policies</div>
+        <h3>{{ totalPolicies }}</h3>
+        <div class="trend up">Overall</div>
+      </div>
+      <div class="stat-group">
+        <div class="label">Active Policies</div>
+        <h3>{{ activePolicies }}</h3>
+        <div class="trend up">Currently Active</div>
+      </div>
+    </div>
   </div>
+
+  <!-- Renewal Requests Card -->
   <div class="kpi-card">
-    <div class="label">Active Policies</div>
-    <h3>{{ activePolicies }}</h3>
-    <div class="trend up">↑ 8% vs last month</div>
-  </div>
-  <div class="kpi-card">
-    <div class="label">Pending Approval</div>
-    <h3>42</h3>
-    <div class="trend down">↓ 2% vs last month</div>
+    <div class="card-header-row">
+      <div class="label">Renewal Requests</div>
+      <button class="btn-icon-small" (click)="openRenewalsModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+          <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z" />
+        </svg>
+      </button>
+    </div>
+    <h3>50</h3> <!-- Dummy total for renewals -->
+    <div class="trend down">Needs Attention</div>
   </div>
   <div class="kpi-card">
     <div class="card-header-row">
@@ -53,60 +67,158 @@
   </div>
 </div>
 
-<!-- POLICY TABLE -->
-<div class="table-card">
-  <!-- Search Bar -->
-  <div style="padding: 16px; border-bottom: 1px solid #e5e5ea;">
-    <input type="text" [formControl]="searchControl" placeholder="Search policies by name..." 
-           style="width: 100%; max-width: 300px; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 14px;">
+<!-- POLICY TABLE ACCORDION -->
+<div class="table-card" style="margin-bottom: 24px;">
+  <!-- Header -->
+  <div class="table-card-header" (click)="togglePoliciesAccordion()">
+    <div class="table-title">
+      <h3>All Policies</h3>
+      <input type="text" [formControl]="searchControl" placeholder="Search policies..."
+        (click)="$event.stopPropagation()"
+        style="width: 200px; padding: 6px 12px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 13px;">
+    </div>
+    <div class="accordion-icon" [class.expanded]="isPoliciesExpanded">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+        <path fill-rule="evenodd"
+          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+          clip-rule="evenodd" />
+      </svg>
+    </div>
   </div>
 
-  <table class="policy-table">
-    <thead>
-      <tr>
-        <th>Policy Name</th>
-        <!-- Removed Category Column -->
-        <th>Sub Category</th>
-        <th>Packages</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Loading Spinner -->
-      <tr *ngIf="isLoading">
-        <td colspan="6">
-          <div class="loading-spinner-container">
-            <div class="loading-spinner"></div>
-          </div>
-        </td>
-      </tr>
+  <!-- Body -->
+  <div class="table-body" [class.expanded]="isPoliciesExpanded">
+    <table class="policy-table">
+      <thead>
+        <tr>
+          <th>Policy Name</th>
+          <th>Sub Category</th>
+          <th>Packages</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="5">
+            <div class="loading-spinner-container">
+              <div class="loading-spinner"></div>
+            </div>
+          </td>
+        </tr>
+        <tr *ngFor="let policy of filteredPolicies$ | async">
+          <td>{{ policy.policyName }}</td>
+          <td>{{ policy.subCategoryName || 'N/A' }}</td>
+          <td style="font-size: 11px; color: #666; max-width: 200px;">
+            <span *ngFor="let pkg of policy.packages; let isLast=last">{{ pkg.name }}<span *ngIf="!isLast">,
+              </span></span>
+            <span *ngIf="!policy.packages?.length">-</span>
+          </td>
+          <td><span class="badge" [ngClass]="policy.status?.toLowerCase()">{{ policy.status }}</span></td>
+          <td>
+            <button class="btn-secondary" style="padding: 4px 8px; font-size: 12px;"
+              (click)="openEditPolicyModal(policy)">Edit</button>
+            <button class="btn-icon delete" (click)="onDeletePolicy(policy)" title="Delete Policy"
+              style="color: #ef4444; margin-left: 8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path fill-rule="evenodd"
+                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="!isLoading && (filteredPolicies$ | async)?.length === 0">
+          <td colspan="5" style="text-align: center; padding: 24px; color: #86868b;">No policies found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
-      <!-- Data Rows -->
-      <tr *ngFor="let policy of filteredPolicies$ | async">
-        <td>{{ policy.policyName }}</td>
-        <td>{{ policy.subCategoryName || 'N/A' }}</td>
-        <td style="font-size: 11px; color: #666; max-width: 200px;">
-          <span *ngFor="let pkg of policy.packages; let isLast=last">{{ pkg.name }}<span *ngIf="!isLast">, </span></span>
-          <span *ngIf="!policy.packages?.length">-</span>
-        </td>
-        <td><span class="badge" [ngClass]="policy.status?.toLowerCase()">{{ policy.status }}</span></td>
-        <td>
-          <button class="btn-secondary" style="padding: 4px 8px; font-size: 12px;" (click)="openEditPolicyModal(policy)">Edit</button>
-          <button class="btn-icon delete" (click)="onDeletePolicy(policy)" title="Delete Policy" style="color: #ef4444; margin-left: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
-              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </td>
-      </tr>
+<!-- CLAIMS TABLE ACCORDION -->
+<div class="table-card">
+  <!-- Header -->
+  <div class="table-card-header" (click)="toggleClaimsAccordion()">
+    <div class="table-title">
+      <h3>Recent Claims</h3>
+      <input type="text" [formControl]="dashboardClaimsSearchControl" placeholder="Search claims..."
+        (click)="$event.stopPropagation()"
+        style="width: 200px; padding: 6px 12px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 13px;">
+    </div>
+    <div class="accordion-icon" [class.expanded]="isClaimsExpanded">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+        <path fill-rule="evenodd"
+          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+          clip-rule="evenodd" />
+      </svg>
+    </div>
+  </div>
 
-      <!-- Empty State -->
-      <tr *ngIf="!isLoading && (filteredPolicies$ | async)?.length === 0">
-        <td colspan="6" style="text-align: center; padding: 24px; color: #86868b;">No policies found.</td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- Body -->
+  <div class="table-body" [class.expanded]="isClaimsExpanded">
+    <table class="policy-table">
+      <thead>
+        <tr>
+          <th>Claim ID</th>
+          <th>Policy</th>
+          <th>Claimant</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Loading -->
+        <tr *ngIf="dashboardClaimsIsLoading">
+          <td colspan="7">
+            <div class="loading-spinner-container">
+              <div class="loading-spinner"></div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Data -->
+        <tr *ngFor="let claim of paginatedDashboardClaims">
+          <td>{{ claim.id }}</td>
+          <td>{{ claim.policyName }}</td>
+          <td>{{ claim.claimant }}</td>
+          <td>{{ claim.dateSubmitted | date:'shortDate' }}</td>
+          <td>{{ claim.amount | currency }}</td>
+          <td>
+            <span class="badge" [ngClass]="{
+              'active': claim.status === 'Approved', 
+              'pending': claim.status === 'Pending',
+              'expired': claim.status === 'Rejected'
+            }">
+              {{ claim.status }}
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <button class="btn-secondary small">Details</button>
+          </td>
+        </tr>
+
+        <!-- Empty -->
+        <tr *ngIf="!dashboardClaimsIsLoading && dashboardClaimsList.length === 0">
+          <td colspan="7" style="text-align: center; padding: 24px; color: #86868b;">
+            Click to load claims...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination-controls" *ngIf="!dashboardClaimsIsLoading && dashboardClaimsList.length > 0"
+      style="padding-bottom: 16px;">
+      <button class="btn-secondary small" (click)="prevDashboardClaimsPage()"
+        [disabled]="dashboardClaimsPage === 1">Previous</button>
+      <span>Page {{ dashboardClaimsPage }} of {{ totalDashboardClaimsPages }}</span>
+      <button class="btn-secondary small" (click)="nextDashboardClaimsPage()"
+        [disabled]="dashboardClaimsPage === totalDashboardClaimsPages">Next</button>
+    </div>
+  </div>
 </div>
 
 <!-- CREATE SUB CATEGORY MODAL -->
@@ -149,7 +261,8 @@
       <h2>Edit Policy</h2>
       <button class="btn-close" (click)="closeEditPolicyModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
-          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          <path
+            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
         </svg>
       </button>
     </div>
@@ -160,9 +273,10 @@
       </div>
       <div class="field">
         <label>Sub Category</label>
-        <input type="text" [value]="selectedPolicy.subCategoryName" disabled style="background: #f5f5f7; color: #666;" />
+        <input type="text" [value]="selectedPolicy.subCategoryName" disabled
+          style="background: #f5f5f7; color: #666;" />
       </div>
-      
+
       <div class="field">
         <label>Packages</label>
         <div style="background: #f5f5f7; padding: 12px; border-radius: 8px; color: #666; font-size: 13px;">
@@ -194,7 +308,8 @@
       <h2>Sub Categories</h2>
       <button class="btn-close" (click)="closeSubCategoryListModal()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
-          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          <path
+            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
         </svg>
       </button>
     </div>
@@ -214,9 +329,12 @@
             <td>{{ sub.description || '-' }}</td>
             <td><span class="badge active">Active</span></td>
             <td style="text-align: right;">
-              <button class="btn-icon delete" (click)="onDeleteSubCategory(sub.id)" title="Delete Category" style="color: #ef4444;">
+              <button class="btn-icon delete" (click)="onDeleteSubCategory(sub.id)" title="Delete Category"
+                style="color: #ef4444;">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  <path fill-rule="evenodd"
+                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                    clip-rule="evenodd" />
                 </svg>
               </button>
             </td>
@@ -259,12 +377,13 @@
             <h3>Packages</h3>
             <button type="button" class="btn-secondary small" (click)="addPackage()">+ Add Package</button>
           </div>
-          
+
           <div formArrayName="packages">
             <div *ngFor="let pkg of packages.controls; let i=index" [formGroupName]="i" class="package-card">
               <div class="package-header">
                 <span>Package {{ i + 1 }}</span>
-                <button type="button" class="btn-icon delete" (click)="removePackage(i)" *ngIf="packages.length > 1">×</button>
+                <button type="button" class="btn-icon delete" (click)="removePackage(i)"
+                  *ngIf="packages.length > 1">×</button>
               </div>
               <div class="field">
                 <label>Package Name</label>
@@ -285,5 +404,158 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- CLAIMS MODAL -->
+<div class="modal-overlay" *ngIf="isClaimsModalOpen">
+  <div class="modal-card full-screen-modal">
+    <div class="modal-header">
+      <h2>Claims Management</h2>
+      <button class="btn-close" (click)="closeClaimsModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path
+            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Loading State -->
+      <div class="loading-spinner-container" *ngIf="isLoadingClaims">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <!-- Claims Table -->
+      <table class="policy-table" *ngIf="!isLoadingClaims">
+        <thead>
+          <tr>
+            <th>Claim ID</th>
+            <th>Policy</th>
+            <th>Claimant</th>
+            <th>Date Submitted</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let claim of paginatedClaims">
+            <td>{{ claim.id }}</td>
+            <td>{{ claim.policyName }}</td>
+            <td>{{ claim.claimant }}</td>
+            <td>{{ claim.dateSubmitted | date:'mediumDate' }}</td>
+            <td>{{ claim.amount | currency }}</td>
+            <td>
+              <span class="badge" [ngClass]="{
+                'active': claim.status === 'Approved', 
+                'pending': claim.status === 'Pending' || claim.status === 'In Review',
+                'expired': claim.status === 'Rejected'
+              }">
+                {{ claim.status }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-secondary small">View</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-controls" *ngIf="!isLoadingClaims && claimsList.length > 0">
+        <button class="btn-secondary small" (click)="prevClaimsPage()" [disabled]="claimsPage === 1">Previous</button>
+        <span>Page {{ claimsPage }} of {{ totalClaimsPages }}</span>
+        <button class="btn-secondary small" (click)="nextClaimsPage()"
+          [disabled]="claimsPage === totalClaimsPages">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RENEWALS MODAL -->
+<div class="modal-overlay" *ngIf="isRenewalsModalOpen">
+  <div class="modal-card full-screen-modal">
+    <div class="modal-header">
+      <h2>Renewal Requests</h2>
+      <button class="btn-close" (click)="closeRenewalsModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path
+            d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Filter Panel -->
+      <div class="filter-panel" *ngIf="!isLoadingRenewals">
+        <div class="search-wrapper">
+          <input type="text" [formControl]="renewalSearchControl" placeholder="Search renewals..."
+            style="width: 100%; padding: 8px 12px; border: 1px solid #d2d2d7; border-radius: 8px;">
+        </div>
+        <div class="toggle-filters">
+          <button [class.active]="renewalFilterType === 'insurance'" (click)="setRenewalFilter('insurance')">
+            Insurance Policy
+          </button>
+          <button [class.active]="renewalFilterType === 'radio'" (click)="setRenewalFilter('radio')">
+            Radio Licenses
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-spinner-container" *ngIf="isLoadingRenewals">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <!-- Renewals Table -->
+      <table class="policy-table" *ngIf="!isLoadingRenewals">
+        <thead>
+          <tr>
+            <th>Renewal ID</th>
+            <th>Entity Name</th>
+            <th>Type</th>
+            <th>Expiry Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of paginatedRenewals">
+            <td>{{ item.id }}</td>
+            <td>
+              <div>{{ item.entityName }}</div>
+              <div style="font-size: 11px; color: #86868b;">{{ item.description }}</div>
+            </td>
+            <td>
+              <span class="badge" style="background: #e0f2fe; color: #0284c7;">
+                {{ item.type === 'insurance' ? 'Policy' : 'Radio' }}
+              </span>
+            </td>
+            <td>{{ item.expiryDate | date:'mediumDate' }}</td>
+            <td>{{ item.amount | currency }}</td>
+            <td>
+              <span class="badge" [ngClass]="{
+                'expired': item.status === 'Overdue',
+                'pending': item.status === 'Pending Payment',
+                'active': item.status === 'Due Soon'
+              }">
+                {{ item.status }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-secondary small">Review</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-controls" *ngIf="!isLoadingRenewals && filteredRenewals.length > 0">
+        <button class="btn-secondary small" (click)="prevRenewalPage()" [disabled]="renewalPage === 1">Previous</button>
+        <span>Page {{ renewalPage }} of {{ totalRenewalPages }}</span>
+        <button class="btn-secondary small" (click)="nextRenewalPage()"
+          [disabled]="renewalPage === totalRenewalPages">Next</button>
+      </div>
+    </div>
   </div>
 </div>

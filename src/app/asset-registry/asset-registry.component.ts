@@ -7,7 +7,7 @@ import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { UserService } from '../services/user.service';
-import { Subscription } from 'rxjs';
+import { Subscription, switchMap, of } from 'rxjs';
 
 @Component({
   selector: 'app-asset-registry',
@@ -50,7 +50,17 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
 
   fetchAssets() {
     this.isLoading = true;
-    this.assetsSubscription = this.assetsService.getAllVehicles().subscribe({
+    
+    // Switch stream based on role: Admin/Agent gets all, Client gets their own
+    this.assetsSubscription = this.authService.userRole$.pipe(
+      switchMap(role => {
+        if (role === 'admin' || role === 'agent') {
+          return this.assetsService.getAllVehicles();
+        }
+        const user = this.authService.currentUser;
+        return user ? this.assetsService.getUserVehicles(user.uid) : of([]);
+      })
+    ).subscribe({
       next: async (vehicles) => {
         const userCache = new Map<string, string>();
         

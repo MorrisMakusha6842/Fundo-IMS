@@ -26,7 +26,7 @@ export class PoliciesComponent implements OnInit {
   policies$: Observable<any[]>;
   filteredPolicies$: Observable<any[]>;
   private subCategoriesList: any[] = [];
-  
+
   // KPIs
   totalPolicies = 0;
   activePolicies = 0;
@@ -37,8 +37,22 @@ export class PoliciesComponent implements OnInit {
   searchControl = new FormControl('');
   selectedPolicy: any = null;
   editStatusControl = new FormControl('active');
-  
+
   private toast = inject(ToastService);
+
+
+  // --- Renewals Logic ---
+  isRenewalsModalOpen = false;
+  isLoadingRenewals = false;
+  allRenewals: any[] = []; // Master list
+  filteredRenewals: any[] = []; // Filtered by type/search
+  paginatedRenewals: any[] = []; // Current page
+  renewalPage = 1;
+  renewalPageSize = 10;
+  totalRenewalPages = 0;
+
+  renewalFilterType: 'insurance' | 'radio' = 'insurance';
+  renewalSearchControl = new FormControl('');
 
   constructor(
     private fb: FormBuilder,
@@ -56,10 +70,10 @@ export class PoliciesComponent implements OnInit {
     });
 
     this.subCategories$ = this.policyService.getSubCategories();
-    
+
     // Combine policies with search control for filtering and KPI calculation
     this.policies$ = this.policyService.getAllPolicies();
-    
+
     this.filteredPolicies$ = combineLatest([
       this.policies$,
       this.searchControl.valueChanges.pipe(startWith(''))
@@ -72,6 +86,11 @@ export class PoliciesComponent implements OnInit {
       }),
       tap(() => this.isLoading = false)
     );
+
+    // Setup Renewal Search
+    this.renewalSearchControl.valueChanges.subscribe(() => {
+      this.filterRenewals();
+    });
   }
 
   ngOnInit(): void {
@@ -86,17 +105,17 @@ export class PoliciesComponent implements OnInit {
   openSubCategoryListModal() { this.isSubCategoryListModalOpen = true; }
   closeSubCategoryListModal() { this.isSubCategoryListModalOpen = false; }
 
-  openCreatePolicyModal() { 
-    this.isCreatePolicyModalOpen = true; 
+  openCreatePolicyModal() {
+    this.isCreatePolicyModalOpen = true;
     // Initialize with one default package
     if (this.packages.length === 0) {
       this.addPackage();
     }
   }
-  
-  closeCreatePolicyModal() { 
-    this.isCreatePolicyModalOpen = false; 
-    this.createPolicyForm.reset(); 
+
+  closeCreatePolicyModal() {
+    this.isCreatePolicyModalOpen = false;
+    this.createPolicyForm.reset();
     this.packages.clear();
   }
 
@@ -222,6 +241,224 @@ export class PoliciesComponent implements OnInit {
         console.error('Error deleting policy:', error);
         this.toast.show('Failed to delete policy', 'error');
       }
+    }
+  }
+  // --- Claims Logic ---
+  isClaimsModalOpen = false;
+  isLoadingClaims = false;
+  claimsList: any[] = [];
+  paginatedClaims: any[] = [];
+  claimsPage = 1;
+  claimsPageSize = 10;
+  totalClaims = 0;
+
+  openClaimsModal() {
+    this.isClaimsModalOpen = true;
+    this.isLoadingClaims = true;
+    this.generateDummyClaims();
+
+    // Simulate API delay
+    setTimeout(() => {
+      this.isLoadingClaims = false;
+      this.updateClaimsPagination();
+    }, 1500);
+  }
+
+  closeClaimsModal() {
+    this.isClaimsModalOpen = false;
+    this.claimsList = [];
+    this.paginatedClaims = [];
+    this.claimsPage = 1;
+  }
+
+  generateDummyClaims() {
+    const statuses = ['Pending', 'Approved', 'Rejected', 'In Review'];
+    this.claimsList = Array.from({ length: 30 }, (_, i) => ({
+      id: `CLM-${1000 + i}`,
+      policyName: `Policy ${['A', 'B', 'C'][Math.floor(Math.random() * 3)]} - ${100 + i}`,
+      claimant: `User ${i + 1}`,
+      dateSubmitted: new Date(2025, 0, i + 1),
+      amount: Math.floor(Math.random() * 5000) + 500,
+      status: statuses[Math.floor(Math.random() * statuses.length)]
+    }));
+    this.totalClaims = this.claimsList.length;
+  }
+
+  updateClaimsPagination() {
+    const startIndex = (this.claimsPage - 1) * this.claimsPageSize;
+    const endIndex = startIndex + this.claimsPageSize;
+    this.paginatedClaims = this.claimsList.slice(startIndex, endIndex);
+  }
+
+  nextClaimsPage() {
+    if ((this.claimsPage * this.claimsPageSize) < this.totalClaims) {
+      this.claimsPage++;
+      this.updateClaimsPagination();
+    }
+  }
+
+  prevClaimsPage() {
+    if (this.claimsPage > 1) {
+      this.claimsPage--;
+      this.updateClaimsPagination();
+    }
+  }
+
+
+  get totalClaimsPages(): number {
+    return Math.ceil(this.totalClaims / this.claimsPageSize);
+  }
+
+  // --- Renewals Methods ---
+
+  openRenewalsModal() {
+    this.isRenewalsModalOpen = true;
+    this.isLoadingRenewals = true;
+    this.generateDummyRenewals();
+
+    setTimeout(() => {
+      this.isLoadingRenewals = false;
+      this.filterRenewals();
+    }, 1500);
+  }
+
+  closeRenewalsModal() {
+    this.isRenewalsModalOpen = false;
+    this.allRenewals = [];
+    this.filteredRenewals = [];
+    this.paginatedRenewals = [];
+    this.renewalPage = 1;
+    this.renewalSearchControl.setValue('', { emitEvent: false });
+  }
+
+  setRenewalFilter(type: 'insurance' | 'radio') {
+    this.renewalFilterType = type;
+    this.renewalPage = 1;
+    this.filterRenewals();
+  }
+
+  generateDummyRenewals() {
+    // Generate 50 dummy items mixed
+    const statuses = ['Pending Payment', 'Overdue', 'Due Soon'];
+    this.allRenewals = Array.from({ length: 50 }, (_, i) => {
+      const isInsurance = i % 2 === 0;
+      return {
+        id: `REN-${2000 + i}`,
+        type: isInsurance ? 'insurance' : 'radio',
+        entityName: isInsurance ? `Policy - Honda Clean ${i}` : `Radio Lic - Station ${i}`,
+        description: isInsurance ? 'Comprehensive Cover' : 'Broadcasting License 2025',
+        expiryDate: new Date(2025, 3, (i % 30) + 1),
+        amount: isInsurance ? 1200 : 5000,
+        status: statuses[Math.floor(Math.random() * statuses.length)]
+      };
+    });
+  }
+
+  filterRenewals() {
+    const term = (this.renewalSearchControl.value || '').toLowerCase();
+
+    this.filteredRenewals = this.allRenewals.filter(item => {
+      const matchesType = item.type === this.renewalFilterType;
+      const matchesSearch = item.entityName.toLowerCase().includes(term) ||
+        item.id.toLowerCase().includes(term);
+      return matchesType && matchesSearch;
+    });
+
+    this.totalRenewalPages = Math.ceil(this.filteredRenewals.length / this.renewalPageSize);
+    this.renewalPage = 1;
+    this.updateRenewalPagination();
+  }
+
+  updateRenewalPagination() {
+    const startIndex = (this.renewalPage - 1) * this.renewalPageSize;
+    const endIndex = startIndex + this.renewalPageSize;
+    this.paginatedRenewals = this.filteredRenewals.slice(startIndex, endIndex);
+  }
+
+  nextRenewalPage() {
+    if (this.renewalPage < this.totalRenewalPages) {
+      this.renewalPage++;
+      this.updateRenewalPagination();
+    }
+  }
+
+  prevRenewalPage() {
+    if (this.renewalPage > 1) {
+      this.renewalPage--;
+      this.updateRenewalPagination();
+    }
+  }
+
+  // --- Accordion Logic ---
+  isPoliciesExpanded = true;
+  isClaimsExpanded = false;
+
+  // --- Dashboard Claims Logic ---
+  dashboardClaimsList: any[] = [];
+  paginatedDashboardClaims: any[] = [];
+  dashboardClaimsPage = 1;
+  dashboardClaimsPageSize = 10;
+  totalDashboardClaimsPages = 0;
+  dashboardClaimsIsLoading = false;
+  dashboardClaimsSearchControl = new FormControl('');
+
+  togglePoliciesAccordion() {
+    this.isPoliciesExpanded = !this.isPoliciesExpanded;
+  }
+
+  toggleClaimsAccordion() {
+    this.isClaimsExpanded = !this.isClaimsExpanded;
+    if (this.isClaimsExpanded && this.dashboardClaimsList.length === 0) {
+      this.loadDashboardClaims();
+    }
+  }
+
+  loadDashboardClaims() {
+    this.dashboardClaimsIsLoading = true;
+    setTimeout(() => {
+      // Generate persistent dummy data for dashboard
+      this.dashboardClaimsList = Array.from({ length: 45 }, (_, i) => ({
+        id: `D-CLM-${3000 + i}`,
+        policyName: `Policy - ${['Fire', 'Home', 'Motor'][i % 3]} Protection`,
+        claimant: `Client ${i + 100}`,
+        dateSubmitted: new Date(2025, 1, (i % 28) + 1),
+        amount: Math.floor(Math.random() * 8000) + 1000,
+        status: ['Pending', 'Approved', 'Rejected'][Math.floor(Math.random() * 3)]
+      }));
+      this.totalDashboardClaimsPages = Math.ceil(this.dashboardClaimsList.length / this.dashboardClaimsPageSize);
+      this.updateDashboardClaimsPagination();
+      this.dashboardClaimsIsLoading = false;
+    }, 1000);
+  }
+
+  updateDashboardClaimsPagination() {
+    const startIndex = (this.dashboardClaimsPage - 1) * this.dashboardClaimsPageSize;
+    const endIndex = startIndex + this.dashboardClaimsPageSize;
+    const term = (this.dashboardClaimsSearchControl.value || '').toLowerCase();
+
+    let filtered = this.dashboardClaimsList;
+    if (term) {
+      filtered = this.dashboardClaimsList.filter(c =>
+        c.policyName.toLowerCase().includes(term) ||
+        c.claimant.toLowerCase().includes(term)
+      );
+    }
+
+    this.totalDashboardClaimsPages = Math.ceil(filtered.length / this.dashboardClaimsPageSize);
+    this.paginatedDashboardClaims = filtered.slice(startIndex, endIndex);
+  }
+
+  nextDashboardClaimsPage() {
+    if (this.dashboardClaimsPage < this.totalDashboardClaimsPages) {
+      this.dashboardClaimsPage++;
+      this.updateDashboardClaimsPagination();
+    }
+  }
+
+  prevDashboardClaimsPage() {
+    if (this.dashboardClaimsPage > 1) {
+      this.dashboardClaimsPage--;
+      this.updateDashboardClaimsPagination();
     }
   }
 }
