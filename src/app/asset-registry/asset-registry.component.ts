@@ -42,6 +42,19 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
     vehicles: this.fb.array([])
   });
 
+  // Form for editing an existing asset
+  editAssetForm: FormGroup = this.fb.group({
+    assetValue: ['', Validators.required],
+    safetyFeatures: [''],
+    policyDeploymentDate: [''],
+    policyExpiryDate: [''],
+    vehicleRegistrationBook: [null],
+    radioLicense: [null],
+    driversLicense: [null],
+    insurancePolicy: [null],
+    vehicleDocumentation: [null]
+  });
+
   ngOnInit(): void {
     this.fetchAssets();
     // Initialize with one vehicle form
@@ -380,6 +393,19 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
   openViewModal(asset: any) {
     this.selectedAsset = asset;
     this.isViewModalOpen = true;
+
+    // Patch the edit form with existing values
+    this.editAssetForm.patchValue({
+      assetValue: asset.assetValue,
+      safetyFeatures: asset.safetyFeatures,
+      policyDeploymentDate: asset.policyDeploymentDate,
+      policyExpiryDate: asset.policyExpiryDate,
+      vehicleRegistrationBook: null,
+      radioLicense: null,
+      driversLicense: null,
+      insurancePolicy: null,
+      vehicleDocumentation: null
+    });
   }
 
   closeViewModal() {
@@ -445,6 +471,100 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error approving asset', error);
       this.toast.show('Failed to approve asset', 'error');
+    }
+  }
+
+  async onEditFileChange(event: any, controlName: string) {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        const processed = await this.processFile(file);
+        this.editAssetForm.patchValue({
+          [controlName]: {
+            name: file.name,
+            type: processed.type,
+            storageData: processed.storageData
+          }
+        });
+      } catch (e: any) {
+        console.error('File read error', e);
+        this.toast.show(e.message || 'Error reading file', 'error');
+      }
+    }
+  }
+
+  async onUpdateAsset() {
+    if (this.editAssetForm.invalid) {
+      this.editAssetForm.markAllAsTouched();
+      this.toast.show('Please fill in all required fields', 'error');
+      return;
+    }
+
+    if (!this.selectedAsset) return;
+
+    this.isSubmitting = true;
+
+    try {
+      const formValues = this.editAssetForm.value;
+      let updatedDocuments = [...(this.selectedAsset.documents || [])];
+
+      const fileControls = [
+        { key: 'vehicleRegistrationBook', field: 'Vehicle Registration Book' },
+        { key: 'radioLicense', field: 'Radio License' },
+        { key: 'driversLicense', field: 'Drivers License' },
+        { key: 'insurancePolicy', field: 'Insurance Policy' },
+        { key: 'vehicleDocumentation', field: 'Vehicle Documentation' }
+      ];
+
+      for (const fc of fileControls) {
+        const newFile = formValues[fc.key];
+        if (newFile) {
+          updatedDocuments = updatedDocuments.filter(d => d.field !== fc.field);
+          updatedDocuments.push({
+            name: newFile.name,
+            type: newFile.type,
+            storageData: newFile.storageData,
+            field: fc.field
+          });
+        }
+      }
+
+      const docsForStorage = updatedDocuments.map(d => {
+        const { dataUrl, ...rest } = d;
+        return rest;
+      });
+
+      const updatedAsset: VehicleAsset = {
+        garagingAddress: this.selectedAsset.garagingAddress,
+        make: this.selectedAsset.make,
+        numberPlate: this.selectedAsset.numberPlate,
+        primaryUse: this.selectedAsset.primaryUse,
+        uid: this.selectedAsset.uid,
+        userId: this.selectedAsset.userId,
+        vehicleClass: this.selectedAsset.vehicleClass,
+        vin: this.selectedAsset.vin,
+        year: this.selectedAsset.year,
+        bodyType: this.selectedAsset.bodyType,
+        createdAt: this.selectedAsset.createdAt,
+        status: this.selectedAsset.status,
+        safetyFeatures: formValues.safetyFeatures,
+        assetValue: String(formValues.assetValue),
+        policyDeploymentDate: formValues.policyDeploymentDate,
+        policyExpiryDate: formValues.policyExpiryDate,
+        documents: docsForStorage
+      };
+
+      await this.assetsService.updateVehicleAsset(this.selectedAsset.id, updatedAsset);
+      
+      this.toast.show('Asset updated successfully', 'success');
+      this.closeViewModal();
+      this.fetchAssets();
+
+    } catch (error) {
+      console.error('Error updating asset', error);
+      this.toast.show('Failed to update asset', 'error');
+    } finally {
+      this.isSubmitting = false;
     }
   }
 }

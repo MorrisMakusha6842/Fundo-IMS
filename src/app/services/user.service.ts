@@ -10,8 +10,11 @@ import {
 	updateDoc,
 	deleteDoc,
 	getDoc,
-	DocumentData
+	DocumentData,
+	collection
 } from 'firebase/firestore';
+import { collectionData } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
 // We intentionally store small images/docs as data URLs in Firestore for this project.
 import { environment } from '../../environments/environment';
 
@@ -187,5 +190,11 @@ export class UserService {
 			console.warn('deleteUser failed', err);
 			throw err;
 		}
+	}
+
+	/** Get all users from Firestore */
+	getAllUsers(): Observable<any[]> {
+		const usersRef = collection(this.db, 'users');
+		return collectionData(usersRef, { idField: 'uid' });
 	}
 }

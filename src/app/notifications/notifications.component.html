@@ -1,80 +1,87 @@
-<div class="flex h-screen bg-gray-100">
+<div class="notifications-container">
 
-  <!-- LEFT PANEL: USERS LIST -->
-  <aside class="w-1/4 bg-white border-r border-gray-200 flex flex-col">
-    <div class="p-4 border-b font-semibold text-gray-700">
-      Conversations
-    </div>
-
-    <ul class="flex-1 overflow-y-auto">
-      <!-- User item -->
-      <li class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100 bg-gray-50">
-        <div class="w-10 h-10 rounded-full bg-gray-300"></div>
-        <div class="flex-1">
-          <p class="font-medium text-sm">John Doe</p>
-          <p class="text-xs text-gray-500 truncate">Last message preview...</p>
+    <!-- LEFT PANEL: USERS LIST -->
+    <aside class="users-panel">
+        <div class="panel-header">
+            Conversations
         </div>
-      </li>
 
-      <li class="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100">
-        <div class="w-10 h-10 rounded-full bg-gray-300"></div>
-        <div class="flex-1">
-          <p class="font-medium text-sm">Admin Support</p>
-          <p class="text-xs text-gray-500 truncate">Your asset was approved</p>
+        <ul class="users-list">
+            <li *ngIf="isLoadingUsers" class="user-item">
+                <div class="loading-text">Loading users...</div>
+            </li>
+
+            <li *ngFor="let user of users" class="user-item" [class.active]="selectedUser?.uid === user.uid"
+                (click)="selectUser(user)">
+                <div class="user-avatar">
+                    <img *ngIf="user.avatarDataUrl" [src]="user.avatarDataUrl" alt="{{user.displayName}}">
+                    <span *ngIf="!user.avatarDataUrl" class="user-initials">{{getUserInitials(user)}}</span>
+                </div>
+                <div class="user-info">
+                    <p class="user-name">{{user.displayName || user.email || 'Unknown User'}}</p>
+                    <p class="last-message">{{user.role || 'Client'}}</p>
+                </div>
+            </li>
+
+            <li *ngIf="!isLoadingUsers && users.length === 0" class="user-item">
+                <div class="loading-text">No users found</div>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- RIGHT PANEL: CHAT -->
+    <section class="chat-panel" *ngIf="selectedUser">
+
+        <!-- CHAT HEADER -->
+        <header class="chat-header">
+            <div class="header-user-avatar">
+                <img *ngIf="selectedUser.avatarDataUrl" [src]="selectedUser.avatarDataUrl"
+                    alt="{{selectedUser.displayName}}">
+                <span *ngIf="!selectedUser.avatarDataUrl" class="user-initials">{{getUserInitials(selectedUser)}}</span>
+            </div>
+            <div class="header-user-info">
+                <p class="header-user-name">{{selectedUser.displayName || selectedUser.email}}</p>
+                <p class="header-user-status">{{selectedUser.role || 'User'}}</p>
+            </div>
+        </header>
+
+        <!-- CHAT MESSAGES (Scrollable) -->
+        <main class="messages-area">
+            <div *ngIf="isLoadingMessages" class="loading-text">Loading messages...</div>
+
+            <div *ngIf="!isLoadingMessages && messages.length === 0" class="no-messages">
+                No messages yet. Start the conversation!
+            </div>
+
+            <div *ngFor="let message of messages" class="message-wrapper"
+                [class.sent]="message.senderId !== selectedUser.uid"
+                [class.received]="message.senderId === selectedUser.uid">
+                <div class="message-bubble">
+                    <p class="message-text">{{message.text}}</p>
+                    <span class="message-time">{{message.timestamp | date:'short'}}</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- MESSAGE INPUT (Sticky at bottom) -->
+        <footer class="message-input-footer">
+            <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="Type a message..."
+                class="message-input" />
+            <button class="send-button" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+                Send
+            </button>
+        </footer>
+
+    </section>
+
+    <!-- PLACEHOLDER WHEN NO USER SELECTED -->
+    <section class="chat-panel placeholder" *ngIf="!selectedUser">
+        <div class="placeholder-content">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <p>Select a conversation to start messaging</p>
         </div>
-      </li>
-    </ul>
-  </aside>
-
-  <!-- RIGHT PANEL: CHAT -->
-  <section class="flex-1 flex flex-col">
-
-    <!-- CHAT HEADER -->
-    <header class="h-16 bg-white border-b border-gray-200 flex items-center px-6">
-      <div class="w-10 h-10 rounded-full bg-gray-300 mr-3"></div>
-      <div>
-        <p class="font-semibold text-sm">Admin Support</p>
-        <p class="text-xs text-gray-500">Online</p>
-      </div>
-    </header>
-
-    <!-- CHAT MESSAGES -->
-    <main class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50">
-
-      <!-- RECEIVED MESSAGE -->
-      <div class="flex justify-start">
-        <div class="max-w-md bg-white px-4 py-2 rounded-lg shadow-sm">
-          <p class="text-sm text-gray-800">
-            Your vehicle has been approved. A proforma invoice is available.
-          </p>
-          <span class="text-xs text-gray-400 block mt-1">09:12</span>
-        </div>
-      </div>
-
-      <!-- SENT MESSAGE -->
-      <div class="flex justify-end">
-        <div class="max-w-md bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm">
-          <p class="text-sm">
-            Thank you. I will review and proceed with payment.
-          </p>
-          <span class="text-xs text-blue-200 block mt-1 text-right">09:13</span>
-        </div>
-      </div>
-
-    </main>
-
-    <!-- MESSAGE INPUT -->
-    <footer class="h-20 bg-white border-t border-gray-200 flex items-center px-4 gap-3">
-      <input
-        type="text"
-        placeholder="Type a message..."
-        class="flex-1 h-11 px-4 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <button
-        class="h-11 px-6 rounded-full bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
-        Send
-      </button>
-    </footer>
-
-  </section>
+    </section>
 </div>

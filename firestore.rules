@@ -67,5 +67,18 @@ service cloud.firestore {
       
       allow update, delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
     }
+
+    // Notifications & Messaging
+    
+    // 1. Users can read/write their own entire notification hierarchy
+    match /notifications/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // 2. Allow authenticated users to WRITE (create) to another user's "received" collection
+    // The path structure is: /notifications/{recipientId}/received/{senderId}/messages/{messageId}
+    match /notifications/{recipientId}/received/{senderId}/messages/{messageId} {
+      allow create: if request.auth != null && request.auth.uid == senderId;
+    }
   }
 }

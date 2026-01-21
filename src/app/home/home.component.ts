@@ -1,7 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { PolicyService } from '../services/policy.service';
 import { AuthService } from '../services/auth.service';
+import { UserService } from '../services/user.service';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
@@ -17,9 +19,13 @@ import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
 export class HomeComponent implements OnInit {
   private policyService = inject(PolicyService);
   private authService = inject(AuthService);
+  private userService = inject(UserService);
   private assetsService = inject(AssetsService);
   private firestore = inject(Firestore);
+  private router = inject(Router);
 
+  displayName: string = '';
+  isLoadingProfile: boolean = true;
   subCategories$: Observable<any[]> | undefined;
   filteredPolicies$: Observable<any[]> | undefined;
   userAssets$: Observable<VehicleAsset[]> | undefined;
@@ -75,6 +81,7 @@ export class HomeComponent implements OnInit {
       switchMap(user => {
         this.isLoadingAssets = true;
         if (user?.uid) {
+          this.fetchUserProfile(user.uid);
           return this.assetsService.getUserVehicles(user.uid);
         } else {
           return of([]);
@@ -88,6 +95,20 @@ export class HomeComponent implements OnInit {
       this.updateAssetPagination(assets);
       this.isLoadingAssets = false;
     });
+  }
+
+  async fetchUserProfile(uid: string) {
+    this.isLoadingProfile = true;
+    try {
+      const profile = await this.userService.getUserProfile(uid);
+      if (profile) {
+        this.displayName = profile['displayName'];
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      this.isLoadingProfile = false;
+    }
   }
 
   generateDummyData() {
@@ -181,5 +202,10 @@ export class HomeComponent implements OnInit {
     this.selectedAsset = null;
     this.claimDescription = '';
     this.claimType = 'Accident';
+  }
+
+  navigateToAssetRegistry(event: Event) {
+    event.stopPropagation();
+    this.router.navigate(['/main-layout/asset-registry']);
   }
 }

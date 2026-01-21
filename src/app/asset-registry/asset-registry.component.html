@@ -67,13 +67,10 @@
                     <td><span class="status" [ngClass]="asset.status?.toLowerCase()">{{ asset.status | titlecase
                             }}</span></td>
                     <td class="actions">
-                        <button class="btn-icon" (click)="openViewModal(asset)" title="View Details">
+                        <button class="btn-icon" (click)="openViewModal(asset)" title="Edit Asset">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20"
                                 height="20">
-                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                <path fill-rule="evenodd"
-                                    d="M.458 10C3.32 4.943 7.522 3 10 3s6.68 1.943 9.542 7c-2.862 5.057-7.022 7-9.542 7S3.32 15.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                    clip-rule="evenodd" />
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                             </svg>
                         </button>
                         <button class="btn-icon delete" (click)="onDeleteAsset(asset)" title="Delete Asset"
@@ -101,7 +98,7 @@
 <div class="modal-overlay" *ngIf="isViewModalOpen && selectedAsset">
     <div class="modal-card">
         <div class="modal-header">
-            <h2>Asset Details: {{ selectedAsset.assetName }}</h2>
+            <h2>Edit Asset: {{ selectedAsset.assetName }}</h2>
             <button class="btn-close" (click)="closeViewModal()">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
                     <path
@@ -109,7 +106,7 @@
                 </svg>
             </button>
         </div>
-        <div class="modal-body">
+        <form class="modal-body" [formGroup]="editAssetForm" (ngSubmit)="onUpdateAsset()">
             <div class="detail-section">
                 <h4>Basic Information</h4>
                 <div class="detail-grid">
@@ -147,17 +144,28 @@
             <div class="detail-section">
                 <h4>Compliance & Safety</h4>
                 <div class="detail-grid">
-                    <div class="detail-item"><label>Asset Value</label>
-                        <p>{{ selectedAsset.assetValue | currency }}</p>
+                    <div class="field">
+                        <label>Asset Value ($)</label>
+                        <input type="number" formControlName="assetValue" class="form-input" />
                     </div>
-                    <div class="detail-item"><label>Safety Features</label>
-                        <p>{{ selectedAsset.safetyFeatures || 'None' }}</p>
+                    <div class="field">
+                        <label>Safety Features</label>
+                        <select formControlName="safetyFeatures" class="form-select">
+                            <option value="">Select Features</option>
+                            <option value="Alarm">Alarm</option>
+                            <option value="Immobilizer">Immobilizer</option>
+                            <option value="Tracking Device">Tracking Device</option>
+                            <option value="Steering Lock">Steering Lock</option>
+                            <option value="None">None</option>
+                        </select>
                     </div>
-                    <div class="detail-item"><label>Policy Deployment</label>
-                        <p>{{ selectedAsset.policyDeploymentDate || 'N/A' }}</p>
+                    <div class="field">
+                        <label>Policy Deployment</label>
+                        <input type="date" formControlName="policyDeploymentDate" class="form-input" />
                     </div>
-                    <div class="detail-item"><label>Policy Expiry</label>
-                        <p>{{ selectedAsset.policyExpiryDate || 'N/A' }}</p>
+                    <div class="field">
+                        <label>Policy Expiry</label>
+                        <input type="date" formControlName="policyExpiryDate" class="form-input" />
                     </div>
                 </div>
             </div>
@@ -193,6 +201,31 @@
             <!-- Asset Documentation Section -->
             <div class="detail-section">
                 <h4>Asset Documentation</h4>
+                
+                <!-- File Uploads for Updates -->
+                <div class="detail-grid" style="margin-bottom: 20px;">
+                    <div class="field">
+                        <label>Update Vehicle Registration Book</label>
+                        <input type="file" (change)="onEditFileChange($event, 'vehicleRegistrationBook')" accept=".pdf,.jpg,.png" />
+                    </div>
+                    <div class="field">
+                        <label>Update Radio License</label>
+                        <input type="file" (change)="onEditFileChange($event, 'radioLicense')" accept=".pdf,.jpg,.png" />
+                    </div>
+                    <div class="field">
+                        <label>Update Driver's License</label>
+                        <input type="file" (change)="onEditFileChange($event, 'driversLicense')" accept="image/*" />
+                    </div>
+                    <div class="field">
+                        <label>Update Insurance Policy</label>
+                        <input type="file" (change)="onEditFileChange($event, 'insurancePolicy')" accept=".pdf,.jpg,.png" />
+                    </div>
+                    <div class="field">
+                        <label>Update Vehicle Documentation</label>
+                        <input type="file" (change)="onEditFileChange($event, 'vehicleDocumentation')" accept=".pdf,.jpg,.png" />
+                    </div>
+                </div>
+
                 <div *ngIf="selectedAsset.documents && selectedAsset.documents.length > 0" class="documents-grid">
                     <div *ngFor="let doc of selectedAsset.documents" class="document-item">
                         <div class="document-preview">
@@ -227,19 +260,23 @@
                 </p>
             </div>
 
-            <!-- Approval Section (Only for non-Active assets) -->
-            <div class="approval-section" *ngIf="selectedAsset.status !== 'Active'">
-                <button class="btn-approve" (click)="openApprovalModal(selectedAsset)">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20"
-                        height="20">
-                        <path fill-rule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clip-rule="evenodd" />
+            <!-- Footer Actions -->
+            <div class="modal-footer" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                <!-- Approval Button (Only for non-Active assets) -->
+                <button type="button" class="btn-approve" *ngIf="selectedAsset.status !== 'Active'" (click)="openApprovalModal(selectedAsset)">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                     </svg>
-                    Approve Asset
+                    Approve
+                </button>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-primary" [disabled]="isSubmitting">
+                    <span *ngIf="isSubmitting" class="spinner"></span>
+                    {{ isSubmitting ? 'Saving...' : 'Save Changes' }}
                 </button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
