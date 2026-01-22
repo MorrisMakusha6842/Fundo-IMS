@@ -70,9 +70,9 @@ service cloud.firestore {
     }
 
     // Invoices
-    match /invoices/{invoiceId} {
-      // Allow read if Admin, Agent, or if the invoice belongs to the user (clientId matches uid)
-      allow read: if request.auth != null && (isAdmin() || isAgent() || resource.data.clientId == request.auth.uid);
+    // Structure: invoices/{userId}/{invoiceType}/{invoiceId}
+    match /invoices/{userId}/{invoiceType}/{invoiceId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin() || isAgent());
       allow create: if request.auth != null && (isAdmin() || isAgent());
       allow update, delete: if isAdmin();
     }

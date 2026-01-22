@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
 import { Firestore, collection, query, orderBy, getDocs, getFirestore } from 'firebase/firestore';
 import { UserService } from '../services/user.service';
-import { VehicleRegisterService } from '../services/vehicle-register.service';
+import { AssetsService } from '../services/assets.service';
 import { ToastService } from '../services/toast.service';
 
 @Component({
@@ -16,7 +16,7 @@ import { ToastService } from '../services/toast.service';
 export class UserManagementComponent implements OnInit {
   private userService = inject(UserService);
   private firestore = getFirestore();
-  private vehicleService = inject(VehicleRegisterService);
+  private assetsService = inject(AssetsService);
   private fb = inject(FormBuilder);
   private toast = inject(ToastService);
 
@@ -24,6 +24,7 @@ export class UserManagementComponent implements OnInit {
   filteredUsers: any[] = [];
   searchControl = new FormControl('');
   isLoading = false;
+  isLoadingAssets = false;
 
   // Modal States
   isViewModalOpen = false;
@@ -98,13 +99,23 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
-  async openViewModal(user: any) {
+  openViewModal(user: any) {
     this.selectedUser = user;
     this.selectedUserVehicles = [];
     this.isViewModalOpen = true;
 
     if (user && user.uid) {
-      this.selectedUserVehicles = await this.vehicleService.getByUserId(user.uid);
+      this.isLoadingAssets = true;
+      this.assetsService.getUserVehicles(user.uid).subscribe({
+        next: (vehicles) => {
+          this.selectedUserVehicles = vehicles;
+          this.isLoadingAssets = false;
+        },
+        error: (error) => {
+          console.error('Error fetching user vehicles:', error);
+          this.isLoadingAssets = false;
+        }
+      });
     }
   }
 

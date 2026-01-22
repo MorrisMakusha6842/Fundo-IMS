@@ -305,10 +305,10 @@
                                             </span>
                                         </ng-container>
                                         <ng-template #addDocsBtn>
-                                            <a routerLink="/main-layout/asset-registry" (click)="$event.stopPropagation()"
-                                                class="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 border border-transparent px-3 py-1.5 rounded shadow-sm no-underline inline-block transition-colors">
+                                            <button (click)="navigateTo('main-layout/asset-registry'); $event.stopPropagation()"
+                                                class="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 border border-transparent px-3 py-1.5 rounded shadow-sm inline-block transition-colors">
                                                 + ADD DOCUMENTS
-                                            </a>
+                                            </button>
                                         </ng-template>
                                     </td>
                                 </tr>

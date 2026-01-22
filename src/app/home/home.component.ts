@@ -208,4 +208,8 @@ export class HomeComponent implements OnInit {
     event.stopPropagation();
     this.router.navigate(['/main-layout/asset-registry']);
   }
+
+  navigateTo(path: string) {
+    this.router.navigate([path]);
+  }
 }

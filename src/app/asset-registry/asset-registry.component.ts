@@ -509,9 +509,13 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
 
       this.toast.show('Asset approved and invoice generated', 'success');
       this.closeApprovalModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in approval workflow', error);
-      this.toast.show('Failed to complete approval workflow', 'error');
+      if (error.code === 'permission-denied') {
+        this.toast.show('Permission denied: Ensure your account has Admin/Agent rights.', 'error');
+      } else {
+        this.toast.show('Failed to complete approval workflow: ' + error.message, 'error');
+      }
     } finally {
       this.isSubmitting = false;
     }
