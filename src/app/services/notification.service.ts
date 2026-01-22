@@ -208,4 +208,19 @@ export class NotificationService {
             console.error('Error marking messages as read:', error);
         }
     }
+
+    /**
+     * Get proforma invoices for a specific user
+     * Fetches from: invoices/{userId}/proforma
+     */
+    getProformaInvoices(userId: string): Observable<any[]> {
+        const invoicesRef = collection(
+            this.firestore,
+            'invoices',
+            userId,
+            'proforma'
+        );
+        const q = query(invoicesRef, orderBy('createdAt', 'desc'));
+        return collectionData(q, { idField: 'id' });
+    }
 }
