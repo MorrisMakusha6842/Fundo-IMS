@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AccountInitialisingComponent } from './account-initialising.component';
+import { NotificationIconComponent } from '../shared/notification-icon/notification-icon.component';
 import { UserService } from '../services/user.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
@@ -10,7 +11,7 @@ import { Firestore } from '@angular/fire/firestore';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, AccountInitialisingComponent],
+  imports: [CommonModule, RouterModule, AccountInitialisingComponent, NotificationIconComponent],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
 })

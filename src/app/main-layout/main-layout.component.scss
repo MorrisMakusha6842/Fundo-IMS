@@ -156,6 +156,16 @@
   width: 72px
 }
 
+/* Make side-nav sticky so it stays visible while main content scrolls */
+.side-nav {
+  position: sticky;
+  top: 56px; /* matches top-nav height */
+  align-self: flex-start;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+  padding-top: 12px;
+}
+
 .side-nav ul {
   transition: width .28s ease
 }
@@ -183,25 +193,17 @@
 }
 
 .side-nav li {
-  padding: 10px 12px;
+  padding: 0; /* remove default padding so items are stacked tightly */
   border-radius: 6px;
   cursor: pointer;
   color: #0f172a;
-  margin-bottom: 6px;
-  font-weight: 600
-}
-
-.side-nav li {
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: #0f172a;
-  margin-bottom: 2px;
-  font-weight: 600
+  margin-bottom: 4px; /* tighter spacing for stacked look */
+  font-weight: 600;
 }
 
 .side-nav li:hover {
-  background: #f1f5f9
+  /* subtle background on hover */
+  background: rgba(2,6,23,0.02);
 }
 
 .main-content {
@@ -281,9 +283,10 @@
 }
 
 .nav-icon img,
-.nav-icon svg {
-  width: 16px;
-  height: 16px;
+.nav-icon svg,
+.app-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
 }
 
 .side-nav .label {
@@ -295,20 +298,42 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 8px;
+  padding: 6px 8px 6px 12px; /* reduced left padding but leave space for accent */
   color: inherit;
-  text-decoration: none
+  text-decoration: none;
+  position: relative; /* for accent bar */
 }
 
 .nav-link .label {
   font-size: 13px
 }
 
-.nav-link.active,
-.nav-link:active,
 .nav-link:hover {
-  background: #f1f5f9;
-  border-radius: 6px
+  background: rgba(2,6,23,0.02);
+  border-radius: 6px;
+}
+
+/* Active state: small left accent bar + slightly darker text */
+.nav-link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 0;
+  background: var(--icon-accent);
+  border-radius: 0 3px 3px 0;
+  transition: width .16s ease;
+}
+
+.nav-link.active {
+  color: var(--icon-accent);
+  font-weight: 700;
+}
+
+.nav-link.active::before,
+.nav-link:hover::before {
+  width: 4px;
 }
 
 /* improve hamburger visuals */

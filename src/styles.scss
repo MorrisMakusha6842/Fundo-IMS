@@ -24,3 +24,92 @@
   justify-content: center;
   border: 2px solid white; /* Or your layout's background color */
 }
+
+/* Centralized icon and side-nav styling */
+:root {
+  --icon-size: 18px;
+  --icon-color: #000000; /* use black for icons per request */
+  --icon-accent: #0071e3; /* action color */
+  --sidenav-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --sidenav-font-size: 14px;
+  --sidenav-gap: 12px;
+}
+
+/* Generic icon helper */
+.app-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  display: inline-block;
+  vertical-align: middle;
+  color: var(--icon-color);
+}
+
+/* Notification icon wrapper (keeps compatibility with existing class) */
+.notification-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.notification-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--icon-color);
+  stroke-width: 1.5;
+}
+
+/* Side navigation base styles to standardize icons and labels */
+.sidenav {
+  font-family: var(--sidenav-font);
+  font-size: var(--sidenav-font-size);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sidenav-gap);
+}
+
+.sidenav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  color: var(--icon-color);
+  border-radius: 8px;
+}
+
+.sidenav-item:hover {
+  background: rgba(0,0,0,0.03);
+  color: var(--icon-accent);
+}
+
+.sidenav-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.sidenav-label {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Small utility for numeric badge on icons inside sidenav */
+.icon-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--icon-accent);
+  color: white;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
