@@ -8,6 +8,7 @@ import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { UserService } from '../services/user.service';
+import { InvoiceService, Invoice } from '../services/invoice.service';
 import { Subscription, switchMap, of } from 'rxjs';
 
 @Component({
@@ -35,7 +36,12 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private toast = inject(ToastService);
   private userService = inject(UserService);
+  private invoiceService = inject(InvoiceService);
   private assetsSubscription?: Subscription;
+
+  // ... (existing code)
+
+
 
   // Main form containing an array of vehicles
   addAssetForm: FormGroup = this.fb.group({
@@ -460,13 +466,31 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.isSubmitting = true;
+
     try {
+      // 1. Approve Asset
       await this.assetsService.approveAsset(
         this.pendingApprovalAsset.uid,
         this.pendingApprovalAsset.id,
         this.assuredValue,
         currentUser.uid
       );
+
+      // 2. Generate Invoice
+      const invoiceData: Invoice = {
+        assetId: this.pendingApprovalAsset.id,
+        assetName: this.pendingApprovalAsset.assetName,
+        clientId: this.pendingApprovalAsset.uid, // Owner ID
+        clientName: this.pendingApprovalAsset.clientName || 'Unknown',
+        amount: this.assuredValue,
+        status: 'Pending',
+        createdAt: serverTimestamp(),
+        generatedBy: currentUser.uid,
+        description: `Insurance premium for ${this.pendingApprovalAsset.assetName}`
+      };
+
+      await this.invoiceService.createInvoice(invoiceData);
 
       // Update local asset status
       const assetIndex = this.assets.findIndex(a => a.id === this.pendingApprovalAsset.id);
@@ -481,11 +505,13 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
         this.selectedAsset.assuredValue = this.assuredValue;
       }
 
-      this.toast.show('Asset approved successfully', 'success');
+      this.toast.show('Asset approved and invoice generated', 'success');
       this.closeApprovalModal();
     } catch (error) {
-      console.error('Error approving asset', error);
-      this.toast.show('Failed to approve asset', 'error');
+      console.error('Error in approval workflow', error);
+      this.toast.show('Failed to complete approval workflow', 'error');
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
