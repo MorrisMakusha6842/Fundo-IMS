@@ -432,6 +432,9 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Expose user role for template
+  userRole$ = this.authService.userRole$;
+
   // Approval workflow methods
   openApprovalModal(asset: any) {
     this.pendingApprovalAsset = asset;
@@ -451,11 +454,18 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const currentUser = this.authService.currentUser;
+    if (!currentUser) {
+      this.toast.show('You must be logged in to approve assets', 'error');
+      return;
+    }
+
     try {
       await this.assetsService.approveAsset(
         this.pendingApprovalAsset.uid,
         this.pendingApprovalAsset.id,
-        this.assuredValue
+        this.assuredValue,
+        currentUser.uid
       );
 
       // Update local asset status
@@ -562,7 +572,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
       };
 
       await this.assetsService.updateVehicleAsset(this.selectedAsset.id, updatedAsset);
-      
+
       this.toast.show('Asset updated successfully', 'success');
       this.closeViewModal();
       this.fetchAssets();

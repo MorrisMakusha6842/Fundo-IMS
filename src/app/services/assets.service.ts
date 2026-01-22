@@ -79,12 +79,13 @@ export class AssetsService {
         }
     }
 
-    async approveAsset(uid: string, vehicleId: string, assuredValue: number): Promise<void> {
+    async approveAsset(uid: string, vehicleId: string, assuredValue: number, approvedBy: string): Promise<void> {
         try {
             const docRef = doc(this.firestore, 'assets', uid, 'vehicles', vehicleId);
             await updateDoc(docRef, {
                 status: 'Active',
                 assetValue: assuredValue.toString(),
+                approvedBy: approvedBy,
                 approvedAt: new Date().toISOString()
             });
             console.log("Asset approved with ID: ", vehicleId);
