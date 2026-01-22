@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, doc, setDoc, updateDoc, query, collectionData, serverTimestamp, orderBy, where, getDocs } from '@angular/fire/firestore';
+import { Injectable, inject } from '@angular/core';
+import { Firestore, collection, addDoc, doc, setDoc, updateDoc, query, collectionData, serverTimestamp, orderBy, where, getDocs, collectionGroup } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
-import { Observable, combineLatest, map } from 'rxjs';
+import { Observable, combineLatest, map, of } from 'rxjs';
+import { InvoiceService, Invoice } from './invoice.service';
 
 export interface Message {
     text: string;
@@ -9,6 +10,8 @@ export interface Message {
     read: boolean;
     senderId: string;
     recipientId: string;
+    type?: 'text' | 'invoice';
+    invoiceData?: Invoice;
 }
 
 export interface Conversation {
@@ -24,6 +27,7 @@ export interface Conversation {
     providedIn: 'root'
 })
 export class NotificationService {
+    private invoiceService = inject(InvoiceService);
 
     constructor(
         private firestore: Firestore,
@@ -85,6 +89,33 @@ export class NotificationService {
         const currentUser = this.auth.currentUser;
         if (!currentUser) {
             return new Observable(observer => observer.next([]));
+        }
+
+        // Handle System Notifications (Invoices)
+        if (otherUserId === 'system') {
+            return this.invoiceService.getUserInvoices(currentUser.uid, 'proforma').pipe(
+                map(invoices => {
+                    return invoices.map(inv => {
+                        // Handle Firestore Timestamp or Date string
+                        let ts = inv.createdAt;
+                        if (ts && typeof ts.toDate === 'function') {
+                            ts = ts.toDate().toISOString();
+                        } else if (!ts) {
+                            ts = new Date().toISOString();
+                        }
+
+                        return {
+                            text: `New Proforma Invoice: ${inv.assetName}`,
+                            timestamp: ts,
+                            read: true, // System messages are auto-read
+                            senderId: 'system',
+                            recipientId: currentUser.uid,
+                            type: 'invoice',
+                            invoiceData: inv
+                        } as Message;
+                    });
+                })
+            );
         }
 
         // Get sent messages to this user
@@ -175,6 +206,7 @@ export class NotificationService {
     async markAsRead(otherUserId: string): Promise<void> {
         const currentUser = this.auth.currentUser;
         if (!currentUser) return;
+        if (otherUserId === 'system') return; // Skip for system user
 
         try {
             const receivedRef = collection(
@@ -222,5 +254,25 @@ export class NotificationService {
         );
         const q = query(invoicesRef, orderBy('createdAt', 'desc'));
         return collectionData(q, { idField: 'id' });
+    }
+
+    /**
+     * Gets the total count of unread messages for the current user.
+     * This uses a collection group query. You may need to create a Firestore index for this.
+     * The index should be on the 'messages' collection, with fields 'recipientId' (ascending) and 'read' (ascending).
+     */
+    getUnreadCount(): Observable<number> {
+        const currentUser = this.auth.currentUser;
+        if (!currentUser) {
+            return of(0);
+        }
+
+        const messagesGroupRef = collectionGroup(this.firestore, 'messages');
+        const q = query(messagesGroupRef,
+            where('recipientId', '==', currentUser.uid),
+            where('read', '==', false)
+        );
+
+        return collectionData(q).pipe(map(messages => messages.length));
     }
 }

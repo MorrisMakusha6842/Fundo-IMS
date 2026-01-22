@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, query, orderBy, collectionData } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
 
 export interface Invoice {
     id?: string;
@@ -34,5 +35,15 @@ export class InvoiceService {
             console.error("Error creating invoice: ", e);
             throw e;
         }
+    }
+
+    /**
+     * Get invoices for a specific user
+     * Fetches from: invoices/{userId}/{type}
+     */
+    getUserInvoices(userId: string, type: string = 'proforma'): Observable<Invoice[]> {
+        const invoicesRef = collection(this.firestore, 'invoices', userId, type);
+        const q = query(invoicesRef, orderBy('createdAt', 'desc'));
+        return collectionData(q, { idField: 'id' }) as Observable<Invoice[]>;
     }
 }

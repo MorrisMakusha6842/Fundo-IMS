@@ -18,10 +18,13 @@ export class NotificationsComponent implements OnInit {
 
   users: any[] = [];
   selectedUser: any = null;
-  messages: Message[] = [];
+  allMessages: Message[] = [];
+  filteredMessages: Message[] = [];
   newMessage: string = '';
   isLoadingUsers = true;
   isLoadingMessages = false;
+
+  messageFilter: 'all' | 'read' | 'unread' = 'all';
 
   private usersSubscription?: Subscription;
   private messagesSubscription?: Subscription;
@@ -39,7 +42,15 @@ export class NotificationsComponent implements OnInit {
     this.isLoadingUsers = true;
     this.usersSubscription = this.userService.getAllUsers().subscribe({
       next: (users) => {
-        this.users = users;
+        // Add System User for Notifications
+        const systemUser = {
+          uid: 'system',
+          displayName: 'System Notifications',
+          email: 'system@insurance.app',
+          role: 'System',
+          avatarDataUrl: null
+        };
+        this.users = [systemUser, ...users];
         this.isLoadingUsers = false;
       },
       error: (error) => {
@@ -51,20 +62,26 @@ export class NotificationsComponent implements OnInit {
 
   selectUser(user: any) {
     this.selectedUser = user;
+    this.messageFilter = 'all'; // Reset filter on new user selection
     this.loadConversation(user.uid);
   }
 
   loadConversation(userId: string) {
     this.isLoadingMessages = true;
+    this.allMessages = [];
+    this.filteredMessages = [];
     this.messagesSubscription?.unsubscribe();
 
     this.messagesSubscription = this.notificationService.getConversation(userId).subscribe({
       next: (messages) => {
-        this.messages = messages;
+        this.allMessages = messages;
+        this.applyFilter();
         this.isLoadingMessages = false;
 
         // Mark messages as read
-        this.notificationService.markAsRead(userId);
+        if (userId !== 'system') {
+          this.notificationService.markAsRead(userId);
+        }
       },
       error: (error) => {
         console.error('Error loading conversation:', error);
@@ -73,8 +90,26 @@ export class NotificationsComponent implements OnInit {
     });
   }
 
+  setFilter(filter: 'all' | 'read' | 'unread') {
+    this.messageFilter = filter;
+    this.applyFilter();
+  }
+
+  applyFilter() {
+    if (this.messageFilter === 'unread') {
+      // Show only messages received from the other user that are unread
+      this.filteredMessages = this.allMessages.filter(m => !m.read && m.senderId === this.selectedUser.uid);
+    } else if (this.messageFilter === 'read') {
+      // Show sent messages and read received messages
+      this.filteredMessages = this.allMessages.filter(m => m.read || m.senderId !== this.selectedUser.uid);
+    } else {
+      // Show all messages
+      this.filteredMessages = [...this.allMessages];
+    }
+  }
+
   async sendMessage() {
-    if (!this.newMessage.trim() || !this.selectedUser) return;
+    if (!this.newMessage.trim() || !this.selectedUser || this.selectedUser.uid === 'system') return;
 
     try {
       await this.notificationService.sendMessage(this.selectedUser.uid, this.newMessage.trim());

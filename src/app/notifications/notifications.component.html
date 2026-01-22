@@ -43,21 +43,58 @@
                 <p class="header-user-name">{{selectedUser.displayName || selectedUser.email}}</p>
                 <p class="header-user-status">{{selectedUser.role || 'User'}}</p>
             </div>
+            <!-- Message Filter -->
+            <div class="message-filters" *ngIf="selectedUser.uid !== 'system'">
+                <button [class.active]="messageFilter === 'all'" (click)="setFilter('all')">All</button>
+                <button [class.active]="messageFilter === 'read'" (click)="setFilter('read')">Read</button>
+                <button [class.active]="messageFilter === 'unread'" (click)="setFilter('unread')">Unread</button>
+            </div>
         </header>
 
         <!-- CHAT MESSAGES (Scrollable) -->
         <main class="messages-area">
             <div *ngIf="isLoadingMessages" class="loading-text">Loading messages...</div>
 
-            <div *ngIf="!isLoadingMessages && messages.length === 0" class="no-messages">
+            <div *ngIf="!isLoadingMessages && allMessages.length === 0" class="no-messages">
                 No messages yet. Start the conversation!
             </div>
 
-            <div *ngFor="let message of messages" class="message-wrapper"
+            <div *ngIf="!isLoadingMessages && allMessages.length > 0 && filteredMessages.length === 0"
+                class="no-messages">
+                No {{ messageFilter }} messages found.
+            </div>
+
+            <div *ngFor="let message of filteredMessages" class="message-wrapper"
                 [class.sent]="message.senderId !== selectedUser.uid"
                 [class.received]="message.senderId === selectedUser.uid">
-                <div class="message-bubble">
-                    <p class="message-text">{{message.text}}</p>
+                <div class="message-bubble" [style.background]="message.type === 'invoice' ? '#f5f5f7' : ''"
+                    [style.color]="message.type === 'invoice' ? '#1d1d1f' : ''"
+                    [style.border]="message.type === 'invoice' ? '1px solid #e5e5ea' : ''">
+
+                    <!-- Invoice Message Type -->
+                    <div *ngIf="message.type === 'invoice'; else textMessage" class="invoice-message">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e5e5ea; padding-bottom: 8px;">
+                            <strong style="font-size: 13px;">Invoice
+                                #{{message.invoiceData?.id?.substring(0,8)}}</strong>
+                            <span
+                                style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #fef9c3; color: #854d0e;">{{message.invoiceData?.status}}</span>
+                        </div>
+                        <p style="margin: 0 0 8px 0; font-size: 14px;">{{message.invoiceData?.description ||
+                            message.text}}</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-weight: 600; font-size: 15px;">{{message.invoiceData?.amount |
+                                currency}}</span>
+                            <button
+                                style="background: #0071e3; color: white; border: none; padding: 4px 12px; border-radius: 12px; font-size: 12px; cursor: pointer;">View</button>
+                        </div>
+                    </div>
+
+                    <!-- Standard Text Message -->
+                    <ng-template #textMessage>
+                        <p class="message-text">{{message.text}}</p>
+                    </ng-template>
+
                     <span class="message-time">{{message.timestamp | date:'short'}}</span>
                 </div>
             </div>
@@ -65,9 +102,11 @@
 
         <!-- MESSAGE INPUT (Sticky at bottom) -->
         <footer class="message-input-footer">
-            <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="Type a message..."
-                class="message-input" />
-            <button class="send-button" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+            <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()"
+                [placeholder]="selectedUser.uid === 'system' ? 'System notifications are read-only' : 'Type a message...'"
+                class="message-input" [disabled]="selectedUser.uid === 'system'" />
+            <button class="send-button" (click)="sendMessage()"
+                [disabled]="!newMessage.trim() || selectedUser.uid === 'system'">
                 Send
             </button>
         </footer>
