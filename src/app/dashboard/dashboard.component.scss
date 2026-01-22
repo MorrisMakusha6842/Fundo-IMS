@@ -11,7 +11,7 @@
 .header {
   display: flex;
   justify-content: space-between;
-align-items: center;
+  align-items: center;
   margin-bottom: 24px;
 
   h1 {
@@ -222,5 +222,26 @@ align-items: center;
   &.pending {
     background: #fef9c3;
     color: #854d0e;
+  }
+}
+
+/* BUTTON STYLES COPIED FROM POLICIES */
+.btn-secondary {
+  background: transparent;
+  color: #0071e3;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: #f2f2f7;
+    border-radius: 8px;
+  }
+
+  &.small {
+    padding: 6px 12px;
+    font-size: 12px;
   }
 }

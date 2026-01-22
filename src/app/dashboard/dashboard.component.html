@@ -109,6 +109,16 @@
           </tr>
         </thead>
         <tbody>
+          <tr *ngIf="isLoadingVehicles">
+            <td colspan="5" style="text-align: center; padding: 24px; color: #86868b;">
+              Loading vehicles...
+            </td>
+          </tr>
+          <tr *ngIf="!isLoadingVehicles && newlyRegisteredVehicles.length === 0">
+            <td colspan="5" style="text-align: center; padding: 24px; color: #86868b;">
+              No newly registered vehicles found.
+            </td>
+          </tr>
           <tr *ngFor="let item of newlyRegisteredVehicles">
             <td>{{ item.vehicle }} <span style="color: #86868b; font-size: 11px;">({{ item.id }})</span></td>
             <td>{{ item.client }}</td>
@@ -117,7 +127,7 @@
             </td>
             <td>{{ item.submitted }}</td>
             <td class="text-right">
-              <button class="btn-secondary small">Review</button>
+              <button class="btn-secondary small" (click)="navigateTo('main-layout/asset-registry')">Verify</button>
             </td>
           </tr>
         </tbody>

@@ -14,11 +14,12 @@ export interface VehicleAsset {
     year: number;
     bodyType: string;
     createdAt: any; // Timestamp
+    updatedAt?: any; // Timestamp
     assetValue: string;
     safetyFeatures?: string;
     policyDeploymentDate?: string;
     policyExpiryDate?: string;
-    documents?: any[]; // Array to hold file data (name, type, dataUrl)
+    documents?: any[]; // Array to hold file data (name, type, dataUrl, uploadedAt)
     status: 'Pending' | 'Approved' | 'Rejected';
     id?: string; // Add optional ID
 }

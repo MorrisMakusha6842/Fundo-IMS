@@ -311,7 +311,8 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             name: v.vehicleRegistrationBook.name,
             type: v.vehicleRegistrationBook.type,
             storageData: v.vehicleRegistrationBook.storageData,
-            field: 'Vehicle Registration Book'
+            field: 'Vehicle Registration Book',
+            uploadedAt: new Date().toISOString()
           });
         }
         if (v.radioLicense) {
@@ -319,7 +320,8 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             name: v.radioLicense.name,
             type: v.radioLicense.type,
             storageData: v.radioLicense.storageData,
-            field: 'Radio License'
+            field: 'Radio License',
+            uploadedAt: new Date().toISOString()
           });
         }
         if (v.driversLicense) {
@@ -327,7 +329,8 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             name: v.driversLicense.name,
             type: v.driversLicense.type,
             storageData: v.driversLicense.storageData,
-            field: 'Drivers License'
+            field: 'Drivers License',
+            uploadedAt: new Date().toISOString()
           });
         }
         if (v.insurancePolicy) {
@@ -335,7 +338,8 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             name: v.insurancePolicy.name,
             type: v.insurancePolicy.type,
             storageData: v.insurancePolicy.storageData,
-            field: 'Insurance Policy'
+            field: 'Insurance Policy',
+            uploadedAt: new Date().toISOString()
           });
         }
         if (v.vehicleDocumentation) {
@@ -343,7 +347,8 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             name: v.vehicleDocumentation.name,
             type: v.vehicleDocumentation.type,
             storageData: v.vehicleDocumentation.storageData,
-            field: 'Vehicle Documentation'
+            field: 'Vehicle Documentation',
+            uploadedAt: new Date().toISOString()
           });
         }
 
@@ -524,7 +529,8 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             name: newFile.name,
             type: newFile.type,
             storageData: newFile.storageData,
-            field: fc.field
+            field: fc.field,
+            uploadedAt: new Date().toISOString()
           });
         }
       }
@@ -546,6 +552,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
         year: this.selectedAsset.year,
         bodyType: this.selectedAsset.bodyType,
         createdAt: this.selectedAsset.createdAt,
+        updatedAt: serverTimestamp(),
         status: this.selectedAsset.status,
         safetyFeatures: formValues.safetyFeatures,
         assetValue: String(formValues.assetValue),
