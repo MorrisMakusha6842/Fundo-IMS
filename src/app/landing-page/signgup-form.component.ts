@@ -148,21 +148,94 @@ export class SigngupFormComponent implements OnInit {
 
 	// Camera helpers
 	async startCamera() {
+		// Basic capability check
 		if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
 			this.toast.show('Camera not supported on this device/browser', 'error');
 			return;
 		}
+
+		// getUserMedia requires a secure context (https) or localhost. Warn if not secure.
+		if (location && location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+			this.toast.show('Camera access requires a secure (https) connection. Please run on localhost or over https.', 'error');
+			return;
+		}
+
 		try {
-			this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-			this.cameraActive = true;
-					// attach stream to modal video element
-					const video: HTMLVideoElement | null = document.querySelector('#signupCameraModalVideo');
-			if (video) {
-				video.srcObject = this.mediaStream;
-				await video.play();
+			// avoid duplicate streams
+			if (this.mediaStream) {
+				// already streaming
+				this.cameraActive = true;
+				return;
 			}
-		} catch (e: any) {
-			this.toast.show('Unable to access camera: ' + (e?.message || e), 'error');
+
+			// check available devices first to give a clearer message
+			let devices = [] as MediaDeviceInfo[];
+			try {
+				devices = await navigator.mediaDevices.enumerateDevices();
+			} catch (enumErr) {
+				// ignore enumeration errors and proceed to getUserMedia which will surface a clearer error
+			}
+			const hasVideoInput = devices.some(d => d.kind === 'videoinput');
+			if (!hasVideoInput) {
+				this.toast.show('No camera device found on this machine.', 'error');
+				return;
+			}
+
+			// Try environment-facing first, fall back to user-facing or any available camera if needed
+			try {
+				this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+			} catch (firstErr) {
+				// If no device matches facingMode, try user-facing
+				try {
+					this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+				} catch (secondErr) {
+					// Finally try generic video:true
+					try {
+						this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+					} catch (thirdErr) {
+						throw thirdErr; // will be handled by outer catch
+					}
+				}
+			}
+			this.cameraActive = true;
+
+			// Attach the stream after the modal has rendered; use a small delay to ensure element exists
+			setTimeout(async () => {
+				try {
+					const video: HTMLVideoElement | null = document.querySelector('#signupCameraModalVideo');
+					if (video) {
+						video.srcObject = this.mediaStream;
+						// Some browsers require play() to be called in a user gesture; we're already inside click handler
+						await video.play().catch(() => { /* ignore play errors */ });
+					}
+				} catch (attachErr) {
+					console.warn('Failed to attach camera stream to video element', attachErr);
+				}
+			}, 50);
+
+		} catch (err: any) {
+			// Map common getUserMedia errors to friendly messages
+			const name = err?.name || '';
+			switch (name) {
+				case 'NotAllowedError':
+				case 'PermissionDeniedError':
+					this.toast.show('Camera permission was denied. Please allow camera access in your browser settings.', 'error');
+					break;
+				case 'NotFoundError':
+				case 'DevicesNotFoundError':
+					this.toast.show('No camera device found on this machine.', 'error');
+					break;
+				case 'NotReadableError':
+				case 'TrackStartError':
+					this.toast.show('Unable to access the camera. It may be in use by another application.', 'error');
+					break;
+				case 'OverconstrainedError':
+					this.toast.show('Unable to satisfy camera constraints.', 'error');
+					break;
+				default:
+					this.toast.show('Unable to access camera: ' + (err?.message || err), 'error');
+			}
+			console.warn('startCamera error', err);
 		}
 	}
 
@@ -201,7 +274,8 @@ export class SigngupFormComponent implements OnInit {
 			this.cameraModalOpen = true;
 			this.tempImagePreview = null;
 			this.tempFile = null;
-			this.startCamera();
+			// Delay starting the camera slightly so the modal's video element is in the DOM
+			setTimeout(() => this.startCamera(), 50);
 		}
 
 		async savePhoto() {

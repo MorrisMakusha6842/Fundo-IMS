@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, addDoc, doc, setDoc, updateDoc, query, collectionData, serverTimestamp, orderBy, where, getDocs, collectionGroup } from '@angular/fire/firestore';
-import { Auth } from '@angular/fire/auth';
-import { Observable, combineLatest, map, of } from 'rxjs';
+import { Firestore, collection, addDoc, doc, setDoc, updateDoc, query, collectionData, serverTimestamp, orderBy, where, getDocs, collectionGroup, writeBatch } from '@angular/fire/firestore';
+import { Auth, onAuthStateChanged } from '@angular/fire/auth';
+import { Observable, combineLatest, map, of, Subscription } from 'rxjs';
 import { InvoiceService, Invoice } from './invoice.service';
 
 export interface Message {
@@ -28,11 +28,21 @@ export interface Conversation {
 })
 export class NotificationService {
     private invoiceService = inject(InvoiceService);
+    private invoiceSubscription?: Subscription;
 
     constructor(
         private firestore: Firestore,
         private auth: Auth
-    ) { }
+    ) {
+        // Initialize realtime listener when user logs in
+        onAuthStateChanged(this.auth, (user) => {
+            if (user) {
+                this.startInvoiceListener(user.uid);
+            } else {
+                this.stopInvoiceListener();
+            }
+        });
+    }
 
     /**
      * Send a message to another user
@@ -83,39 +93,74 @@ export class NotificationService {
     }
 
     /**
+     * Stops the invoice listener subscription
+     */
+    private stopInvoiceListener() {
+        if (this.invoiceSubscription) {
+            this.invoiceSubscription.unsubscribe();
+            this.invoiceSubscription = undefined;
+        }
+    }
+
+    /**
+     * Realtime listener for proforma invoices.
+     * Automatically creates notifications when new invoices appear.
+     */
+    private startInvoiceListener(userId: string) {
+        this.stopInvoiceListener(); // Ensure no duplicate subscriptions
+
+        this.invoiceSubscription = this.invoiceService.getUserInvoices(userId, 'proforma').subscribe(async invoices => {
+            if (!invoices || invoices.length === 0) return;
+
+            // Get existing system messages to avoid duplicates
+            const systemRef = collection(this.firestore, 'notifications', userId, 'received', 'system', 'messages');
+            const snapshot = await getDocs(systemRef);
+            const existingInvoiceIds = new Set(snapshot.docs.map(d => d.id));
+
+            const batch = writeBatch(this.firestore);
+            let batchCount = 0;
+
+            invoices.forEach(inv => {
+                // Use invoice ID as the document ID to ensure idempotency
+                if (inv.id && !existingInvoiceIds.has(inv.id)) {
+                    const docRef = doc(this.firestore, 'notifications', userId, 'received', 'system', 'messages', inv.id);
+
+                    let ts = inv.createdAt;
+                    if (ts && typeof ts.toDate === 'function') {
+                        ts = ts.toDate().toISOString();
+                    } else if (!ts) {
+                        ts = new Date().toISOString();
+                    }
+
+                    const message: Message = {
+                        text: `New Proforma Invoice: ${inv.assetName}`,
+                        timestamp: ts,
+                        read: false, // Default to unread so user sees it
+                        senderId: 'system',
+                        recipientId: userId,
+                        type: 'invoice',
+                        invoiceData: inv
+                    };
+
+                    batch.set(docRef, message);
+                    batchCount++;
+                }
+            });
+
+            if (batchCount > 0) {
+                await batch.commit();
+                console.log(`Synced ${batchCount} system notifications`);
+            }
+        });
+    }
+
+    /**
      * Get conversation with a specific user (merge sent and received messages)
      */
     getConversation(otherUserId: string): Observable<Message[]> {
         const currentUser = this.auth.currentUser;
         if (!currentUser) {
             return new Observable(observer => observer.next([]));
-        }
-
-        // Handle System Notifications (Invoices)
-        if (otherUserId === 'system') {
-            return this.invoiceService.getUserInvoices(currentUser.uid, 'proforma').pipe(
-                map(invoices => {
-                    return invoices.map(inv => {
-                        // Handle Firestore Timestamp or Date string
-                        let ts = inv.createdAt;
-                        if (ts && typeof ts.toDate === 'function') {
-                            ts = ts.toDate().toISOString();
-                        } else if (!ts) {
-                            ts = new Date().toISOString();
-                        }
-
-                        return {
-                            text: `New Proforma Invoice: ${inv.assetName}`,
-                            timestamp: ts,
-                            read: true, // System messages are auto-read
-                            senderId: 'system',
-                            recipientId: currentUser.uid,
-                            type: 'invoice',
-                            invoiceData: inv
-                        } as Message;
-                    });
-                })
-            );
         }
 
         // Get sent messages to this user
@@ -206,7 +251,6 @@ export class NotificationService {
     async markAsRead(otherUserId: string): Promise<void> {
         const currentUser = this.auth.currentUser;
         if (!currentUser) return;
-        if (otherUserId === 'system') return; // Skip for system user
 
         try {
             const receivedRef = collection(
@@ -221,21 +265,15 @@ export class NotificationService {
             const q = query(receivedRef, where('read', '==', false));
             const snapshot = await getDocs(q);
 
-            const updatePromises = snapshot.docs.map(docSnapshot => {
-                const docRef = doc(
-                    this.firestore,
-                    'notifications',
-                    currentUser.uid,
-                    'received',
-                    otherUserId,
-                    'messages',
-                    docSnapshot.id
-                );
-                return updateDoc(docRef, { read: true });
+            if (snapshot.empty) return;
+
+            const batch = writeBatch(this.firestore);
+            snapshot.docs.forEach(docSnapshot => {
+                batch.update(docSnapshot.ref, { read: true });
             });
 
-            await Promise.all(updatePromises);
-            console.log('Messages marked as read');
+            await batch.commit();
+            console.log(`Marked ${snapshot.size} messages as read`);
         } catch (error) {
             console.error('Error marking messages as read:', error);
         }
@@ -254,6 +292,19 @@ export class NotificationService {
         );
         const q = query(invoicesRef, orderBy('createdAt', 'desc'));
         return collectionData(q, { idField: 'id' });
+    }
+
+    /**
+     * Get all unread messages for the current user (raw list).
+     * Used to calculate unread counts per sender.
+     */
+    getUnreadMessages(userId: string): Observable<Message[]> {
+        const messagesGroupRef = collectionGroup(this.firestore, 'messages');
+        const q = query(messagesGroupRef,
+            where('recipientId', '==', userId),
+            where('read', '==', false)
+        );
+        return collectionData(q) as Observable<Message[]>;
     }
 
     /**

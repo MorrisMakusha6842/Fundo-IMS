@@ -21,6 +21,11 @@
                     <p class="user-name">{{user.displayName || user.email || 'Unknown User'}}</p>
                     <p class="last-message">{{user.role || 'Client'}}</p>
                 </div>
+                
+                <!-- Unread Badge -->
+                <div class="unread-badge" *ngIf="unreadCounts[user.uid] > 0">
+                    {{ unreadCounts[user.uid] > 99 ? '99+' : unreadCounts[user.uid] }}
+                </div>
             </li>
 
             <li *ngIf="!isLoadingUsers && users.length === 0" class="user-item">
@@ -56,7 +61,8 @@
             <div *ngIf="isLoadingMessages" class="loading-text">Loading messages...</div>
 
             <div *ngIf="!isLoadingMessages && allMessages.length === 0" class="no-messages">
-                No messages yet. Start the conversation!
+                {{ selectedUser.uid === 'system' ? 'No system notifications.' : 'No messages yet. Start the
+                conversation!' }}
             </div>
 
             <div *ngIf="!isLoadingMessages && allMessages.length > 0 && filteredMessages.length === 0"

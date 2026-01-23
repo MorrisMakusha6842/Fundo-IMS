@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../services/user.service';
 import { NotificationService, Message } from '../services/notification.service';
+import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -15,6 +16,7 @@ import { Subscription } from 'rxjs';
 export class NotificationsComponent implements OnInit {
   private userService = inject(UserService);
   private notificationService = inject(NotificationService);
+  private authService = inject(AuthService);
 
   users: any[] = [];
   selectedUser: any = null;
@@ -26,16 +28,37 @@ export class NotificationsComponent implements OnInit {
 
   messageFilter: 'all' | 'read' | 'unread' = 'all';
 
+  unreadCounts: { [userId: string]: number } = {};
+
   private usersSubscription?: Subscription;
   private messagesSubscription?: Subscription;
+  private unreadSubscription?: Subscription;
 
   ngOnInit(): void {
     this.fetchAllUsers();
+
+    // Subscribe to unread counts
+    this.authService.user$.subscribe(user => {
+      if (user) {
+        this.subscribeToUnread(user.uid);
+      }
+    });
+  }
+
+  subscribeToUnread(uid: string) {
+    this.unreadSubscription?.unsubscribe();
+    this.unreadSubscription = this.notificationService.getUnreadMessages(uid).subscribe(msgs => {
+      this.unreadCounts = {};
+      msgs.forEach(m => {
+        this.unreadCounts[m.senderId] = (this.unreadCounts[m.senderId] || 0) + 1;
+      });
+    });
   }
 
   ngOnDestroy(): void {
     this.usersSubscription?.unsubscribe();
     this.messagesSubscription?.unsubscribe();
+    this.unreadSubscription?.unsubscribe();
   }
 
   fetchAllUsers() {
@@ -78,8 +101,9 @@ export class NotificationsComponent implements OnInit {
         this.applyFilter();
         this.isLoadingMessages = false;
 
-        // Mark messages as read
-        if (userId !== 'system') {
+        // Only mark as read if there are unread messages from this sender
+        const hasUnread = messages.some(m => !m.read && m.senderId === userId);
+        if (hasUnread) {
           this.notificationService.markAsRead(userId);
         }
       },
