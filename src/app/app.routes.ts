@@ -7,7 +7,7 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { NotificationsComponent } from './notifications/notifications.component';
-import { ReminderComponent } from './reminder/reminder.component';
+import { RemindersComponent } from './services/reminders.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
 import { BillingComponent } from './billing/billing.component';
 import { PoliciesComponent } from './policies/policies.component';
@@ -39,7 +39,7 @@ export const routes: Routes = [
       { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
       { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] },
       { path: 'notifications', component: NotificationsComponent, canActivate: [AuthGuard] },
-      { path: 'reminder', component: ReminderComponent, canActivate: [AuthGuard] },
+      { path: 'reminders', component: RemindersComponent, canActivate: [AuthGuard] },
       { path: 'analytics', component: AnalyticsComponent, canActivate: [AuthGuard] },
       { path: 'billing', component: BillingComponent, canActivate: [AuthGuard] },
       { path: 'policies', component: PoliciesComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
