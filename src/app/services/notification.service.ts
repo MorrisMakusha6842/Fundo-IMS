@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, addDoc, doc, setDoc, updateDoc, query, collectionData, serverTimestamp, orderBy, where, getDocs, collectionGroup, writeBatch } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, doc, setDoc, updateDoc, query, collectionData, serverTimestamp, orderBy, where, getDocs, collectionGroup, writeBatch, onSnapshot } from '@angular/fire/firestore';
 import { Auth, onAuthStateChanged } from '@angular/fire/auth';
 import { Observable, combineLatest, map, of, Subscription } from 'rxjs';
 import { InvoiceService, Invoice } from './invoice.service';
@@ -304,7 +304,20 @@ export class NotificationService {
             where('recipientId', '==', userId),
             where('read', '==', false)
         );
-        return collectionData(q) as Observable<Message[]>;
+
+        return new Observable<Message[]>(observer => {
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const messages: Message[] = [];
+                snapshot.forEach(doc => {
+                    // Filter to ensure we only count messages in the 'received' subcollection
+                    if (doc.ref.path.includes('/received/')) {
+                        messages.push(doc.data() as Message);
+                    }
+                });
+                observer.next(messages);
+            }, error => observer.error(error));
+            return () => unsubscribe();
+        });
     }
 
     /**
@@ -324,6 +337,18 @@ export class NotificationService {
             where('read', '==', false)
         );
 
-        return collectionData(q).pipe(map(messages => messages.length));
+        return new Observable<number>(observer => {
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                let count = 0;
+                snapshot.forEach(doc => {
+                    // Filter to ensure we only count messages in the 'received' subcollection
+                    if (doc.ref.path.includes('/received/')) {
+                        count++;
+                    }
+                });
+                observer.next(count);
+            }, error => observer.error(error));
+            return () => unsubscribe();
+        });
     }
 }

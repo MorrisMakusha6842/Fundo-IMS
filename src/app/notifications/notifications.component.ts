@@ -35,12 +35,11 @@ export class NotificationsComponent implements OnInit {
   private unreadSubscription?: Subscription;
 
   ngOnInit(): void {
-    this.fetchAllUsers();
-
-    // Subscribe to unread counts
+    // Subscribe to auth state to get current user ID for filtering and unread counts
     this.authService.user$.subscribe(user => {
       if (user) {
         this.subscribeToUnread(user.uid);
+        this.fetchAllUsers(user.uid);
       }
     });
   }
@@ -61,8 +60,10 @@ export class NotificationsComponent implements OnInit {
     this.unreadSubscription?.unsubscribe();
   }
 
-  fetchAllUsers() {
+  fetchAllUsers(currentUserId: string) {
     this.isLoadingUsers = true;
+    this.usersSubscription?.unsubscribe(); // Ensure we don't have duplicate subscriptions
+
     this.usersSubscription = this.userService.getAllUsers().subscribe({
       next: (users) => {
         // Add System User for Notifications
@@ -73,7 +74,11 @@ export class NotificationsComponent implements OnInit {
           role: 'System',
           avatarDataUrl: null
         };
-        this.users = [systemUser, ...users];
+
+        // Filter out the current authenticated user from the list
+        const filteredUsers = users.filter(u => u.uid !== currentUserId);
+
+        this.users = [systemUser, ...filteredUsers];
         this.isLoadingUsers = false;
       },
       error: (error) => {
@@ -101,7 +106,8 @@ export class NotificationsComponent implements OnInit {
         this.applyFilter();
         this.isLoadingMessages = false;
 
-        // Only mark as read if there are unread messages from this sender
+        // Trigger the read status update.
+        // This updates the message document status (read: true) in Firestore.
         const hasUnread = messages.some(m => !m.read && m.senderId === userId);
         if (hasUnread) {
           this.notificationService.markAsRead(userId);
@@ -140,6 +146,36 @@ export class NotificationsComponent implements OnInit {
       this.newMessage = '';
     } catch (error) {
       console.error('Error sending message:', error);
+    }
+  }
+
+  shouldShowDateSeparator(currentMessage: Message, previousMessage: Message | undefined): boolean {
+    if (!previousMessage) return true;
+
+    const currentDate = new Date(currentMessage.timestamp);
+    const previousDate = new Date(previousMessage.timestamp);
+
+    return !this.isSameDay(currentDate, previousDate);
+  }
+
+  private isSameDay(d1: Date, d2: Date): boolean {
+    return d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate();
+  }
+
+  getDateLabel(timestamp: any): string {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (this.isSameDay(date, today)) {
+      return 'Today';
+    } else if (this.isSameDay(date, yesterday)) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
     }
   }
 
