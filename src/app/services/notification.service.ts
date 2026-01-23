@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, addDoc, doc, setDoc, updateDoc, query, collectionData, serverTimestamp, orderBy, where, getDocs, collectionGroup, writeBatch, onSnapshot } from '@angular/fire/firestore';
 import { Auth, onAuthStateChanged } from '@angular/fire/auth';
-import { Observable, combineLatest, map, of, Subscription } from 'rxjs';
+import { Observable, combineLatest, map, of, Subscription, BehaviorSubject } from 'rxjs';
 import { InvoiceService, Invoice } from './invoice.service';
 
 export interface Message {
@@ -30,6 +30,10 @@ export class NotificationService {
     private invoiceService = inject(InvoiceService);
     private invoiceSubscription?: Subscription;
 
+    private unreadMessagesSubject = new BehaviorSubject<Message[]>([]);
+    public unreadMessages$ = this.unreadMessagesSubject.asObservable();
+    private unreadListenerUnsubscribe: (() => void) | undefined;
+
     constructor(
         private firestore: Firestore,
         private auth: Auth
@@ -38,8 +42,10 @@ export class NotificationService {
         onAuthStateChanged(this.auth, (user) => {
             if (user) {
                 this.startInvoiceListener(user.uid);
+                this.startUnreadListener(user.uid);
             } else {
                 this.stopInvoiceListener();
+                this.stopUnreadListener();
             }
         });
     }
@@ -100,6 +106,45 @@ export class NotificationService {
             this.invoiceSubscription.unsubscribe();
             this.invoiceSubscription = undefined;
         }
+    }
+
+    /**
+     * Stops the unread messages listener
+     */
+    private stopUnreadListener() {
+        if (this.unreadListenerUnsubscribe) {
+            this.unreadListenerUnsubscribe();
+            this.unreadListenerUnsubscribe = undefined;
+        }
+        this.unreadMessagesSubject.next([]);
+    }
+
+    /**
+     * Realtime listener for ALL unread messages (including system).
+     * Updates the central BehaviorSubject.
+     */
+    private startUnreadListener(userId: string) {
+        this.stopUnreadListener();
+
+        const messagesGroupRef = collectionGroup(this.firestore, 'messages');
+        const q = query(messagesGroupRef,
+            where('recipientId', '==', userId),
+            where('read', '==', false)
+        );
+
+        this.unreadListenerUnsubscribe = onSnapshot(q, (snapshot) => {
+            const messages: Message[] = [];
+            snapshot.docs.forEach(doc => {
+                // Filter to ensure we only count messages in the 'received' subcollection
+                // This avoids counting the sender's copy of the message which also matches the query
+                if (doc.ref.path.includes('/received/')) {
+                    messages.push(doc.data() as Message);
+                }
+            });
+            this.unreadMessagesSubject.next(messages);
+        }, error => {
+            console.error('Error in unread listener:', error);
+        });
     }
 
     /**
@@ -299,25 +344,8 @@ export class NotificationService {
      * Used to calculate unread counts per sender.
      */
     getUnreadMessages(userId: string): Observable<Message[]> {
-        const messagesGroupRef = collectionGroup(this.firestore, 'messages');
-        const q = query(messagesGroupRef,
-            where('recipientId', '==', userId),
-            where('read', '==', false)
-        );
-
-        return new Observable<Message[]>(observer => {
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                const messages: Message[] = [];
-                snapshot.forEach(doc => {
-                    // Filter to ensure we only count messages in the 'received' subcollection
-                    if (doc.ref.path.includes('/received/')) {
-                        messages.push(doc.data() as Message);
-                    }
-                });
-                observer.next(messages);
-            }, error => observer.error(error));
-            return () => unsubscribe();
-        });
+        // Return the centralized subject (userId arg is handled by startUnreadListener on auth change)
+        return this.unreadMessages$;
     }
 
     /**
@@ -326,29 +354,19 @@ export class NotificationService {
      * The index should be on the 'messages' collection, with fields 'recipientId' (ascending) and 'read' (ascending).
      */
     getUnreadCount(): Observable<number> {
-        const currentUser = this.auth.currentUser;
-        if (!currentUser) {
-            return of(0);
-        }
+        return this.unreadMessages$.pipe(map(msgs => msgs.length));
+    }
 
-        const messagesGroupRef = collectionGroup(this.firestore, 'messages');
-        const q = query(messagesGroupRef,
-            where('recipientId', '==', currentUser.uid),
-            where('read', '==', false)
-        );
-
-        return new Observable<number>(observer => {
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                let count = 0;
-                snapshot.forEach(doc => {
-                    // Filter to ensure we only count messages in the 'received' subcollection
-                    if (doc.ref.path.includes('/received/')) {
-                        count++;
-                    }
-                });
-                observer.next(count);
-            }, error => observer.error(error));
-            return () => unsubscribe();
-        });
+    /**
+     * Get a map of unread message counts by senderId.
+     */
+    getUnreadCountMap(): Observable<{ [senderId: string]: number }> {
+        return this.unreadMessages$.pipe(map(msgs => {
+            const counts: { [senderId: string]: number } = {};
+            msgs.forEach(m => {
+                counts[m.senderId] = (counts[m.senderId] || 0) + 1;
+            });
+            return counts;
+        }));
     }
 }

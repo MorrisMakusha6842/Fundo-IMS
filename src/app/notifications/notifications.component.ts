@@ -38,19 +38,16 @@ export class NotificationsComponent implements OnInit {
     // Subscribe to auth state to get current user ID for filtering and unread counts
     this.authService.user$.subscribe(user => {
       if (user) {
-        this.subscribeToUnread(user.uid);
+        this.subscribeToUnread();
         this.fetchAllUsers(user.uid);
       }
     });
   }
 
-  subscribeToUnread(uid: string) {
+  subscribeToUnread() {
     this.unreadSubscription?.unsubscribe();
-    this.unreadSubscription = this.notificationService.getUnreadMessages(uid).subscribe(msgs => {
-      this.unreadCounts = {};
-      msgs.forEach(m => {
-        this.unreadCounts[m.senderId] = (this.unreadCounts[m.senderId] || 0) + 1;
-      });
+    this.unreadSubscription = this.notificationService.getUnreadCountMap().subscribe(counts => {
+      this.unreadCounts = counts;
     });
   }
 
