@@ -99,9 +99,13 @@ export class MainLayoutComponent implements OnInit {
         return;
       }
 
-      // Check for USA agreement in profile (usa map with usaStatus)
       const usaAgreed = profile?.['usa']?.['usaStatus'] === 'agreed';
       this.showAccountInit = !usaAgreed;
+
+      if (usaAgreed) {
+        // User is already initialized, check if they have any missing asset docs
+        this.toast.checkAssetCompliance(uid);
+      }
     } catch (err) {
       console.warn('Failed to check user init', err);
       // be conservative: if we cannot check, don't block access; hide modal

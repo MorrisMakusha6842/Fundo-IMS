@@ -109,6 +109,10 @@ export class AccountInitialisingComponent implements OnInit, AfterViewInit, OnDe
       await this.assetsService.addVehicleAsset(vehicleData as any);
 
       this.toast.show('Account activation submitted', 'success');
+
+      // Trigger asset compliance check for the new user
+      this.toast.checkAssetCompliance(uid);
+
       // emit close so parent can hide modal and re-check
       this.close.emit();
     } catch (err: any) {
