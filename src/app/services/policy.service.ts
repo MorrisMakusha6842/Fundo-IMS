@@ -65,4 +65,20 @@ export class PolicyService {
         const docRef = doc(this.firestore, `sub-categories/${subCategoryId}/policies`, policyId);
         return updateDoc(docRef, data);
     }
+
+    /**
+     * Fetches policies for a specific sub-category.
+     */
+    getPoliciesBySubCategory(subCategoryId: string): Observable<any[]> {
+        const colRef = collection(this.firestore, `sub-categories/${subCategoryId}/policies`);
+        return collectionData(colRef, { idField: 'id' });
+    }
+
+    /**
+     * Fetches packages for a specific policy.
+     */
+    getPolicyPackages(policyId: string): Observable<any[]> {
+        const q = query(collectionGroup(this.firestore, 'packages'), where('policyId', '==', policyId));
+        return collectionData(q, { idField: 'id' });
+    }
 }

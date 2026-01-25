@@ -1,0 +1,137 @@
+<div class="modal-overlay" (click)="closeModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+        <button class="btn-close-modal" (click)="closeModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+
+        <div *ngIf="isLoading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading Policy Details...</p>
+        </div>
+
+        <div *ngIf="!isLoading && policy" class="content-wrapper">
+            <!-- LEFT PANEL: POLICY DETAILS -->
+            <div class="policy-details-panel">
+                <div class="panel-header">
+                    <span class="policy-category-badge">{{ policy.category || 'Insurance' }}</span>
+                    <h1>{{ policy.policyName || policy.name }}</h1>
+                    <p class="policy-description">{{ policy.description }}</p>
+                </div>
+
+                <div class="panel-body">
+                    <div class="detail-section" *ngIf="policy.features">
+                        <h3>Key Features</h3>
+                        <ul class="features-list">
+                            <li *ngFor="let feature of policy.features">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                <span>{{ feature }}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>Coverage Details</h3>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <span class="label">Base Coverage</span>
+                                <span class="value">{{ (policy.coverageAmount || 0) | currency }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Base Premium</span>
+                                <span class="value">{{ (policy.premiumAmount || 0) | currency }}/mo</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Deductible</span>
+                                <span class="value">{{ (policy.deductible || 0) | currency }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Default Term</span>
+                                <span class="value">{{ policy.term || '12 Months' }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section" *ngIf="packages.length > 0">
+                        <h3>Available Packages</h3>
+                        <div class="packages-list">
+                            <div *ngFor="let pkg of packages" class="package-item">
+                                <h4>{{ pkg.name }}</h4>
+                                <p>{{ pkg.description }}</p>
+                                <span class="price">{{ pkg.price | currency }}/mo</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL / ACCORDION: GET QUOTE -->
+            <div class="quote-form-wrapper" [class.accordion-open]="isQuoteAccordionOpen">
+                <div class="quote-form-header" (click)="isQuoteAccordionOpen = !isQuoteAccordionOpen">
+                    <h2>Get a Quote</h2>
+                    <svg class="accordion-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+
+                <div class="quote-form-body">
+                    <div class="form-group">
+                        <label>Select Asset to Insure</label>
+                        <select [(ngModel)]="selectedAssetId" (ngModelChange)="onAssetChange($event)"
+                            class="asset-select">
+                            <option [ngValue]="null" disabled>Choose a vehicle...</option>
+                            <option *ngFor="let asset of availableAssets" [value]="asset.id">
+                                {{ asset.year }} {{ asset.make }} - {{ asset.assetValue | currency }}
+                            </option>
+                        </select>
+                        <p class="hint" *ngIf="availableAssets.length === 0">No registered assets found.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Payment Frequency</label>
+                        <div class="frequency-toggle">
+                            <div class="toggle-option" [class.selected]="paymentFrequency === 'monthly'"
+                                (click)="paymentFrequency = 'monthly'">
+                                <span>Monthly</span>
+                            </div>
+                            <div class="toggle-option" [class.selected]="paymentFrequency === 'annually'"
+                                (click)="paymentFrequency = 'annually'">
+                                <span>Annually</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-card">
+                        <h3>Estimated Premium</h3>
+                        <div class="premium-display">
+                            <span class="amount">
+                                {{ (paymentFrequency === 'monthly' ? (quotePremium / 12) : quotePremium) |
+                                currency:'USD':'symbol':'1.2-2' }}
+                            </span>
+                            <span class="period">/ {{ paymentFrequency === 'monthly' ? 'mo' : 'yr' }}</span>
+                        </div>
+                        <div class="breakdown" *ngIf="quotePremium > 0">
+                            Based on 4% of selected asset value.
+                        </div>
+                    </div>
+
+                    <div class="quote-actions">
+                        <button class="btn-secondary" (click)="saveQuote()" [disabled]="!selectedAssetId">Save
+                            Quote</button>
+                        <button class="btn-primary" (click)="purchasePackage()"
+                            [disabled]="!selectedAssetId">Purchase</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

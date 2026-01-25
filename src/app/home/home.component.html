@@ -40,7 +40,7 @@
                 </div>
 
                 <!-- Policy Card -->
-                <div class="policy-card" *ngFor="let policy of policies">
+                <div class="policy-card" *ngFor="let policy of policies" (click)="openPolicyModal(policy)">
                     <div class="card-content">
                         <h3>{{ policy.policyName || policy.name || 'Unnamed Policy' }}</h3>
                         <p class="description">{{ policy.description || 'Comprehensive coverage for your needs.' }}</p>
@@ -365,3 +365,6 @@
 
     </div>
 </div>
+
+<!-- Policy Detail Modal (Child Component) -->
+<app-policy-detail-modal [policy]="selectedPolicy" (close)="closePolicyModal()"></app-policy-detail-modal>

@@ -8,11 +8,12 @@ import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { Observable, BehaviorSubject, of, combineLatest } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
-import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
+import { FormsModule } from '@angular/forms';
+import { PolicyDetailModalComponent } from './policy-detail-modal.component';
 
 @Component({
   selector: 'app-home',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PolicyDetailModalComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
@@ -54,6 +55,9 @@ export class HomeComponent implements OnInit {
   activePolicies: any[] = [];
   lapsedPolicies: any[] = [];
 
+  // Policy Modal State
+  selectedPolicy: any = null;
+
   ngOnInit() {
     this.subCategories$ = this.policyService.getSubCategories();
 
@@ -63,8 +67,7 @@ export class HomeComponent implements OnInit {
           return this.policyService.getAllPolicies();
         } else {
           // Fetch policies for specific sub-category
-          const colRef = collection(this.firestore, `sub-categories/${categoryId}/policies`);
-          return collectionData(colRef, { idField: 'id' });
+          return this.policyService.getPoliciesBySubCategory(categoryId);
         }
       }),
       catchError(err => {
@@ -81,16 +84,16 @@ export class HomeComponent implements OnInit {
       switchMap(([user, role]) => {
         this.isLoadingAssets = true;
         if (!user) return of([]);
-        
+
         this.fetchUserProfile(user.uid);
-        
+
         if (role === 'admin' || role === 'agent') {
           return this.assetsService.getAllVehicles();
         }
         return this.assetsService.getUserVehicles(user.uid);
       })
     ).subscribe(assets => {
-      this.allUserAssets = assets;
+      this.availableAssets = assets;
       this.processAssetsForPolicies(assets);
       this.totalAssets = assets.length;
       this.totalAssetPages = Math.ceil(this.totalAssets / this.assetPageSize);
@@ -180,7 +183,7 @@ export class HomeComponent implements OnInit {
   }
 
   // Refactored Pagination Logic needed to access 'allAssets'
-  private allUserAssets: VehicleAsset[] = [];
+  public availableAssets: VehicleAsset[] = [];
 
   selectCategory(categoryId: string) {
     const current = this.selectedCategorySubject.value;
@@ -203,7 +206,7 @@ export class HomeComponent implements OnInit {
 
   getExpiryStatus(asset: VehicleAsset): 'UP TO DATE' | 'ATTENTION NEEDED' {
     const policyDoc = asset.documents?.find((doc: any) => doc.field === 'Insurance Policy');
-    
+
     if (!policyDoc || !policyDoc.expiryDate) return 'ATTENTION NEEDED';
 
     const expiry = new Date(policyDoc.expiryDate);
@@ -219,7 +222,7 @@ export class HomeComponent implements OnInit {
     const newPage = this.assetPage + offset;
     if (newPage >= 1 && newPage <= this.totalAssetPages) {
       this.assetPage = newPage;
-      this.updateAssetPagination(this.allUserAssets);
+      this.updateAssetPagination(this.availableAssets);
     }
   }
 
@@ -249,5 +252,13 @@ export class HomeComponent implements OnInit {
 
   navigateTo(path: string) {
     this.router.navigate([path]);
+  }
+
+  openPolicyModal(policy: any) {
+    this.selectedPolicy = policy;
+  }
+
+  closePolicyModal() {
+    this.selectedPolicy = null;
   }
 }
