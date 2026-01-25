@@ -5,6 +5,7 @@ import { UserService } from '../services/user.service';
 import { NotificationService, Message } from '../services/notification.service';
 import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-notifications',
@@ -17,6 +18,7 @@ export class NotificationsComponent implements OnInit {
   private userService = inject(UserService);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
+  private router = inject(Router);
 
   users: any[] = [];
   selectedUser: any = null;
@@ -180,5 +182,11 @@ export class NotificationsComponent implements OnInit {
     if (!user) return 'U';
     const name = user.displayName || user.email || 'User';
     return name.charAt(0).toUpperCase();
+  }
+
+  viewAsset(assetId?: string) {
+    if (assetId) {
+      this.router.navigate(['/main-layout/asset-registry']);
+    }
   }
 }

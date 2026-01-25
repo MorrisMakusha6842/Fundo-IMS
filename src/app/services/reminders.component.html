@@ -50,7 +50,7 @@
                     <td>{{ reminder.dueDate.toDate() | date:'medium' }}</td>
                     <td>
                         <span class="badge" [ngClass]="reminder.type === 'custom' ? 'pending' : 'active'">
-                            {{ reminder.type }}
+                            {{ reminder.type === 'asset_expiry' ? 'Asset Expiry' : 'Custom' }}
                         </span>
                     </td>
                     <td>

@@ -83,7 +83,7 @@
                         [style.border]="message.type === 'invoice' ? '1px solid #e5e5ea' : ''">
 
                         <!-- Invoice Message Type -->
-                        <div *ngIf="message.type === 'invoice'; else textMessage" class="invoice-message">
+                        <div *ngIf="message.type === 'invoice'" class="invoice-message">
                             <div
                                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e5e5ea; padding-bottom: 8px;">
                                 <strong style="font-size: 13px;">Invoice
@@ -101,10 +101,21 @@
                             </div>
                         </div>
 
+                        <!-- Asset Message Type -->
+                        <div *ngIf="message.type === 'asset'" class="invoice-message">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e5e5ea; padding-bottom: 8px;">
+                                <strong style="font-size: 13px;">New Asset</strong>
+                                <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #fff7ed; color: #c2410c;">Pending</span>
+                            </div>
+                            <p style="margin: 0 0 8px 0; font-size: 14px;">{{message.text}}</p>
+                            <div style="display: flex; justify-content: flex-end;">
+                                <button style="background: #0071e3; color: white; border: none; padding: 4px 12px; border-radius: 12px; font-size: 12px; cursor: pointer;"
+                                    (click)="viewAsset(message.assetId)">Verify</button>
+                            </div>
+                        </div>
+
                         <!-- Standard Text Message -->
-                        <ng-template #textMessage>
-                            <p class="message-text">{{message.text}}</p>
-                        </ng-template>
+                        <p *ngIf="!message.type || message.type === 'text'" class="message-text">{{message.text}}</p>
 
                         <span class="message-time">{{message.timestamp | date:'shortTime'}}</span>
                     </div>

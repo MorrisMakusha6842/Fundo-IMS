@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { Router } from '@angular/router';
 
 type ToastType = 'info' | 'success' | 'error' | 'warn';
 
@@ -7,6 +8,7 @@ import { AssetsService } from './assets.service';
 @Injectable({ providedIn: 'root' })
 export class ToastService {
   private container?: HTMLElement;
+  private router = inject(Router);
 
   constructor(private assetsService: AssetsService) { }
 
@@ -28,7 +30,7 @@ export class ToastService {
     return c;
   }
 
-  show(message: string, type: ToastType = 'info', duration = 4000, dismissible = false, title?: string) {
+  show(message: string, type: ToastType = 'info', duration = 4000, dismissible = false, title?: string, onClick?: () => void) {
     const c = this.ensureContainer();
     const t = document.createElement('div');
     t.className = `app-toast app-toast-${type}`;
@@ -168,8 +170,16 @@ export class ToastService {
 
     timeout = setTimeout(() => this.removeToast(t), duration);
 
-    // If not dismissible, click to close
-    if (!dismissible) {
+    // If onClick action is provided, click to execute
+    if (onClick) {
+      t.style.cursor = 'pointer';
+      t.addEventListener('click', () => {
+        onClick();
+        if (timeout) clearTimeout(timeout);
+        this.removeToast(t);
+      });
+    } else if (!dismissible) {
+      // If not dismissible and no action, click to close
       t.addEventListener('click', () => {
         clearTimeout(timeout);
         this.removeToast(t);
@@ -198,6 +208,18 @@ export class ToastService {
         }
       },
       error: (err) => console.error('Error checking asset compliance', err)
+    });
+  }
+
+  /**
+   * Shows a notification toast for a new message.
+   */
+  showNotification(senderId: string, messageText: string) {
+    const title = senderId === 'system' ? 'System Notification' : 'New Message';
+    // Truncate message if it's too long
+    const displayContent = messageText.length > 60 ? messageText.substring(0, 60) + '...' : messageText;
+    this.show(displayContent, 'info', 5000, true, title, () => {
+      this.router.navigate(['/main-layout/notifications']);
     });
   }
 }

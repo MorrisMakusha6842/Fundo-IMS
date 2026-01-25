@@ -7,6 +7,8 @@ import { UserService } from '../services/user.service';
 import { AuthService } from '../services/auth.service';
 import { ToastService } from '../services/toast.service';
 import { Firestore } from '@angular/fire/firestore';
+import { RemindersService } from '../services/reminders.service';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-main-layout',
@@ -33,6 +35,7 @@ export class MainLayoutComponent implements OnInit {
   private router = inject(Router);
   private userService = inject(UserService);
   private firestore = inject(Firestore);
+  private remindersService = inject(RemindersService);
 
   // Expose user role for template
   userRole$ = this.auth.userRole$;
@@ -105,6 +108,7 @@ export class MainLayoutComponent implements OnInit {
       if (usaAgreed) {
         // User is already initialized, check if they have any missing asset docs
         this.toast.checkAssetCompliance(uid);
+        this.checkReminders(uid);
       }
     } catch (err) {
       console.warn('Failed to check user init', err);
@@ -113,6 +117,28 @@ export class MainLayoutComponent implements OnInit {
     } finally {
       this.isCheckingInit = false;
     }
+  }
+
+  private checkReminders(uid: string) {
+    this.remindersService.getReminders().pipe(take(1)).subscribe(reminders => {
+      const now = new Date();
+      const warningThreshold = new Date();
+      warningThreshold.setDate(now.getDate() + 14); // Warn 14 days in advance
+
+      let expiryCount = 0;
+      reminders.forEach(r => {
+        const due = r.dueDate.toDate ? r.dueDate.toDate() : new Date(r.dueDate);
+        if (r.type === 'asset_expiry' && due > now && due <= warningThreshold) {
+          expiryCount++;
+        }
+      });
+
+      if (expiryCount > 0) {
+        this.toast.show(`You have ${expiryCount} assets expiring soon. Check Reminders.`, 'warn', 10000, true, 'Expiries Detected', () => {
+          this.router.navigate(['/main-layout/reminders']);
+        });
+      }
+    });
   }
 
   async onAccountInitClose() {

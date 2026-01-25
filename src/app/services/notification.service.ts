@@ -3,6 +3,9 @@ import { Firestore, collection, addDoc, doc, setDoc, updateDoc, query, collectio
 import { Auth, onAuthStateChanged } from '@angular/fire/auth';
 import { Observable, combineLatest, map, of, Subscription, BehaviorSubject } from 'rxjs';
 import { InvoiceService, Invoice } from './invoice.service';
+import { ToastService } from './toast.service';
+import { AssetsService } from './assets.service';
+import { UserService } from './user.service';
 
 export interface Message {
     text: string;
@@ -10,8 +13,9 @@ export interface Message {
     read: boolean;
     senderId: string;
     recipientId: string;
-    type?: 'text' | 'invoice';
+    type?: 'text' | 'invoice' | 'asset';
     invoiceData?: Invoice;
+    assetId?: string;
 }
 
 export interface Conversation {
@@ -28,7 +32,11 @@ export interface Conversation {
 })
 export class NotificationService {
     private invoiceService = inject(InvoiceService);
+    private toastService = inject(ToastService);
+    private assetsService = inject(AssetsService);
+    private userService = inject(UserService);
     private invoiceSubscription?: Subscription;
+    private assetSubscription?: Subscription;
 
     private unreadMessagesSubject = new BehaviorSubject<Message[]>([]);
     public unreadMessages$ = this.unreadMessagesSubject.asObservable();
@@ -39,13 +47,24 @@ export class NotificationService {
         private auth: Auth
     ) {
         // Initialize realtime listener when user logs in
-        onAuthStateChanged(this.auth, (user) => {
+        onAuthStateChanged(this.auth, async (user) => {
             if (user) {
                 this.startInvoiceListener(user.uid);
                 this.startUnreadListener(user.uid);
+
+                // Check role for asset listener (Admins/Agents only)
+                try {
+                    const profile = await this.userService.getUserProfile(user.uid);
+                    if (profile && (profile['role'] === 'admin' || profile['role'] === 'agent')) {
+                        this.startAssetListener(user.uid);
+                    }
+                } catch (e) {
+                    console.error('Error checking role for notifications', e);
+                }
             } else {
                 this.stopInvoiceListener();
                 this.stopUnreadListener();
+                this.stopAssetListener();
             }
         });
     }
@@ -108,6 +127,13 @@ export class NotificationService {
         }
     }
 
+    private stopAssetListener() {
+        if (this.assetSubscription) {
+            this.assetSubscription.unsubscribe();
+            this.assetSubscription = undefined;
+        }
+    }
+
     /**
      * Stops the unread messages listener
      */
@@ -132,6 +158,8 @@ export class NotificationService {
             where('read', '==', false)
         );
 
+        let isFirstRun = true;
+
         this.unreadListenerUnsubscribe = onSnapshot(q, (snapshot) => {
             const messages: Message[] = [];
             snapshot.docs.forEach(doc => {
@@ -142,6 +170,19 @@ export class NotificationService {
                 }
             });
             this.unreadMessagesSubject.next(messages);
+
+            // Notify user of new messages (skipping the initial load of existing messages)
+            if (!isFirstRun) {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === 'added') {
+                        const msg = change.doc.data() as Message;
+                        if (change.doc.ref.path.includes('/received/')) {
+                            this.toastService.showNotification(msg.senderId, msg.text);
+                        }
+                    }
+                });
+            }
+            isFirstRun = false;
         }, error => {
             console.error('Error in unread listener:', error);
         });
@@ -195,6 +236,62 @@ export class NotificationService {
             if (batchCount > 0) {
                 await batch.commit();
                 console.log(`Synced ${batchCount} system notifications`);
+            }
+        });
+    }
+
+    /**
+     * Realtime listener for newly registered assets.
+     * Notifies admins/agents when a pending asset has documents uploaded.
+     */
+    private startAssetListener(userId: string) {
+        this.stopAssetListener();
+
+        this.assetSubscription = this.assetsService.getAllVehicles().subscribe(async vehicles => {
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setHours(oneWeekAgo.getHours() - 168);
+
+            // Filter for pending assets that have recent documents
+            const pendingAssets = vehicles.filter(asset => {
+                if (asset.status !== 'Pending') return false;
+                if (!asset.documents || asset.documents.length === 0) return false;
+                
+                // Check if any document is recent
+                return asset.documents.some((doc: any) => {
+                     const uploadDate = doc.uploadedAt ? new Date(doc.uploadedAt) : null;
+                     return uploadDate && uploadDate > oneWeekAgo;
+                });
+            });
+
+            if (pendingAssets.length === 0) return;
+
+            const systemRef = collection(this.firestore, 'notifications', userId, 'received', 'system', 'messages');
+            const snapshot = await getDocs(systemRef);
+            const existingIds = new Set(snapshot.docs.map(d => d.id));
+
+            const batch = writeBatch(this.firestore);
+            let count = 0;
+
+            pendingAssets.forEach(asset => {
+                if (asset.id && !existingIds.has(asset.id)) {
+                    const docRef = doc(this.firestore, 'notifications', userId, 'received', 'system', 'messages', asset.id);
+                    const message: Message = {
+                        text: `New Asset Registration: ${asset.year} ${asset.make} (${asset.numberPlate})`,
+                        timestamp: new Date().toISOString(),
+                        read: false,
+                        senderId: 'system',
+                        recipientId: userId,
+                        type: 'asset',
+                        assetId: asset.id
+                    };
+                    batch.set(docRef, message);
+                    count++;
+                }
+            });
+
+            if (count > 0) {
+                await batch.commit();
+                console.log(`Synced ${count} asset notifications`);
             }
         });
     }
