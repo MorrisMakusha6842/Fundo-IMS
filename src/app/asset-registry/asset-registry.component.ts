@@ -39,6 +39,13 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
   private invoiceService = inject(InvoiceService);
   private assetsSubscription?: Subscription;
 
+  // Camera State
+  cameraModalOpen = false;
+  mediaStream: MediaStream | null = null;
+  tempImagePreview: string | null = null;
+  tempFile: File | null = null;
+  activeCameraContext: { mode: 'add' | 'edit', index?: number, controlName: string } | null = null;
+
   // ... (existing code)
 
 
@@ -55,10 +62,15 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
     policyDeploymentDate: [''],
     policyExpiryDate: [''],
     vehicleRegistrationBook: [null],
+    vehicleRegistrationBookExpiry: [''],
     radioLicense: [null],
+    radioLicenseExpiry: [''],
     driversLicense: [null],
+    driversLicenseExpiry: [''],
     insurancePolicy: [null],
-    vehicleDocumentation: [null]
+    insurancePolicyExpiry: [''],
+    vehicleDocumentation: [null],
+    vehicleDocumentationExpiry: ['']
   });
 
   ngOnInit(): void {
@@ -319,6 +331,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             type: v.vehicleRegistrationBook.type,
             storageData: v.vehicleRegistrationBook.storageData,
             field: 'Vehicle Registration Book',
+            expiryDate: v.vehicleRegistrationBookExpiry || null,
             uploadedAt: v.vehicleRegistrationBook.uploadedAt || new Date().toISOString()
           });
         }
@@ -328,6 +341,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             type: v.radioLicense.type,
             storageData: v.radioLicense.storageData,
             field: 'Radio License',
+            expiryDate: v.radioLicenseExpiry || null,
             uploadedAt: v.radioLicense.uploadedAt || new Date().toISOString()
           });
         }
@@ -337,6 +351,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             type: v.driversLicense.type,
             storageData: v.driversLicense.storageData,
             field: 'Drivers License',
+            expiryDate: v.driversLicenseExpiry || null,
             uploadedAt: v.driversLicense.uploadedAt || new Date().toISOString()
           });
         }
@@ -346,6 +361,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             type: v.insurancePolicy.type,
             storageData: v.insurancePolicy.storageData,
             field: 'Insurance Policy',
+            expiryDate: v.insurancePolicyExpiry || null,
             uploadedAt: v.insurancePolicy.uploadedAt || new Date().toISOString()
           });
         }
@@ -355,6 +371,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
             type: v.vehicleDocumentation.type,
             storageData: v.vehicleDocumentation.storageData,
             field: 'Vehicle Documentation',
+            expiryDate: v.vehicleDocumentationExpiry || null,
             uploadedAt: v.vehicleDocumentation.uploadedAt || new Date().toISOString()
           });
         }
@@ -406,17 +423,22 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
     this.selectedAsset = asset;
     this.isViewModalOpen = true;
 
+    const getDocExpiry = (field: string) => {
+      const doc = asset.documents?.find((d: any) => d.field === field);
+      return doc?.expiryDate || '';
+    };
+
     // Patch the edit form with existing values
     this.editAssetForm.patchValue({
       assetValue: asset.assetValue,
       safetyFeatures: asset.safetyFeatures,
       policyDeploymentDate: asset.policyDeploymentDate,
       policyExpiryDate: asset.policyExpiryDate,
-      vehicleRegistrationBook: null,
-      radioLicense: null,
-      driversLicense: null,
-      insurancePolicy: null,
-      vehicleDocumentation: null
+      vehicleRegistrationBookExpiry: getDocExpiry('Vehicle Registration Book'),
+      radioLicenseExpiry: getDocExpiry('Radio License'),
+      driversLicenseExpiry: getDocExpiry('Drivers License'),
+      insurancePolicyExpiry: getDocExpiry('Insurance Policy'),
+      vehicleDocumentationExpiry: getDocExpiry('Vehicle Documentation')
     });
   }
 
@@ -557,24 +579,39 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
       let updatedDocuments = [...(this.selectedAsset.documents || [])];
 
       const fileControls = [
-        { key: 'vehicleRegistrationBook', field: 'Vehicle Registration Book' },
-        { key: 'radioLicense', field: 'Radio License' },
-        { key: 'driversLicense', field: 'Drivers License' },
-        { key: 'insurancePolicy', field: 'Insurance Policy' },
-        { key: 'vehicleDocumentation', field: 'Vehicle Documentation' }
+        { key: 'vehicleRegistrationBook', expiryKey: 'vehicleRegistrationBookExpiry', field: 'Vehicle Registration Book' },
+        { key: 'radioLicense', expiryKey: 'radioLicenseExpiry', field: 'Radio License' },
+        { key: 'driversLicense', expiryKey: 'driversLicenseExpiry', field: 'Drivers License' },
+        { key: 'insurancePolicy', expiryKey: 'insurancePolicyExpiry', field: 'Insurance Policy' },
+        { key: 'vehicleDocumentation', expiryKey: 'vehicleDocumentationExpiry', field: 'Vehicle Documentation' }
       ];
 
       for (const fc of fileControls) {
         const newFile = formValues[fc.key];
+        const expiry = formValues[fc.expiryKey];
+
         if (newFile) {
+          // Remove old doc of same type
           updatedDocuments = updatedDocuments.filter(d => d.field !== fc.field);
+          // Add new doc
           updatedDocuments.push({
             name: newFile.name,
             type: newFile.type,
             storageData: newFile.storageData,
             field: fc.field,
+            expiryDate: expiry || null,
             uploadedAt: newFile.uploadedAt || new Date().toISOString()
           });
+        } else {
+          // No new file, but check if expiry date changed for existing doc
+          const existingDocIndex = updatedDocuments.findIndex(d => d.field === fc.field);
+          if (existingDocIndex !== -1) {
+            // Create a shallow copy of the doc to update expiry
+            updatedDocuments[existingDocIndex] = {
+              ...updatedDocuments[existingDocIndex],
+              expiryDate: expiry || null
+            };
+          }
         }
       }
 
@@ -616,5 +653,107 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
     } finally {
       this.isSubmitting = false;
     }
+  }
+
+  // --- Camera Logic ---
+
+  openCameraFor(mode: 'add' | 'edit', index: number | undefined, controlName: string) {
+    this.activeCameraContext = { mode, index, controlName };
+    this.cameraModalOpen = true;
+    this.tempImagePreview = null;
+    this.tempFile = null;
+    setTimeout(() => this.startCamera(), 50);
+  }
+
+  async startCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this.toast.show('Camera not supported', 'error');
+      return;
+    }
+
+    try {
+      if (this.mediaStream) return;
+
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      
+      setTimeout(async () => {
+        const video: HTMLVideoElement | null = document.querySelector('#assetCameraModalVideo');
+        if (video) {
+          video.srcObject = this.mediaStream;
+          await video.play().catch(() => {});
+        }
+      }, 50);
+    } catch (err: any) {
+      console.warn('Camera error', err);
+      this.toast.show('Unable to access camera', 'error');
+    }
+  }
+
+  stopCamera() {
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(t => t.stop());
+      this.mediaStream = null;
+    }
+    const video: HTMLVideoElement | null = document.querySelector('#assetCameraModalVideo');
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+    }
+  }
+
+  async takePhoto() {
+    const video: HTMLVideoElement | null = document.querySelector('#assetCameraModalVideo');
+    if (!video) return;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], `capture_${Date.now()}.jpg`, { type: blob.type });
+    
+    this.tempImagePreview = dataUrl;
+    this.tempFile = file;
+  }
+
+  retake() {
+    this.tempImagePreview = null;
+    this.tempFile = null;
+  }
+
+  async savePhoto() {
+    if (!this.tempFile || !this.activeCameraContext) return;
+
+    try {
+      const processed = await this.processFile(this.tempFile);
+      const fileData = {
+        name: this.tempFile.name,
+        type: processed.type,
+        storageData: processed.storageData,
+        uploadedAt: new Date().toISOString()
+      };
+
+      if (this.activeCameraContext.mode === 'add' && typeof this.activeCameraContext.index === 'number') {
+        this.vehicles.at(this.activeCameraContext.index).patchValue({
+          [this.activeCameraContext.controlName]: fileData
+        });
+      } else if (this.activeCameraContext.mode === 'edit') {
+        this.editAssetForm.patchValue({
+          [this.activeCameraContext.controlName]: fileData
+        });
+      }
+
+      this.toast.show('Photo captured successfully', 'success');
+    } catch (e: any) {
+      this.toast.show('Error processing photo', 'error');
+    }
+
+    this.cameraModalOpen = false;
+    this.stopCamera();
   }
 }

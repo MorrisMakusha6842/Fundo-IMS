@@ -205,29 +205,105 @@
 
                 <!-- File Uploads for Updates -->
                 <div class="detail-grid" style="margin-bottom: 20px;">
-                    <div class="field">
-                        <label>Update Vehicle Registration Book</label>
-                        <input type="file" (change)="onEditFileChange($event, 'vehicleRegistrationBook')"
-                            accept=".pdf,.jpg,.png" />
+                    <!-- Vehicle Registration Book -->
+                    <div class="field-group-row"
+                        style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 2;">
+                        <div class="field" style="flex: 1;">
+                            <label>Update Vehicle Registration Book</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="file" (change)="onEditFileChange($event, 'vehicleRegistrationBook')"
+                                    accept=".pdf,.jpg,.png" />
+                                <button type="button" class="btn-icon"
+                                    (click)="openCameraFor('edit', undefined, 'vehicleRegistrationBook')"
+                                    title="Take Photo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                        width="20" height="20">
+                                        <path fill-rule="evenodd"
+                                            d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="field" style="width: 140px;">
+                            <label>Expiry Date</label>
+                            <input type="date" formControlName="vehicleRegistrationBookExpiry" />
+                        </div>
                     </div>
-                    <div class="field">
-                        <label>Update Radio License</label>
-                        <input type="file" (change)="onEditFileChange($event, 'radioLicense')"
-                            accept=".pdf,.jpg,.png" />
+
+                    <!-- Radio License -->
+                    <div class="field-group-row"
+                        style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 2;">
+                        <div class="field" style="flex: 1;">
+                            <label>Update Radio License</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="file" (change)="onEditFileChange($event, 'radioLicense')"
+                                    accept=".pdf,.jpg,.png" />
+                                <button type="button" class="btn-icon"
+                                    (click)="openCameraFor('edit', undefined, 'radioLicense')" title="Take Photo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                        width="20" height="20">
+                                        <path fill-rule="evenodd"
+                                            d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="field" style="width: 140px;">
+                            <label>Expiry Date</label>
+                            <input type="date" formControlName="radioLicenseExpiry" />
+                        </div>
                     </div>
-                    <div class="field">
-                        <label>Update Driver's License</label>
-                        <input type="file" (change)="onEditFileChange($event, 'driversLicense')" accept="image/*" />
+
+                    <!-- Drivers License -->
+                    <div class="field-group-row"
+                        style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 2;">
+                        <div class="field" style="flex: 1;">
+                            <label>Update Driver's License</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="file" (change)="onEditFileChange($event, 'driversLicense')"
+                                    accept="image/*" />
+                                <button type="button" class="btn-icon"
+                                    (click)="openCameraFor('edit', undefined, 'driversLicense')" title="Take Photo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                        width="20" height="20">
+                                        <path fill-rule="evenodd"
+                                            d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="field" style="width: 140px;">
+                            <label>Expiry Date</label>
+                            <input type="date" formControlName="driversLicenseExpiry" />
+                        </div>
                     </div>
-                    <div class="field">
-                        <label>Update Insurance Policy</label>
-                        <input type="file" (change)="onEditFileChange($event, 'insurancePolicy')"
-                            accept=".pdf,.jpg,.png" />
-                    </div>
-                    <div class="field">
-                        <label>Update Vehicle Documentation</label>
-                        <input type="file" (change)="onEditFileChange($event, 'vehicleDocumentation')"
-                            accept=".pdf,.jpg,.png" />
+
+                    <!-- Insurance Policy -->
+                    <div class="field-group-row"
+                        style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 2;">
+                        <div class="field" style="flex: 1;">
+                            <label>Update Insurance Policy</label>
+                            <div style="display: flex; gap: 5px;">
+                                <input type="file" (change)="onEditFileChange($event, 'insurancePolicy')"
+                                    accept=".pdf,.jpg,.png" />
+                                <button type="button" class="btn-icon"
+                                    (click)="openCameraFor('edit', undefined, 'insurancePolicy')" title="Take Photo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                        width="20" height="20">
+                                        <path fill-rule="evenodd"
+                                            d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="field" style="width: 140px;">
+                            <label>Expiry Date</label>
+                            <input type="date" formControlName="insurancePolicyExpiry" />
+                        </div>
                     </div>
                 </div>
 
@@ -248,6 +324,8 @@
                         <div class="document-info">
                             <h5>{{ doc.field || doc.name }}</h5>
                             <p class="doc-name">{{ doc.name }}</p>
+                            <p *ngIf="doc.expiryDate" class="doc-expiry" style="font-size: 11px; color: #dc2626;">
+                                Expires: {{ doc.expiryDate | date }}</p>
                             <a *ngIf="doc.dataUrl" [href]="doc.dataUrl" [download]="doc.name" class="doc-download">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
                                     width="16" height="16">
@@ -398,29 +476,111 @@
                             specify vehicle value.</p>
 
                         <div class="detail-grid">
-                            <div class="field">
+                            <div class="field" style="grid-column: span 2;">
                                 <label>Asset Value ($)</label>
                                 <input type="number" formControlName="assetValue" placeholder="e.g. 18000" />
                             </div>
-                            <div class="field">
-                                <label>Vehicle Registration Book</label>
-                                <input type="file" (change)="onFileChange($event, i, 'vehicleRegistrationBook')"
-                                    accept=".pdf,.jpg,.png" />
+
+                            <!-- Vehicle Registration Book -->
+                            <div class="field-group-row"
+                                style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 2;">
+                                <div class="field" style="flex: 1;">
+                                    <label>Vehicle Registration Book</label>
+                                    <div style="display: flex; gap: 5px;">
+                                        <input type="file" (change)="onFileChange($event, i, 'vehicleRegistrationBook')"
+                                            accept=".pdf,.jpg,.png" />
+                                        <button type="button" class="btn-icon"
+                                            (click)="openCameraFor('add', i, 'vehicleRegistrationBook')"
+                                            title="Take Photo">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                fill="currentColor" width="20" height="20">
+                                                <path fill-rule="evenodd"
+                                                    d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="field" style="width: 140px;">
+                                    <label>Expiry Date</label>
+                                    <input type="date" formControlName="vehicleRegistrationBookExpiry" />
+                                </div>
                             </div>
-                            <div class="field">
-                                <label>Radio License</label>
-                                <input type="file" (change)="onFileChange($event, i, 'radioLicense')"
-                                    accept=".pdf,.jpg,.png" />
+
+                            <!-- Radio License -->
+                            <div class="field-group-row"
+                                style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 2;">
+                                <div class="field" style="flex: 1;">
+                                    <label>Radio License</label>
+                                    <div style="display: flex; gap: 5px;">
+                                        <input type="file" (change)="onFileChange($event, i, 'radioLicense')"
+                                            accept=".pdf,.jpg,.png" />
+                                        <button type="button" class="btn-icon"
+                                            (click)="openCameraFor('add', i, 'radioLicense')" title="Take Photo">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                fill="currentColor" width="20" height="20">
+                                                <path fill-rule="evenodd"
+                                                    d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="field" style="width: 140px;">
+                                    <label>Expiry Date</label>
+                                    <input type="date" formControlName="radioLicenseExpiry" />
+                                </div>
                             </div>
-                            <div class="field">
-                                <label>Driver's License Image</label>
-                                <input type="file" (change)="onFileChange($event, i, 'driversLicense')"
-                                    accept="image/*" />
+
+                            <!-- Drivers License -->
+                            <div class="field-group-row"
+                                style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 2;">
+                                <div class="field" style="flex: 1;">
+                                    <label>Driver's License Image</label>
+                                    <div style="display: flex; gap: 5px;">
+                                        <input type="file" (change)="onFileChange($event, i, 'driversLicense')"
+                                            accept="image/*" />
+                                        <button type="button" class="btn-icon"
+                                            (click)="openCameraFor('add', i, 'driversLicense')" title="Take Photo">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                fill="currentColor" width="20" height="20">
+                                                <path fill-rule="evenodd"
+                                                    d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="field" style="width: 140px;">
+                                    <label>Expiry Date</label>
+                                    <input type="date" formControlName="driversLicenseExpiry" />
+                                </div>
                             </div>
-                            <div class="field">
-                                <label>Vehicle Documentation (General)</label>
-                                <input type="file" (change)="onFileChange($event, i, 'vehicleDocumentation')"
-                                    accept=".pdf,.jpg,.png" />
+
+                            <!-- Vehicle Documentation -->
+                            <div class="field-group-row"
+                                style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 2;">
+                                <div class="field" style="flex: 1;">
+                                    <label>Vehicle Documentation (General)</label>
+                                    <div style="display: flex; gap: 5px;">
+                                        <input type="file" (change)="onFileChange($event, i, 'vehicleDocumentation')"
+                                            accept=".pdf,.jpg,.png" />
+                                        <button type="button" class="btn-icon"
+                                            (click)="openCameraFor('add', i, 'vehicleDocumentation')"
+                                            title="Take Photo">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                fill="currentColor" width="20" height="20">
+                                                <path fill-rule="evenodd"
+                                                    d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="field" style="width: 140px;">
+                                    <label>Expiry Date</label>
+                                    <input type="date" formControlName="vehicleDocumentationExpiry" />
+                                </div>
                             </div>
                         </div>
 
@@ -428,11 +588,30 @@
                             style="font-size: 12px; font-weight: 600; color: #86868b; margin: 15px 0 10px 0; text-transform: uppercase;">
                             Insurance Policy Details</h5>
                         <div class="detail-grid">
-                            <div class="field">
-                                <label>Insurance Policy Document</label>
-                                <input type="file" (change)="onFileChange($event, i, 'insurancePolicy')"
-                                    accept=".pdf,.jpg,.png" />
+                            <div class="field-group-row"
+                                style="display: flex; gap: 10px; align-items: flex-end; grid-column: span 2;">
+                                <div class="field" style="flex: 1;">
+                                    <label>Insurance Policy Document</label>
+                                    <div style="display: flex; gap: 5px;">
+                                        <input type="file" (change)="onFileChange($event, i, 'insurancePolicy')"
+                                            accept=".pdf,.jpg,.png" />
+                                        <button type="button" class="btn-icon"
+                                            (click)="openCameraFor('add', i, 'insurancePolicy')" title="Take Photo">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                fill="currentColor" width="20" height="20">
+                                                <path fill-rule="evenodd"
+                                                    d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="field" style="width: 140px;">
+                                    <label>Expiry Date</label>
+                                    <input type="date" formControlName="insurancePolicyExpiry" />
+                                </div>
                             </div>
+
                             <div class="field">
                                 <label>Policy Deployment Date</label>
                                 <input type="date" formControlName="policyDeploymentDate" />
@@ -492,6 +671,29 @@
             <button type="button" class="btn-primary" (click)="onSendApproval()" [disabled]="assuredValue <= 0">
                 Send Approval
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Camera Modal -->
+<div class="camera-modal" *ngIf="cameraModalOpen"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; align-items: center; justify-content: center;">
+    <div class="camera-backdrop" (click)="stopCamera(); cameraModalOpen=false"
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);"></div>
+    <div class="camera-dialog"
+        style="position: relative; background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 600px; display: flex; flex-direction: column; gap: 15px;">
+        <div class="camera-preview"
+            style="position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 8px; overflow: hidden;">
+            <video id="assetCameraModalVideo" autoplay muted playsinline
+                style="width: 100%; height: 100%; object-fit: cover;"></video>
+            <img *ngIf="tempImagePreview" [src]="tempImagePreview" alt="capture preview"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
+        </div>
+        <div class="camera-controls" style="display: flex; justify-content: center; gap: 10px;">
+            <button type="button" class="btn-primary" (click)="takePhoto()" *ngIf="!tempImagePreview">Capture</button>
+            <button type="button" class="btn-primary" *ngIf="tempImagePreview" (click)="savePhoto()">Use Photo</button>
+            <button type="button" class="btn-secondary" *ngIf="tempImagePreview" (click)="retake()">Retake</button>
+            <button type="button" class="btn-secondary" (click)="stopCamera(); cameraModalOpen=false">Cancel</button>
         </div>
     </div>
 </div>

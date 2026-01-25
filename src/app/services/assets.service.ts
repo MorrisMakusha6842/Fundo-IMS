@@ -19,7 +19,15 @@ export interface VehicleAsset {
     safetyFeatures?: string;
     policyDeploymentDate?: string;
     policyExpiryDate?: string;
-    documents?: any[]; // Array to hold file data (name, type, dataUrl, uploadedAt)
+    documents?: {
+        name: string;
+        type: string;
+        storageData?: any;
+        dataUrl?: string;
+        field: string;
+        uploadedAt: string;
+        expiryDate?: string;
+    }[]; 
     status: 'Pending' | 'Approved' | 'Rejected';
     id?: string; // Add optional ID
 }
