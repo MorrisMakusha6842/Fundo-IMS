@@ -5,7 +5,7 @@ import { PolicyService } from '../services/policy.service';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
-import { Observable, BehaviorSubject, of } from 'rxjs';
+import { Observable, BehaviorSubject, of, combineLatest } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms'; // Import FormsModule for ngModel
@@ -46,18 +46,15 @@ export class HomeComponent implements OnInit {
   claimType: string = 'Accident'; // Default
 
   // Accordion State
-  isPendingExpanded: boolean = false;
-  isActiveExpanded: boolean = false;
+  isActiveExpanded: boolean = true;
   isExpiringExpanded: boolean = false;
   isLapsedExpanded: boolean = false;
 
-  // Dummy Data
-  expiringPolicies: any[] = [];
+  // Policy Data
+  activePolicies: any[] = [];
   lapsedPolicies: any[] = [];
 
   ngOnInit() {
-    this.generateDummyData();
-
     this.subCategories$ = this.policyService.getSubCategories();
 
     this.filteredPolicies$ = this.selectedCategory$.pipe(
@@ -76,19 +73,25 @@ export class HomeComponent implements OnInit {
       })
     );
 
-    // Fetch user assets
-    this.authService.user$.pipe(
-      switchMap(user => {
+    // Fetch assets and policies based on role
+    combineLatest([
+      this.authService.user$,
+      this.authService.userRole$
+    ]).pipe(
+      switchMap(([user, role]) => {
         this.isLoadingAssets = true;
-        if (user?.uid) {
-          this.fetchUserProfile(user.uid);
-          return this.assetsService.getUserVehicles(user.uid);
-        } else {
-          return of([]);
+        if (!user) return of([]);
+        
+        this.fetchUserProfile(user.uid);
+        
+        if (role === 'admin' || role === 'agent') {
+          return this.assetsService.getAllVehicles();
         }
+        return this.assetsService.getUserVehicles(user.uid);
       })
     ).subscribe(assets => {
       this.allUserAssets = assets;
+      this.processAssetsForPolicies(assets);
       this.totalAssets = assets.length;
       this.totalAssetPages = Math.ceil(this.totalAssets / this.assetPageSize);
       this.userAssets$ = of(assets);
@@ -111,21 +114,51 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  generateDummyData() {
-    this.expiringPolicies = [
-      { policyId: 'POL-8821', policyName: 'Comprehensive Cover', asset: 'Toyota Hilux', expiryDate: '2026-02-15', status: 'Expiring Soon' },
-      { policyId: 'POL-9932', policyName: 'Third Party Fire & Theft', asset: 'Honda Fit', expiryDate: '2026-02-28', status: 'Expiring Soon' }
-    ];
+  processAssetsForPolicies(assets: VehicleAsset[]) {
+    this.activePolicies = [];
+    this.lapsedPolicies = [];
 
-    this.lapsedPolicies = [
-      { policyId: 'POL-1102', policyName: 'Full Cover', asset: 'Nissan Note', expiryDate: '2025-12-10', status: 'Lapsed' },
-      { policyId: 'POL-3321', policyName: 'Third Party Only', asset: 'Mazda Demio', expiryDate: '2025-11-05', status: 'Lapsed' }
-    ];
+    const now = new Date();
+    const warningThreshold = new Date();
+    warningThreshold.setDate(now.getDate() + 30); // 30 days warning
+
+    assets.forEach(asset => {
+      if (asset.documents) {
+        asset.documents.forEach((doc: any) => {
+          if (doc.field === 'Insurance Policy') {
+            // Process dataUrl if needed (handle Firestore Bytes)
+            let docUrl = doc.dataUrl;
+            if (!docUrl && doc.storageData && typeof doc.storageData.toBase64 === 'function') {
+              docUrl = `data:${doc.type};base64,${doc.storageData.toBase64()}`;
+            }
+
+            const policy = {
+              policyId: doc.name, // Using filename as ID for now
+              policyName: 'Insurance Policy',
+              asset: `${asset.make} ${asset.numberPlate}`,
+              expiryDate: doc.expiryDate,
+              status: 'Active',
+              docUrl: docUrl
+            };
+
+            if (doc.expiryDate) {
+              const expiry = new Date(doc.expiryDate);
+              if (expiry < now) {
+                policy.status = 'Lapsed';
+                this.lapsedPolicies.push(policy);
+              } else {
+                this.activePolicies.push(policy);
+              }
+            } else {
+              this.activePolicies.push(policy);
+            }
+          }
+        });
+      }
+    });
   }
 
-  togglePending() { this.isPendingExpanded = !this.isPendingExpanded; }
   toggleActive() { this.isActiveExpanded = !this.isActiveExpanded; }
-  toggleExpiring() { this.isExpiringExpanded = !this.isExpiringExpanded; }
   toggleLapsed() { this.isLapsedExpanded = !this.isLapsedExpanded; }
 
   updateAssetPagination(allAssets: VehicleAsset[]) {
@@ -164,17 +197,22 @@ export class HomeComponent implements OnInit {
 
   // Placeholder Logic for Table Columns
   hasAppliedPolicy(asset: VehicleAsset): boolean {
-    // Check if policyDeploymentDate exists and is valid
-    return !!asset.policyDeploymentDate;
+    // Check if documents array contains an Insurance Policy
+    return !!asset.documents?.some((doc: any) => doc.field === 'Insurance Policy');
   }
 
   getExpiryStatus(asset: VehicleAsset): 'UP TO DATE' | 'ATTENTION NEEDED' {
-    if (!asset.policyExpiryDate) return 'ATTENTION NEEDED';
+    const policyDoc = asset.documents?.find((doc: any) => doc.field === 'Insurance Policy');
+    
+    if (!policyDoc || !policyDoc.expiryDate) return 'ATTENTION NEEDED';
 
-    const expiry = new Date(asset.policyExpiryDate);
+    const expiry = new Date(policyDoc.expiryDate);
     const today = new Date();
-    // Simple check: if expiry is in future -> Up to date
-    return expiry > today ? 'UP TO DATE' : 'ATTENTION NEEDED';
+    const diffTime = expiry.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Warning if less than 7 days remaining
+    return diffDays > 7 ? 'UP TO DATE' : 'ATTENTION NEEDED';
   }
 
   changeAssetPage(offset: number) {

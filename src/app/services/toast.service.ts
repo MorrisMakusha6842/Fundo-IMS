@@ -214,8 +214,11 @@ export class ToastService {
   /**
    * Shows a notification toast for a new message.
    */
-  showNotification(senderId: string, messageText: string) {
-    const title = senderId === 'system' ? 'System Notification' : 'New Message';
+  showNotification(senderId: string, messageText: string, senderName?: string) {
+    let title = senderId === 'system' ? 'System Notification' : 'New Message';
+    if (senderName && senderId !== 'system') {
+      title = senderName;
+    }
     // Truncate message if it's too long
     const displayContent = messageText.length > 60 ? messageText.substring(0, 60) + '...' : messageText;
     this.show(displayContent, 'info', 5000, true, title, () => {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../services/user.service';
@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss'
 })
-export class NotificationsComponent implements OnInit {
+export class NotificationsComponent implements OnInit, AfterViewChecked {
   private userService = inject(UserService);
   private notificationService = inject(NotificationService);
   private authService = inject(AuthService);
@@ -36,6 +36,9 @@ export class NotificationsComponent implements OnInit {
   private messagesSubscription?: Subscription;
   private unreadSubscription?: Subscription;
 
+  @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
+  private shouldScrollToBottom = false;
+
   ngOnInit(): void {
     // Subscribe to auth state to get current user ID for filtering and unread counts
     this.authService.user$.subscribe(user => {
@@ -44,6 +47,19 @@ export class NotificationsComponent implements OnInit {
         this.fetchAllUsers(user.uid);
       }
     });
+  }
+
+  ngAfterViewChecked() {
+    if (this.shouldScrollToBottom) {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }
+  }
+
+  scrollToBottom(): void {
+    try {
+      this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+    } catch (err) { }
   }
 
   subscribeToUnread() {
@@ -104,6 +120,7 @@ export class NotificationsComponent implements OnInit {
         this.allMessages = messages;
         this.applyFilter();
         this.isLoadingMessages = false;
+        this.shouldScrollToBottom = true;
 
         // Trigger the read status update.
         // This updates the message document status (read: true) in Firestore.
@@ -143,6 +160,7 @@ export class NotificationsComponent implements OnInit {
     try {
       await this.notificationService.sendMessage(this.selectedUser.uid, this.newMessage.trim());
       this.newMessage = '';
+      this.shouldScrollToBottom = true;
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -188,5 +206,9 @@ export class NotificationsComponent implements OnInit {
     if (assetId) {
       this.router.navigate(['/main-layout/asset-registry']);
     }
+  }
+
+  backToUsers() {
+    this.selectedUser = null;
   }
 }

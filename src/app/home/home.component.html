@@ -58,45 +58,6 @@
             </div>
         </section>
 
-        <!-- Pending Approvals Accordion -->
-        <div class="table-card">
-            <div class="table-card-header" (click)="togglePending()">
-                <div class="table-title">
-                    <h3>Pending Approvals</h3>
-                </div>
-                <div class="accordion-icon" [class.expanded]="isPendingExpanded">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20"
-                        height="20">
-                        <path fill-rule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clip-rule="evenodd" />
-                    </svg>
-                </div>
-            </div>
-            <div class="table-body" [class.expanded]="isPendingExpanded">
-                <table class="policy-table">
-                    <thead>
-                        <tr>
-                            <th>Request Type</th>
-                            <th>Reference</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Claim</td>
-                            <td>CLM-0098</td>
-                            <td>
-                                <span class="badge pending">Pending Review</span>
-                            </td>
-                            <td>18 Jan 2026</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
         <!-- Active Policies Accordion -->
         <div class="table-card">
             <div class="table-card-header" (click)="toggleActive()">
@@ -116,64 +77,28 @@
                 <table class="policy-table">
                     <thead>
                         <tr>
-                            <th>Policy No</th>
+                            <th>Policy Document</th>
                             <th>Asset</th>
                             <th>Status</th>
                             <th>Expiry</th>
-                            <th></th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>POL-00123</td>
-                            <td>Toyota Hilux</td>
-                            <td>
-                                <span class="badge active">Active</span>
-                            </td>
-                            <td>12 Mar 2026</td>
-                            <td class="text-right">
-                                <button class="btn-secondary small">View</button>
-                            </td>
+                        <tr *ngIf="activePolicies.length === 0">
+                            <td colspan="5" style="text-align: center; padding: 20px; color: #86868b;">No active policies found.</td>
                         </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Expiring Soon Accordion -->
-        <div class="table-card">
-            <div class="table-card-header" (click)="toggleExpiring()">
-                <div class="table-title">
-                    <h3>Expiring Soon</h3>
-                </div>
-                <div class="accordion-icon" [class.expanded]="isExpiringExpanded">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20"
-                        height="20">
-                        <path fill-rule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clip-rule="evenodd" />
-                    </svg>
-                </div>
-            </div>
-            <div class="table-body" [class.expanded]="isExpiringExpanded">
-                <table class="policy-table">
-                    <thead>
-                        <tr>
-                            <th>Policy No</th>
-                            <th>Policy Name</th>
-                            <th>Asset</th>
-                            <th>Expiry Date</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let policy of expiringPolicies">
+                        <tr *ngFor="let policy of activePolicies">
                             <td>{{ policy.policyId }}</td>
-                            <td>{{ policy.policyName }}</td>
                             <td>{{ policy.asset }}</td>
-                            <td>{{ policy.expiryDate }}</td>
                             <td>
-                                <span class="badge pending">{{ policy.status }}</span>
+                                <span class="badge active">{{ policy.status }}</span>
+                            </td>
+                            <td>{{ policy.expiryDate | date }}</td>
+                            <td class="text-right">
+                                <a *ngIf="policy.docUrl" [href]="policy.docUrl" download="{{policy.policyId}}" class="btn-secondary small" style="text-decoration: none; display: inline-block;">
+                                    Download
+                                </a>
                             </td>
                         </tr>
                     </tbody>
@@ -200,19 +125,20 @@
                 <table class="policy-table">
                     <thead>
                         <tr>
-                            <th>Policy No</th>
-                            <th>Policy Name</th>
+                            <th>Policy Document</th>
                             <th>Asset</th>
                             <th>Expiry Date</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <tr *ngIf="lapsedPolicies.length === 0">
+                            <td colspan="4" style="text-align: center; padding: 20px; color: #86868b;">No lapsed policies.</td>
+                        </tr>
                         <tr *ngFor="let policy of lapsedPolicies">
                             <td>{{ policy.policyId }}</td>
-                            <td>{{ policy.policyName }}</td>
                             <td>{{ policy.asset }}</td>
-                            <td>{{ policy.expiryDate }}</td>
+                            <td>{{ policy.expiryDate | date }}</td>
                             <td>
                                 <span class="badge expired">{{ policy.status }}</span>
                             </td>

@@ -173,11 +173,20 @@ export class NotificationService {
 
             // Notify user of new messages (skipping the initial load of existing messages)
             if (!isFirstRun) {
-                snapshot.docChanges().forEach(change => {
+                snapshot.docChanges().forEach(async change => {
                     if (change.type === 'added') {
                         const msg = change.doc.data() as Message;
                         if (change.doc.ref.path.includes('/received/')) {
-                            this.toastService.showNotification(msg.senderId, msg.text);
+                            let senderName: string | undefined;
+                            if (msg.senderId !== 'system') {
+                                try {
+                                    const profile = await this.userService.getUserProfile(msg.senderId);
+                                    senderName = profile?.['displayName'] || profile?.['email'];
+                                } catch (e) {
+                                    console.error('Error resolving sender name for toast', e);
+                                }
+                            }
+                            this.toastService.showNotification(msg.senderId, msg.text, senderName);
                         }
                     }
                 });

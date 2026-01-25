@@ -1,4 +1,4 @@
-<div class="notifications-container">
+<div class="notifications-container" [class.chat-active]="!!selectedUser">
 
     <!-- LEFT PANEL: USERS LIST -->
     <aside class="users-panel">
@@ -21,7 +21,7 @@
                     <p class="user-name">{{user.displayName || user.email || 'Unknown User'}}</p>
                     <p class="last-message">{{user.role || 'Client'}}</p>
                 </div>
-                
+
                 <!-- Unread Badge -->
                 <div class="unread-badge" *ngIf="unreadCounts[user.uid] > 0">
                     {{ unreadCounts[user.uid] > 99 ? '99+' : unreadCounts[user.uid] }}
@@ -39,6 +39,13 @@
 
         <!-- CHAT HEADER -->
         <header class="chat-header">
+            <button class="back-btn" (click)="backToUsers()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+            </button>
             <div class="header-user-avatar">
                 <img *ngIf="selectedUser.avatarDataUrl" [src]="selectedUser.avatarDataUrl"
                     alt="{{selectedUser.displayName}}">
@@ -57,7 +64,7 @@
         </header>
 
         <!-- CHAT MESSAGES (Scrollable) -->
-        <main class="messages-area">
+        <main class="messages-area" #scrollContainer>
             <div *ngIf="isLoadingMessages" class="loading-text">Loading messages...</div>
 
             <div *ngIf="!isLoadingMessages && allMessages.length === 0" class="no-messages">
@@ -103,13 +110,16 @@
 
                         <!-- Asset Message Type -->
                         <div *ngIf="message.type === 'asset'" class="invoice-message">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e5e5ea; padding-bottom: 8px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #e5e5ea; padding-bottom: 8px;">
                                 <strong style="font-size: 13px;">New Asset</strong>
-                                <span style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #fff7ed; color: #c2410c;">Pending</span>
+                                <span
+                                    style="font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #fff7ed; color: #c2410c;">Pending</span>
                             </div>
                             <p style="margin: 0 0 8px 0; font-size: 14px;">{{message.text}}</p>
                             <div style="display: flex; justify-content: flex-end;">
-                                <button style="background: #0071e3; color: white; border: none; padding: 4px 12px; border-radius: 12px; font-size: 12px; cursor: pointer;"
+                                <button
+                                    style="background: #0071e3; color: white; border: none; padding: 4px 12px; border-radius: 12px; font-size: 12px; cursor: pointer;"
                                     (click)="viewAsset(message.assetId)">Verify</button>
                             </div>
                         </div>
