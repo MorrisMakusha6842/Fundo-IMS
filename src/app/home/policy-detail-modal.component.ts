@@ -1,123 +1,175 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, inject, HostBinding, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, inject, OnInit, HostBinding } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PolicyService } from '../services/policy.service';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
-import { of, switchMap, forkJoin } from 'rxjs';
 
 @Component({
-  selector: 'app-policy-detail-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './policy-detail-modal.component.html',
-  styleUrls: ['./policy-detail-modal.component.scss']
+    selector: 'app-policy-detail-modal',
+    standalone: true,
+    imports: [CommonModule, FormsModule],
+    templateUrl: './policy-detail-modal.component.html',
+    styleUrls: ['./policy-detail-modal.component.scss']
 })
-export class PolicyDetailModalComponent implements OnChanges {
-  @Input() policy: any | null = null;
-  @Output() close = new EventEmitter<void>();
+export class PolicyDetailModalComponent implements OnInit, OnChanges {
+    @Input() policy: any = null;
+    @Output() close = new EventEmitter<void>();
 
-  @HostBinding('class.visible')
-  get isVisible(): boolean {
-    return !!this.policy;
-  }
-
-  private policyService = inject(PolicyService);
-  private assetsService = inject(AssetsService);
-  private authService = inject(AuthService);
-  private cdr = inject(ChangeDetectorRef);
-
-  isLoading = true;
-  packages: any[] = [];
-  availableAssets: VehicleAsset[] = [];
-  
-  // Quote Form State
-  isQuoteAccordionOpen = false;
-  selectedAssetId: string | null = null;
-  paymentFrequency: 'monthly' | 'annually' = 'monthly';
-  quotePremium = 0;
-  
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['policy'] && this.policy) {
-      this.fetchDataForPolicy(this.policy.id);
-      document.body.style.overflow = 'hidden';
-    } else if (!this.policy) {
-      document.body.style.overflow = '';
+    @HostBinding('class.visible')
+    get isVisible(): boolean {
+        return !!this.policy;
     }
-  }
 
-  fetchDataForPolicy(policyId: string): void {
-    this.isLoading = true;
-    this.packages = [];
-    this.availableAssets = [];
-    this.resetQuoteForm();
+    private assetsService = inject(AssetsService);
+    private authService = inject(AuthService);
 
-    const packages$ = this.policyService.getPolicyPackages(policyId);
-    const assets$ = this.authService.user$.pipe(
-      switchMap(user => user ? this.assetsService.getUserVehicles(user.uid) : of([]))
-    );
+    isLoading = false;
+    packages: any[] = [];
+    availableAssets: VehicleAsset[] = [];
 
-    forkJoin({ packages: packages$, assets: assets$ }).subscribe({
-      next: ({ packages, assets }) => {
-        this.packages = packages.length > 0 ? packages : this.getFallbackPackages();
-        this.availableAssets = assets;
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error("Error fetching policy details", err);
-        this.packages = this.getFallbackPackages(); // Show fallback on error
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
+    // Quote Form State
+    isQuoteAccordionOpen = false;
+    selectedPackageId: string | null = null;
+    selectedAssetId: string | null = null;
+    paymentFrequency: 'monthly' | 'annually' = 'monthly';
 
-  onAssetChange(assetId: string | null): void {
-    if (assetId) {
-      const selected = this.availableAssets.find(a => a.id === assetId);
-      if (selected) {
-        const rawValue = String(selected.assetValue).replace(/[^0-9.]/g, '');
-        const value = parseFloat(rawValue);
-        this.quotePremium = !isNaN(value) ? value * 0.04 : 0; // 4% of Asset Value
-      }
-    } else {
-      this.quotePremium = 0;
+    // Pricing
+    basePackagePrice = 0;
+    selectedOptionalCoverages = new Set<string>();
+    quotePremium = 0;
+
+    ngOnInit() {
+        this.loadUserAssets();
     }
-  }
 
-  saveQuote(): void {
-    // TODO: Implement Firestore write to 'quotes' collection
-    console.log('Saving quote...', {
-      policyId: this.policy.id,
-      assetId: this.selectedAssetId,
-      premium: this.quotePremium,
-      frequency: this.paymentFrequency
-    });
-    alert('Quote saved (see console for data).');
-  }
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['policy'] && this.policy) {
+            this.mapPolicyPackages();
+            this.resetQuoteForm();
+        }
+    }
 
-  purchasePackage(): void {
-    // TODO: Implement payment gateway logic
-    console.log('Purchasing package...');
-    alert('Purchase initiated (see console for data).');
-  }
+    private mapPolicyPackages() {
+        if (this.policy && Array.isArray(this.policy.packages)) {
+            this.packages = this.policy.packages.map((pkg: any, index: number) => {
+                let mappedCoverages: any[] = [];
 
-  closeModal(): void {
-    this.close.emit();
-  }
+                // Handle coverages array (strings or objects)
+                if (Array.isArray(pkg.coverages)) {
+                    mappedCoverages = pkg.coverages.map((cov: any) => {
+                        if (typeof cov === 'string') {
+                            return { name: cov, included: true, price: 0 };
+                        }
+                        return cov;
+                    });
+                }
 
-  private resetQuoteForm(): void {
-    this.isQuoteAccordionOpen = false;
-    this.selectedAssetId = null;
-    this.paymentFrequency = 'monthly';
-    this.quotePremium = 0;
-  }
+                return {
+                    id: pkg.id || `pkg-${index}`,
+                    name: pkg.name || `Package ${index + 1}`,
+                    price: pkg.price || 0,
+                    description: pkg.description || '',
+                    coverages: mappedCoverages
+                };
+            });
+        } else {
+            this.packages = [];
+        }
+    }
 
-  private getFallbackPackages(): any[] {
-    return [
-      { id: 'pkg1', name: 'Standard', price: 50, description: 'Essential coverage for peace of mind.', coverages: [{ name: 'Third Party Liability', price: 0, included: true }, { name: 'Fire Protection', price: 10, included: false }] },
-      { id: 'pkg2', name: 'Premium', price: 120, description: 'Complete protection for your asset.', coverages: [{ name: 'Third Party Liability', price: 0, included: true }, { name: 'Fire & Theft', price: 0, included: true }, { name: 'Accident Forgiveness', price: 25, included: false }] }
-    ];
-  }
+    loadUserAssets() {
+        const user = this.authService.currentUser;
+        if (user) {
+            this.assetsService.getUserVehicles(user.uid).subscribe(assets => {
+                this.availableAssets = assets;
+            });
+        }
+    }
+
+    selectPackage(pkg: any) {
+        if (this.selectedPackageId === pkg.id) {
+            this.selectedPackageId = null; // Collapse
+            this.basePackagePrice = 0;
+            this.quotePremium = 0;
+            return;
+        }
+
+        this.selectedPackageId = pkg.id;
+        this.basePackagePrice = pkg.price || 0;
+        this.selectedOptionalCoverages.clear();
+        this.calculatePremium();
+    }
+
+    toggleOptionalCoverage(cov: any) {
+        if (this.selectedOptionalCoverages.has(cov.name)) {
+            this.selectedOptionalCoverages.delete(cov.name);
+        } else {
+            this.selectedOptionalCoverages.add(cov.name);
+        }
+        this.calculatePremium();
+    }
+
+    isCoverageSelected(name: string): boolean {
+        return this.selectedOptionalCoverages.has(name);
+    }
+
+    onAssetChange(assetId: any) {
+        this.calculatePremium();
+    }
+
+    calculatePremium() {
+        let total = this.basePackagePrice;
+
+        // Add optional coverages
+        this.selectedOptionalCoverages.forEach(name => {
+            const pkg = this.packages.find(p => p.id === this.selectedPackageId);
+            if (pkg) {
+                const cov = pkg.coverages.find((c: any) => c.name === name);
+                if (cov && cov.price) {
+                    total += cov.price;
+                }
+            }
+        });
+
+        // Asset value factor
+        if (this.selectedAssetId) {
+            const asset = this.availableAssets.find(a => a.id === this.selectedAssetId);
+            if (asset && asset.assetValue) {
+                const value = parseFloat(asset.assetValue);
+                if (!isNaN(value)) {
+                    // Example calculation
+                    const annualBase = value * 0.05;
+                    if (this.paymentFrequency === 'monthly') {
+                        total += (annualBase / 12);
+                    } else {
+                        total += annualBase;
+                    }
+                }
+            }
+        }
+
+        this.quotePremium = total;
+    }
+
+    saveQuote() {
+        alert('Quote saved successfully!');
+    }
+
+    purchasePackage() {
+        alert('Purchase initiated.');
+    }
+
+    closeModal() {
+        this.close.emit();
+    }
+
+    private resetQuoteForm() {
+        this.isQuoteAccordionOpen = false;
+        this.selectedAssetId = null;
+        this.selectedPackageId = null;
+        this.basePackagePrice = 0;
+        this.selectedOptionalCoverages.clear();
+        this.paymentFrequency = 'monthly';
+        this.quotePremium = 0;
+    }
 }

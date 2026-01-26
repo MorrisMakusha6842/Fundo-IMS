@@ -8,6 +8,10 @@
     /* Prevent horizontal scrolling */
     width: 100%;
     box-sizing: border-box;
+    
+    * {
+        box-sizing: border-box;
+    }
 }
 
 
@@ -372,6 +376,11 @@ button:disabled {
     }
 }
 
+.overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 /* MOBILE RESPONSIVENESS */
 
 /* Max-width wrapper constraint */
@@ -380,6 +389,26 @@ button:disabled {
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
+}
+
+/* Grid System Fallbacks (if Tailwind is missing) */
+.grid {
+    display: grid;
+    gap: 1.5rem; // gap-6
+}
+
+.grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+    .md\:grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.gap-8 {
+    gap: 2rem;
 }
 
 /* Tablet and below */

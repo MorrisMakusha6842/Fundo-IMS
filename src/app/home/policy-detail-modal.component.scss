@@ -1,4 +1,6 @@
 // iOS-inspired Design System
+@use 'sass:color';
+
 $ios-blue: #007AFF;
 $ios-gray-bg: #F2F2F7;
 $ios-white: #FFFFFF;
@@ -97,7 +99,7 @@ $ios-text-tertiary: #C6C6C8;
   background: $ios-white;
 
   .panel-header {
-    padding: 24px 32px;
+    padding: 20px 32px;
     border-bottom: 1px solid $ios-separator;
 
     .policy-category-badge {
@@ -127,7 +129,7 @@ $ios-text-tertiary: #C6C6C8;
   }
 
   .panel-body {
-    padding: 16px 32px 32px;
+    padding: 16px 32px 24px;
   }
 
   .detail-section {
@@ -140,6 +142,12 @@ $ios-text-tertiary: #C6C6C8;
       margin-bottom: 16px;
       padding-bottom: 8px;
       border-bottom: 1px solid $ios-separator;
+    }
+
+    .section-subtitle {
+      font-size: 14px;
+      color: $ios-text-secondary;
+      margin: -12px 0 16px 0;
     }
   }
 
@@ -190,22 +198,102 @@ $ios-text-tertiary: #C6C6C8;
     }
   }
 
-  .packages-list {
+  .packages-grid {
     display: grid;
     gap: 12px;
+  }
 
-    .package-item {
+  .package-card {
       background: $ios-gray-bg;
-      padding: 16px;
       border-radius: 12px;
+      border: 2px solid transparent;
       position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
 
-      h4 { margin: 0 0 4px 0; font-size: 16px; font-weight: 600; }
-      p { margin: 0; font-size: 13px; color: $ios-text-secondary; }
-      .price { position: absolute; top: 16px; right: 16px; font-weight: 600; color: $ios-blue; }
+      .package-header {
+        padding: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .header-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      h4 { margin: 0; font-size: 16px; font-weight: 600; }
+      .price { font-weight: 600; color: $ios-blue; font-size: 14px; }
+      
+      .package-chevron {
+        width: 20px;
+        height: 20px;
+        color: $ios-text-tertiary;
+        transition: transform 0.3s ease, color 0.3s ease;
+      }
+
+      .package-description { margin: 0 16px 16px; font-size: 13px; color: $ios-text-secondary; }
+
+      &.selected {
+        border-color: $ios-blue;
+        background: color.adjust($ios-blue, $lightness: 40%);
+        
+        .package-chevron {
+          transform: rotate(180deg);
+          color: $ios-blue;
+        }
+      }
+
+      .coverages-section {
+        border-top: 1px solid $ios-separator;
+        padding: 16px;
+        
+        h5 {
+          font-size: 12px;
+          font-weight: 600;
+          color: $ios-text-secondary;
+          text-transform: uppercase;
+          margin: 0 0 8px 0;
+        }
+      }
+
+      .coverages-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 16px 0;
+        font-size: 14px;
+        
+        li {
+          padding: 6px 0;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        &.optional li {
+          cursor: pointer;
+          padding: 8px;
+          border-radius: 6px;
+          &:hover { background: rgba(0,0,0,0.05); }
+        }
+
+        .coverage-price {
+          margin-left: auto;
+          font-size: 13px;
+          font-weight: 500;
+          color: $ios-text-secondary;
+        }
+
+        .checkbox {
+          width: 18px; height: 18px; border: 2px solid #c7c7cc; border-radius: 50%; transition: all 0.2s;
+          &.checked { background: $ios-blue; border-color: $ios-blue; }
+        }
+      }
     }
   }
-}
+
 
 // --- Right Panel: Quote Form ---
 .quote-form-wrapper {
@@ -227,7 +315,11 @@ $ios-text-tertiary: #C6C6C8;
     font-size: 22px;
     font-weight: 700;
   }
-  .accordion-chevron { display: none; }
+  .accordion-chevron { 
+    display: none; 
+    width: 24px; 
+    height: 24px; 
+  }
 }
 
 .quote-form-body {
