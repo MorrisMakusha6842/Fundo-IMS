@@ -185,7 +185,7 @@ export class HomeComponent implements OnInit {
   // Refactored Pagination Logic needed to access 'allAssets'
   public availableAssets: VehicleAsset[] = [];
 
-  selectCategory(categoryId: string) {
+  selectCategory(categoryId: string | null) {
     const current = this.selectedCategorySubject.value;
     if (current === categoryId) {
       this.selectedCategorySubject.next(null); // Deselect

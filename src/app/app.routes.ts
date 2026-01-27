@@ -15,6 +15,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { UserManagementComponent } from './user-management/user-management.component';
 import { VehicleRegisterComponent } from './vehicle-register/vehicle-register.component';
 import { AssetRegistryComponent } from './asset-registry/asset-registry.component';
+import { FinancialInsightComponent } from './financial-insight/financial-insight.component';
 
 export const routes: Routes = [
   {
@@ -42,6 +43,7 @@ export const routes: Routes = [
       { path: 'reminders', component: RemindersComponent, canActivate: [AuthGuard] },
       { path: 'analytics', component: AnalyticsComponent, canActivate: [AuthGuard] },
       { path: 'billing', component: BillingComponent, canActivate: [AuthGuard] },
+      { path: 'financial-insight', component: FinancialInsightComponent, canActivate: [AuthGuard] },
       { path: 'policies', component: PoliciesComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
       { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },
       { path: 'user-management', component: UserManagementComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },

@@ -1,0 +1,128 @@
+<!-- HEADER -->
+<div class="header">
+    <h1>Financial Insight</h1>
+    <div class="date-badge">
+        Today: {{ today | date:'mediumDate' }}
+    </div>
+</div>
+
+<div class="container">
+    <!-- TABLE CARD -->
+    <div class="user-table-card">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Date Applied</th>
+                    <th>Prev. Tax Rate</th>
+                    <th>Current Tax Rate</th>
+                    <th>Prev. FX Rate</th>
+                    <th>Current FX Rate</th>
+                    <th>Applied By</th>
+                    <th class="text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- DRAFT ROW (New Entry) -->
+                <tr class="draft-row">
+                    <td>
+                        <span class="status pending">---</span>
+                    </td>
+                    <td class="text-gray-500">{{ draftRecord.previousTaxRate }}%</td>
+                    <td>
+                        <button class="btn-edit-value" (click)="openValueModal('tax')">
+                            {{ draftRecord.currentTaxRate }}%
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                class="w-4 h-4 ml-1">
+                                <path
+                                    d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td class="text-gray-500">{{ draftRecord.previousFxRate | currency }}</td>
+                    <td>
+                        <button class="btn-edit-value" (click)="openValueModal('fx')">
+                            {{ draftRecord.currentFxRate | currency }}
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                class="w-4 h-4 ml-1">
+                                <path
+                                    d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+                            </svg>
+                        </button>
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-avatar">{{ currentUser?.displayName?.charAt(0) || 'U' }}</div>
+                            <span>{{ currentUser?.displayName || 'Me' }}</span>
+                        </div>
+                    </td>
+                    <td class="text-right">
+                        <button class="btn-primary btn-sm" (click)="initiateSave()"
+                            style="text-align: center;">Save</button>
+                    </td>
+                </tr>
+
+                <!-- HISTORY ROWS -->
+                <tr *ngFor="let record of history$ | async">
+                    <td>{{ record.dateApplied.toDate() | date:'mediumDate' }}</td>
+                    <td class="text-gray-500">{{ record.previousTaxRate }}%</td>
+                    <td class="font-medium">{{ record.currentTaxRate }}%</td>
+                    <td class="text-gray-500">{{ record.previousFxRate | currency }}</td>
+                    <td class="font-medium">{{ record.currentFxRate | currency }}</td>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-avatar small">{{ record.appliedBy.displayName.charAt(0) }}</div>
+                            <span class="text-sm">{{ record.appliedBy.displayName }}</span>
+                        </div>
+                    </td>
+                    <td class="text-right">
+                        <span class="text-xs text-gray-400">Locked</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- VALUE EDIT MODAL (Small) -->
+<div class="modal-overlay" *ngIf="activeModal === 'tax' || activeModal === 'fx'">
+    <div class="modal-card small-modal">
+        <div class="modal-header">
+            <h2>Edit {{ activeModal === 'tax' ? 'Tax Rate (%)' : 'FX Rate' }}</h2>
+            <button class="btn-close" (click)="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="field">
+                <label>Enter New Value</label>
+                <input type="number" [(ngModel)]="tempValue" class="input-lg" step="0.01">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+            <button class="btn-primary" (click)="saveValueModal()">Update</button>
+        </div>
+    </div>
+</div>
+
+<!-- PASSWORD CONFIRMATION MODAL -->
+<div class="modal-overlay" *ngIf="activeModal === 'password'">
+    <div class="modal-card small-modal">
+        <div class="modal-header">
+            <h2>Confirm Changes</h2>
+            <button class="btn-close" (click)="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <p class="mb-4 text-sm text-gray-600">Please enter your password to authorize this financial update.</p>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" [(ngModel)]="password" placeholder="••••••••" class="input-lg">
+                <p class="error-text" *ngIf="errorMessage">{{ errorMessage }}</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+            <button class="btn-primary" [disabled]="isSaving || !password" (click)="confirmSave()">
+                {{ isSaving ? 'Verifying...' : 'Confirm & Save' }}
+            </button>
+        </div>
+    </div>
+</div>

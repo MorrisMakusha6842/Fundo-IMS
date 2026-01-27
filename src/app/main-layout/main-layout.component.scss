@@ -141,6 +141,8 @@
 .app-shell {
   display: flex;
   min-height: calc(100vh - 56px);
+  width: 100%;
+  max-width: 100vw;
 }
 
 .side-nav {
@@ -206,7 +208,8 @@
 
 .main-content {
   flex: 1;
-  
+  min-width: 0; /* Critical: prevents flex item from overflowing horizontally */
+  width: 100%;
 }
 
 /* Centered search box */

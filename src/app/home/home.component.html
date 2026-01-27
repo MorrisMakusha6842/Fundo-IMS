@@ -1,54 +1,63 @@
 <div class="host-wrapper">
-    <div class="max-w-7xl mx-auto space-y-8 py-5 px-4 sm:px-6">
+    <div class="w-full max-w-7xl mx-auto space-y-8 sm:space-y-10 py-6 sm:py-10 px-4 sm:px-6 lg:px-8">
 
         <!-- Header -->
-        <div class="header">
+        <div>
             <ng-container *ngIf="isLoadingProfile; else loadedHeader">
                 <div class="animate-pulse">
-                    <div class="h-8 bg-gray-200 rounded w-64 mb-2"></div>
-                    <div class="h-4 bg-gray-200 rounded w-48"></div>
+                    <div class="h-8 bg-gray-300 rounded w-3/5 mb-2"></div>
+                    <div class="h-4 bg-gray-300 rounded w-2/5"></div>
                 </div>
             </ng-container>
             <ng-template #loadedHeader>
                 <div>
-                    <h1>Welcome, {{ displayName || 'User' }}</h1>
-                    <p>Manage your policies, claims, and requests</p>
+                    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Welcome, {{ displayName || 'User' }}</h1>
+                    <p class="mt-1 text-sm text-gray-600">Manage your policies, claims, and requests</p>
                 </div>
             </ng-template>
         </div>
 
         <!-- Sub-Categories Filter Carousel -->
         <div class="carousel-container" *ngIf="subCategories$ | async as subCategories">
-            <button class="filter-pill" [class.active]="(selectedCategory$ | async) === null"
-                (click)="selectCategory('')">
+            <button
+                class="flex-shrink-0 whitespace-nowrap rounded-full border py-1.5 px-4 text-sm font-medium transition-colors"
+                [ngClass]="{
+                    'bg-gray-900 text-white border-transparent': (selectedCategory$ | async) === null,
+                    'bg-white text-gray-700 border-gray-300 hover:bg-gray-50': (selectedCategory$ | async) !== null
+                }"
+                (click)="selectCategory(null)">
                 All
             </button>
-            <button class="filter-pill" *ngFor="let cat of subCategories"
-                [class.active]="(selectedCategory$ | async) === cat.id" (click)="selectCategory(cat.id)">
+            <button *ngFor="let cat of subCategories"
+                class="flex-shrink-0 whitespace-nowrap rounded-full border py-1.5 px-4 text-sm font-medium transition-colors"
+                [ngClass]="{
+                    'bg-gray-900 text-white border-transparent': (selectedCategory$ | async) === cat.id,
+                    'bg-white text-gray-700 border-gray-300 hover:bg-gray-50': (selectedCategory$ | async) !== cat.id
+                }"
+                (click)="selectCategory(cat.id)">
                 {{ cat.name }}
             </button>
         </div>
 
-        <!-- Available Policies -->
         <!-- Available Policies Carousel -->
         <section>
-            <h2 class="text-lg font-medium text-gray-900 mb-4">Available Policies</h2>
-            <div class="carousel-container" *ngIf="filteredPolicies$ | async as policies">
+            <h2 class="text-xl font-semibold text-gray-900">Available Policies</h2>
+            <div class="carousel-container mt-4" *ngIf="filteredPolicies$ | async as policies">
                 <!-- Loading State -->
-                <div *ngIf="policies.length === 0" class="p-4 text-gray-500 text-sm">
+                <div *ngIf="policies.length === 0" class="p-4 text-center text-gray-500 text-sm w-full">
                     No policies available for this category.
                 </div>
 
                 <!-- Policy Card -->
-                <div class="policy-card" *ngFor="let policy of policies" (click)="openPolicyModal(policy)">
-                    <div class="card-content">
-                        <h3>{{ policy.policyName || policy.name || 'Unnamed Policy' }}</h3>
-                        <p class="description">{{ policy.description || 'Comprehensive coverage for your needs.' }}</p>
+                <div *ngFor="let policy of policies" (click)="openPolicyModal(policy)"
+                    class="relative flex-shrink-0 w-60 sm:w-64 h-44 bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 shadow-md hover:shadow-xl hover:-translate-y-1 border border-gray-200">
+                    <div class="p-5 h-full flex flex-col">
+                        <h3 class="font-semibold text-base text-gray-900">{{ policy.policyName || policy.name || 'Unnamed Policy' }}</h3>
+                        <p class="mt-1 text-xs text-gray-600 leading-snug flex-grow">{{ policy.description || 'Comprehensive coverage for your needs.' }}</p>
                     </div>
-                    <div class="bottom-panel">
-                        <span>View Policy</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16"
-                            height="16">
+                    <div class="absolute bottom-0 left-0 right-0 bg-gray-50/80 backdrop-blur-sm border-t border-gray-900/5 px-5 py-3 flex justify-between items-center">
+                        <span class="font-semibold text-sm text-indigo-600">View Details</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-indigo-600">
                             <path fill-rule="evenodd"
                                 d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                                 clip-rule="evenodd" />
@@ -59,107 +68,103 @@
         </section>
 
         <!-- Active Policies Accordion -->
-        <div class="table-card">
-            <div class="table-card-header" (click)="toggleActive()">
-                <div class="table-title">
-                    <h3>Active Policies</h3>
-                </div>
-                <div class="accordion-icon" [class.expanded]="isActiveExpanded">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20"
-                        height="20">
-                        <path fill-rule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clip-rule="evenodd" />
-                    </svg>
-                </div>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="flex justify-between items-center p-4 cursor-pointer transition-colors hover:bg-gray-50 border-b border-gray-200" (click)="toggleActive()">
+                <h3 class="text-base font-semibold text-gray-900">Active Policies</h3>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-gray-500 transition-transform duration-300" [class.rotate-180]="isActiveExpanded">
+                    <path fill-rule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                </svg>
             </div>
             <div class="table-body" [class.expanded]="isActiveExpanded">
-                <table class="policy-table">
-                    <thead>
-                        <tr>
-                            <th>Policy Document</th>
-                            <th>Asset</th>
-                            <th>Status</th>
-                            <th>Expiry</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngIf="activePolicies.length === 0">
-                            <td colspan="5" style="text-align: center; padding: 20px; color: #86868b;">No active policies found.</td>
-                        </tr>
-                        <tr *ngFor="let policy of activePolicies">
-                            <td>{{ policy.policyId }}</td>
-                            <td>{{ policy.asset }}</td>
-                            <td>
-                                <span class="badge active">{{ policy.status }}</span>
-                            </td>
-                            <td>{{ policy.expiryDate | date }}</td>
-                            <td class="text-right">
-                                <a *ngIf="policy.docUrl" [href]="policy.docUrl" download="{{policy.policyId}}" class="btn-secondary small" style="text-decoration: none; display: inline-block;">
-                                    Download
-                                </a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="w-full daicy-table min-w-full">
+                <div class="w-full block overflow-x-auto overflow-y-auto max-h-[50vh] sm:max-h-none border-t border-gray-100">
+                    <table class="policy-table min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Policy Document</th>
+                                <th>Asset</th>
+                                <th>Status</th>
+                                <th>Expiry</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngIf="activePolicies.length === 0">
+                                <td colspan="5" style="text-align: center; padding: 20px; color: #86868b;">No active policies found.</td>
+                            </tr>
+                            <tr *ngFor="let policy of activePolicies">
+                                <td>{{ policy.policyId }}</td>
+                                <td>{{ policy.asset }}</td>
+                                <td>
+                                    <span class="badge active">{{ policy.status }}</span>
+                                </td>
+                                <td>{{ policy.expiryDate | date }}</td>
+                                <td class="text-right">
+                                    <a *ngIf="policy.docUrl" [href]="policy.docUrl" download="{{policy.policyId}}" class="btn-secondary small" style="text-decoration: none; display: inline-block;">
+                                        Download
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- Lapsed Policies Accordion -->
-        <div class="table-card">
-            <div class="table-card-header" (click)="toggleLapsed()">
-                <div class="table-title">
-                    <h3>Lapsed Policies</h3>
-                </div>
-                <div class="accordion-icon" [class.expanded]="isLapsedExpanded">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20"
-                        height="20">
-                        <path fill-rule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clip-rule="evenodd" />
-                    </svg>
-                </div>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="flex justify-between items-center p-4 cursor-pointer transition-colors hover:bg-gray-50 border-b border-gray-200" (click)="toggleLapsed()">
+                <h3 class="text-base font-semibold text-gray-900">Lapsed Policies</h3>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-gray-500 transition-transform duration-300" [class.rotate-180]="isLapsedExpanded">
+                    <path fill-rule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clip-rule="evenodd" />
+                </svg>
             </div>
             <div class="table-body" [class.expanded]="isLapsedExpanded">
-                <table class="policy-table">
-                    <thead>
-                        <tr>
-                            <th>Policy Document</th>
-                            <th>Asset</th>
-                            <th>Expiry Date</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngIf="lapsedPolicies.length === 0">
-                            <td colspan="4" style="text-align: center; padding: 20px; color: #86868b;">No lapsed policies.</td>
-                        </tr>
-                        <tr *ngFor="let policy of lapsedPolicies">
-                            <td>{{ policy.policyId }}</td>
-                            <td>{{ policy.asset }}</td>
-                            <td>{{ policy.expiryDate | date }}</td>
-                            <td>
-                                <span class="badge expired">{{ policy.status }}</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="w-full block overflow-x-auto overflow-y-auto max-h-[50vh] sm:max-h-none border-t border-gray-100">
+                    <table class="policy-table min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Policy Document</th>
+                                <th>Asset</th>
+                                <th>Expiry Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngIf="lapsedPolicies.length === 0">
+                                <td colspan="4" style="text-align: center; padding: 20px; color: #86868b;">No lapsed policies.</td>
+                            </tr>
+                            <tr *ngFor="let policy of lapsedPolicies">
+                                <td>{{ policy.policyId }}</td>
+                                <td>{{ policy.asset }}</td>
+                                <td>{{ policy.expiryDate | date }}</td>
+                                <td>
+                                    <span class="badge expired">{{ policy.status }}</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- Request a Claim -->
-        <section class="bg-white rounded-xl shadow p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-6">
-                Request a Claim
+        <section class="bg-white rounded-xl shadow-sm p-4 sm:p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                File a Claim
             </h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 <!-- Column 1: Asset Selection -->
                 <div>
                     <h3 class="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">Select Asset</h3>
 
-                    <div class="border rounded-lg bg-white shadow-sm overflow-x-auto">
+                    <div class="w-full block overflow-x-auto overflow-y-auto max-h-[50vh] sm:max-h-none -mx-4 sm:mx-0 sm:border sm:rounded-lg bg-white sm:shadow-sm">
+
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -314,21 +319,18 @@
 
                     <!-- Claim Type -->
                     <label class="block text-sm font-medium text-gray-700 mb-2">Issue Type</label>
-                    <div class="grid grid-cols-3 gap-3 mb-6">
-                        <label class="claim-type-option">
-                            <input type="radio" name="claimType" value="Accident" [(ngModel)]="claimType"
-                                class="sr-only">
-                            <span class="option-content">Accident</span>
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+                        <label>
+                            <input type="radio" name="claimType" value="Accident" [(ngModel)]="claimType" class="sr-only peer">
+                            <span class="cursor-pointer h-full flex items-center justify-center p-2.5 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium transition-colors peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-sm">Accident</span>
                         </label>
-
-                        <label class="claim-type-option">
-                            <input type="radio" name="claimType" value="Theft" [(ngModel)]="claimType" class="sr-only">
-                            <span class="option-content">Theft</span>
+                        <label>
+                            <input type="radio" name="claimType" value="Theft" [(ngModel)]="claimType" class="sr-only peer">
+                            <span class="cursor-pointer h-full flex items-center justify-center p-2.5 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium transition-colors peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-sm">Theft</span>
                         </label>
-
-                        <label class="claim-type-option">
-                            <input type="radio" name="claimType" value="Damage" [(ngModel)]="claimType" class="sr-only">
-                            <span class="option-content">Damage</span>
+                        <label>
+                            <input type="radio" name="claimType" value="Damage" [(ngModel)]="claimType" class="sr-only peer">
+                            <span class="cursor-pointer h-full flex items-center justify-center p-2.5 border border-gray-300 rounded-lg text-gray-700 text-sm font-medium transition-colors peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 peer-checked:shadow-sm">Damage</span>
                         </label>
                     </div>
 
