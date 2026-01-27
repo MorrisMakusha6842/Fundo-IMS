@@ -1,16 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-
-interface PaymentAccount {
-    id: string;
-    name: string;
-    provider: 'Ecocash' | 'OneMoney' | 'Bank';
-    accountNumber: string;
-    paynowId: string;
-    paynowKey: string;
-    status: 'Active' | 'Inactive';
-}
+import { AccountReceivableService, PaymentAccount } from './account-receivable.service';
 
 @Component({
     selector: 'app-account-receivable',
@@ -20,6 +11,7 @@ interface PaymentAccount {
     styleUrls: ['./account-receivable.component.scss']
 })
 export class AccountReceivableComponent implements OnInit {
+    private accountService = inject(AccountReceivableService);
     accounts: PaymentAccount[] = [];
     showForm = false;
     accountForm: FormGroup;
@@ -38,11 +30,9 @@ export class AccountReceivableComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Dummy Data
-        this.accounts = [
-            { id: '1', name: 'Main Ecocash', provider: 'Ecocash', accountNumber: '0771234567', paynowId: '12345', paynowKey: '••••••••', status: 'Active' },
-            { id: '2', name: 'Business OneMoney', provider: 'OneMoney', accountNumber: '0712345678', paynowId: '67890', paynowKey: '••••••••', status: 'Inactive' }
-        ];
+        this.accountService.getAccounts().subscribe(data => {
+            this.accounts = data;
+        });
     }
 
     initAddAccount() {
