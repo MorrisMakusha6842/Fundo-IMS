@@ -1,6 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+export interface BillingTrend {
+  date: string;          // 2026-01-01
+  collected: number;     // cumulative
+  forecast?: number;     // optional future
+}
+
 @Component({
     selector: 'app-billing-overview',
     standalone: true,
@@ -87,31 +93,71 @@ import { CommonModule } from '@angular/common';
   <div class="billing-ledger">
 
     <div class="ledger-header">
-      <h3>Ledger Summary</h3>
-      <button class="btn-secondary">Export CSV</button>
+      <h3>Premium Collection Summary</h3>
+      <div class="header-actions">
+        <select class="filter-select">
+            <option>This Month</option>
+            <option>Last Month</option>
+            <option>Quarter to Date</option>
+        </select>
+        <button class="btn-secondary">Export CSV</button>
+      </div>
     </div>
 
-    <div class="ledger-chart">
-      <div class="chart-placeholder-box">Chart Area (Coming Soon)</div>
+    <div class="ledger-chart-container">
+      <!-- SVG Graph: Premium Collection Trend -->
+      <svg viewBox="0 0 1000 300" preserveAspectRatio="none" class="chart-svg">
+          <defs>
+              <linearGradient id="collectedGradient" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#0071e3" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#0071e3" stop-opacity="0"/>
+              </linearGradient>
+          </defs>
+
+          <!-- Grid Lines -->
+          <line x1="0" y1="250" x2="1000" y2="250" class="grid-line" />
+          <line x1="0" y1="150" x2="1000" y2="150" class="grid-line" />
+          <line x1="0" y1="50" x2="1000" y2="50" class="grid-line" />
+
+          <!-- Target Line (Dotted) -->
+          <line x1="0" y1="80" x2="1000" y2="80" class="target-line" />
+          <text x="10" y="75" class="chart-label target-label">Target: {{ monthlyTarget | currency }}</text>
+
+          <!-- Forecast Line (Dashed) -->
+          <path d="M 500 180 Q 750 100 1000 60" class="forecast-line" />
+
+          <!-- Actual Collected Area (Filled) -->
+          <path d="M 0 300 L 0 280 Q 250 250 500 180 L 500 300 Z" class="collected-area" />
+          <path d="M 0 280 Q 250 250 500 180" class="collected-line" />
+
+          <!-- Current Day Indicator -->
+          <circle cx="500" cy="180" r="4" class="current-dot" />
+          <line x1="500" y1="180" x2="500" y2="300" class="current-line" />
+          
+          <!-- Axis Labels -->
+          <text x="0" y="295" class="axis-label">Day 1</text>
+          <text x="500" y="295" class="axis-label">Today</text>
+          <text x="980" y="295" class="axis-label text-right">Day 30</text>
+      </svg>
     </div>
 
     <div class="ledger-legend">
       <div class="legend-item">
         <span class="dot collected"></span>
-        Premiums Collected
+        Actual Collected
         <strong>$5,893.00</strong>
       </div>
 
       <div class="legend-item">
-        <span class="dot outstanding"></span>
-        Outstanding
-        <strong>$8,393.00</strong>
+        <span class="dot forecast"></span>
+        Forecast
+        <strong>$13,500.00</strong>
       </div>
 
       <div class="legend-item">
-        <span class="dot projected"></span>
-        Projected (Renewals)
-        <strong>$12,393.00</strong>
+        <span class="dot target"></span>
+        Monthly Target
+        <strong>{{ monthlyTarget | currency }}</strong>
       </div>
     </div>
 
@@ -155,6 +201,9 @@ import { CommonModule } from '@angular/common';
 })
 export class BillingOverviewComponent {
     isActiveAccountsModalOpen = false;
+    
+    // Data Model Properties
+    monthlyTarget: number = 12393;
 
     // Dummy data for the modal
     activeAccounts = [

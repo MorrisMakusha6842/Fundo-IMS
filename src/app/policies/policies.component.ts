@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators, For
 import { PolicyService } from '../services/policy.service';
 import { ToastService } from '../services/toast.service';
 import { Observable, tap, combineLatest, map, startWith } from 'rxjs';
+import { serverTimestamp } from 'firebase/firestore';
 
 @Component({
   selector: 'app-policies',
@@ -66,6 +67,8 @@ export class PoliciesComponent implements OnInit {
     this.createPolicyForm = this.fb.group({
       subCategory: ['', Validators.required],
       policyName: ['', Validators.required],
+      // tenure expected as number of months (integers). We'll store server timestamp + months in Firestore.
+      tenure: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
       packages: this.fb.array([])
     });
 
@@ -152,13 +155,49 @@ export class PoliciesComponent implements OnInit {
   addPackage() {
     const pkgGroup = this.fb.group({
       name: ['', Validators.required],
-      coverages: ['', Validators.required] // Simple text area for comma-separated values
+      coverages: this.fb.array([]),
+      flatFees: this.fb.array([])
     });
     this.packages.push(pkgGroup);
+
+    // Add default empty rows for better UX
+    this.addCoverage(this.packages.length - 1);
+    this.addFee(this.packages.length - 1);
   }
 
   removePackage(index: number) {
     this.packages.removeAt(index);
+  }
+
+  // --- Nested Form Arrays Helpers ---
+  getPackageCoverages(packageIndex: number): FormArray {
+    return this.packages.at(packageIndex).get('coverages') as FormArray;
+  }
+
+  getPackageFees(packageIndex: number): FormArray {
+    return this.packages.at(packageIndex).get('flatFees') as FormArray;
+  }
+
+  addCoverage(packageIndex: number) {
+    this.getPackageCoverages(packageIndex).push(this.fb.group({
+      name: ['', Validators.required],
+      percentage: [100, [Validators.required, Validators.min(0), Validators.max(100)]]
+    }));
+  }
+
+  removeCoverage(packageIndex: number, coverageIndex: number) {
+    this.getPackageCoverages(packageIndex).removeAt(coverageIndex);
+  }
+
+  addFee(packageIndex: number) {
+    this.getPackageFees(packageIndex).push(this.fb.group({
+      name: ['', Validators.required],
+      amount: [0, [Validators.required, Validators.min(0)]]
+    }));
+  }
+
+  removeFee(packageIndex: number, feeIndex: number) {
+    this.getPackageFees(packageIndex).removeAt(feeIndex);
   }
 
   // --- Logic ---
@@ -186,28 +225,104 @@ export class PoliciesComponent implements OnInit {
   }
 
   async onCreatePolicy() {
-    if (this.createPolicyForm.invalid) return;
+    if (this.createPolicyForm.invalid) {
+      // mark fields so any inline errors (if added later) show up and give immediate feedback
+      this.createPolicyForm.markAllAsTouched();
+      this.toast.show('Please fill the required fields correctly before creating the policy.', 'error');
+      return;
+    }
     this.isSubmitting = true;
-    const { subCategory, policyName, packages } = this.createPolicyForm.value;
+    const { subCategory, policyName, tenure, packages } = this.createPolicyForm.value;
+
+    // tenure should be integer months; ensure it's numeric
+    const tenureMonths = Number(tenure);
+    if (!Number.isInteger(tenureMonths) || tenureMonths <= 0) {
+      this.toast.show('Tenure must be a whole number of months (e.g. 12).', 'error');
+      this.isSubmitting = false;
+      return;
+    }
 
     // Find the name of the selected sub-category to store on the policy for easier display
     const selectedSub = this.subCategoriesList.find(s => s.id === subCategory);
     const subCategoryName = selectedSub ? selectedSub.name : 'Unknown';
 
-    // Process packages to split coverages string into array
-    const processedPackages = packages.map((pkg: any) => ({
-      name: pkg.name,
-      coverages: (pkg.coverages || '').split(',').map((c: string) => c.trim()).filter((c: string) => c.length > 0)
-    }));
-
     try {
       // subCategory is the ID of the selected category
+      // Validate packages (names, numeric ranges) and normalize values
+      for (let pIndex = 0; pIndex < (packages || []).length; pIndex++) {
+        const pkg = packages[pIndex];
+        if (!pkg.name || !pkg.name.trim()) {
+          this.toast.show(`Package ${pIndex + 1} needs a name.`, 'error');
+          this.isSubmitting = false;
+          return;
+        }
+
+        const covs = pkg.coverages || [];
+        for (let cIndex = 0; cIndex < covs.length; cIndex++) {
+          const cov = covs[cIndex];
+          const pct = Number(cov.percentage);
+          if (cov.name == null || cov.name.toString().trim() === '') {
+            this.toast.show(`Coverage #${cIndex + 1} in package "${pkg.name}" needs a name.`, 'error');
+            this.isSubmitting = false;
+            return;
+          }
+          if (isNaN(pct) || pct < 0 || pct > 100) {
+            this.toast.show(`Coverage "${cov.name}" in package "${pkg.name}" must have a percentage between 0 and 100.`, 'error');
+            this.isSubmitting = false;
+            return;
+          }
+        }
+
+        const fees = pkg.flatFees || [];
+        for (let fIndex = 0; fIndex < fees.length; fIndex++) {
+          const fee = fees[fIndex];
+          const amt = Number(fee.amount);
+          if (fee.name == null || fee.name.toString().trim() === '') {
+            this.toast.show(`Fee #${fIndex + 1} in package "${pkg.name}" needs a name.`, 'error');
+            this.isSubmitting = false;
+            return;
+          }
+          if (isNaN(amt) || amt < 0) {
+            this.toast.show(`Fee "${fee.name}" in package "${pkg.name}" must have a valid amount (>= 0).`, 'error');
+            this.isSubmitting = false;
+            return;
+          }
+        }
+      }
+
+      const normalizedPackages = (packages || []).map((pkg: any) => {
+        const normCoverages = (pkg.coverages || []).map((c: any) => ({
+          name: c.name,
+          percentage: Number(c.percentage)
+        }));
+
+        // Treat flatFees as coverages as requested: convert each fee into a coverage-like entry
+        const feeAsCoverages = (pkg.flatFees || []).map((f: any) => ({
+          name: f.name,
+          amount: Number(f.amount)
+        }));
+
+        return {
+          ...pkg,
+          // merged coverages array contains both percentage-based coverages and fee-based coverages
+          coverages: [...normCoverages, ...feeAsCoverages],
+          // keep flatFees for backward compatibility but normalize amounts
+          flatFees: (pkg.flatFees || []).map((f: any) => ({ name: f.name, amount: Number(f.amount) }))
+        } as any;
+      });
+
+      // Use Firestore serverTimestamp for createdAt and tenureStart so server time is recorded.
+      // Also store tenureMonths so other parts of the system can compute expiry reliably.
       await this.policyService.addPolicy(subCategory, {
         policyName,
-        packages: processedPackages,
+        // keep legacy `tenure` string for compatibility with PolicyData
+        tenure: String(tenure),
+        tenureMonths,
+        tenureStart: serverTimestamp(),
+        packages: normalizedPackages,
         subCategoryId: subCategory,
         subCategoryName: subCategoryName,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
         status: 'active'
       });
       this.toast.show('Policy created successfully', 'success');

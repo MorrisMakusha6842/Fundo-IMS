@@ -2,6 +2,29 @@ import { Injectable, inject } from '@angular/core';
 import { Firestore, collection, addDoc, collectionData, doc, query, where, collectionGroup, deleteDoc, updateDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
+export interface PolicyCoverage {
+    name: string;
+    percentage: number;
+}
+
+export interface PolicyFee {
+    name: string;
+    amount: number;
+}
+
+export interface PolicyPackage {
+    name: string;
+    coverages: PolicyCoverage[];
+    flatFees: PolicyFee[];
+}
+
+export interface PolicyData {
+    policyName: string;
+    tenure: string;
+    packages: PolicyPackage[];
+    [key: string]: any; // Allow other props like timestamps/status
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -29,7 +52,7 @@ export class PolicyService {
      * Adds a policy to a specific sub-category.
      * Path: sub-categories/{subCategoryId}/policies/{autoId}
      */
-    async addPolicy(subCategoryId: string, policyData: any) {
+    async addPolicy(subCategoryId: string, policyData: PolicyData) {
         const colRef = collection(this.firestore, `sub-categories/${subCategoryId}/policies`);
         return addDoc(colRef, policyData);
     }

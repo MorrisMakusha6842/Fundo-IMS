@@ -592,3 +592,182 @@
     }
   }
 }
+
+/* NEW STYLES FOR COVERAGES & FEES */
+.package-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e5ea;
+}
+
+.detail-column {
+  background: #f5f5f7;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e5e5ea;
+}
+
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+  label {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #424245;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+}
+
+.btn-link-small {
+  background: #fff;
+  border: 1px solid #d2d2d7;
+  color: #0071e3;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 12px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #0071e3;
+    color: #fff;
+    border-color: #0071e3;
+    text-decoration: none;
+  }
+}
+
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fff;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #e5e5ea;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+/* Allow flex items (inputs) to shrink so content (numbers) is visible on small widths */
+.detail-row .input-sm {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.input-sm {
+  padding: 6px 8px;
+  font-size: 13px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: #f5f5f7;
+  width: 100%;
+  transition: all 0.2s;
+
+  &:focus {
+    outline: none;
+    background: #fff;
+    border-color: #0071e3;
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.1);
+  }
+
+  &::placeholder {
+    color: #a1a1a6;
+  }
+}
+
+.input-suffix-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  /* place prefix/suffix outside the input so they don't overlap text */
+  .prefix-out,
+  .suffix-out {
+    font-size: 13px;
+    color: #86868b;
+    flex: 0 0 auto;
+  }
+
+  input {
+    /* full-width input but allow sibling prefix/suffix to occupy minimal space */
+    flex: 1 1 auto;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 8px 10px;
+  }
+}
+
+/* Remove number input spinner arrows across browsers so values are fully visible
+   Applies to the coverage percentage and fee amount numeric inputs. */
+input[type="number"] {
+  -moz-appearance: textfield; /* Firefox */
+  appearance: textfield;
+}
+
+/* Chrome, Edge, Safari */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn-icon-remove {
+  background: transparent;
+  color: #86868b;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #fee2e2;
+    color: #ef4444;
+  }
+}
+
+.empty-text {
+  font-size: 12px;
+  color: #86868b;
+  font-style: normal;
+  text-align: center;
+  padding: 20px;
+  background: #fff;
+  border: 1px dashed #d2d2d7;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 640px) {
+  .package-details-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

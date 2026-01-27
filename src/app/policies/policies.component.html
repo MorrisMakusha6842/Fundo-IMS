@@ -109,7 +109,7 @@
         <tr *ngFor="let policy of filteredPolicies$ | async">
           <td>{{ policy.policyName }}</td>
           <td>{{ policy.subCategoryName || 'N/A' }}</td>
-          <td style="font-size: 11px; color: #666; max-width: 200px;">
+          <td style="font-size: 11px; color: #666; max-width: 250px;">
             <span *ngFor="let pkg of policy.packages; let isLast=last">{{ pkg.name }}<span *ngIf="!isLast">,
               </span></span>
             <span *ngIf="!policy.packages?.length">-</span>
@@ -359,6 +359,7 @@
     </div>
     <form class="modal-form-content" [formGroup]="createPolicyForm" (ngSubmit)="onCreatePolicy()">
       <div class="modal-body">
+        <!-- Plain numeric text inputs (no helpers) -->
         <div class="field">
           <label>Category (Sub Category)</label>
           <select formControlName="subCategory">
@@ -366,9 +367,15 @@
             <option *ngFor="let sub of subCategories$ | async" [value]="sub.id">{{ sub.name }}</option>
           </select>
         </div>
-        <div class="field">
-          <label>Policy Name</label>
-          <input type="text" formControlName="policyName" placeholder="e.g. Motor Comprehensive" />
+        <div class="form-row">
+          <div class="field">
+            <label>Policy Name</label>
+            <input type="text" formControlName="policyName" placeholder="e.g. Motor Comprehensive" />
+          </div>
+          <div class="field">
+            <label>Tenure (Duration)</label>
+            <input type="text" formControlName="tenure" placeholder="e.g. 12 Months" />
+          </div>
         </div>
 
         <!-- Dynamic Packages Section -->
@@ -385,13 +392,56 @@
                 <button type="button" class="btn-icon delete" (click)="removePackage(i)"
                   *ngIf="packages.length > 1">×</button>
               </div>
+
               <div class="field">
                 <label>Package Name</label>
                 <input type="text" formControlName="name" placeholder="e.g. Gold, Silver" />
               </div>
-              <div class="field">
-                <label>Coverages (comma separated)</label>
-                <textarea formControlName="coverages" placeholder="e.g. Towing, Windscreen, Theft"></textarea>
+
+              <div class="package-details-grid">
+                <!-- Coverages Column -->
+                <div class="detail-column">
+                  <div class="column-header">
+                    <label>Coverages</label>
+                    <button type="button" class="btn-link-small" (click)="addCoverage(i)">+ Add</button>
+                  </div>
+                  <div class="detail-list" formArrayName="coverages">
+                    <div *ngFor="let cov of getPackageCoverages(i).controls; let j=index" [formGroupName]="j"
+                      class="detail-row">
+                      <input type="text" formControlName="name" placeholder="Coverage Name" class="input-sm"
+                        style="flex: 2;">
+                      <div class="input-suffix-group" style="flex: 1; min-width:0; display:flex; align-items:center; gap:8px;">
+                        <!-- % placed outside input to avoid overlap -->
+                        <input type="text" formControlName="percentage" placeholder="100" class="input-sm">
+                        <span class="suffix-out">%</span>
+                      </div>
+                      <button type="button" class="btn-icon-remove" (click)="removeCoverage(i, j)">×</button>
+                    </div>
+                    <div *ngIf="getPackageCoverages(i).length === 0" class="empty-text">No coverages added</div>
+                  </div>
+                </div>
+
+                <!-- Flat Fees Column -->
+                <div class="detail-column">
+                  <div class="column-header">
+                    <label>Flat Fees</label>
+                    <button type="button" class="btn-link-small" (click)="addFee(i)">+ Add</button>
+                  </div>
+                  <div class="detail-list" formArrayName="flatFees">
+                    <div *ngFor="let fee of getPackageFees(i).controls; let k=index" [formGroupName]="k"
+                      class="detail-row">
+                      <input type="text" formControlName="name" placeholder="Fee Name" class="input-sm"
+                        style="flex: 2;">
+                      <div class="input-suffix-group" style="flex: 1; min-width:0; display:flex; align-items:center; gap:8px;">
+                        <!-- $ placed outside input to avoid overlap -->
+                        <span class="prefix-out">$</span>
+                        <input type="text" formControlName="amount" placeholder="0.00" class="input-sm">
+                      </div>
+                      <button type="button" class="btn-icon-remove" (click)="removeFee(i, k)">×</button>
+                    </div>
+                    <div *ngIf="getPackageFees(i).length === 0" class="empty-text">No fees added</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -399,7 +449,8 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" (click)="closeCreatePolicyModal()">Cancel</button>
-        <button type="submit" class="btn-primary" [disabled]="createPolicyForm.invalid || isSubmitting">
+        <!-- allow submit button to be clickable so we can show validation toasts; actual submission is guarded in TS -->
+        <button type="submit" class="btn-primary" [disabled]="isSubmitting">
           {{ isSubmitting ? 'Creating...' : 'Create Policy' }}
         </button>
       </div>

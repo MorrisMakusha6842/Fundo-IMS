@@ -151,21 +151,78 @@
     }
 }
 
-.ledger-chart {
-    height: 300px;
-    background: #fbfbfd;
-    border-radius: 12px;
-    margin-bottom: 24px;
+.header-actions {
     display: flex;
+    gap: 12px;
     align-items: center;
-    justify-content: center;
-    border: 1px dashed #d2d2d7;
 }
 
-.chart-placeholder-box {
-    color: #86868b;
-    font-size: 14px;
+/* CHART STYLES */
+.ledger-chart-container {
+    height: 300px;
+    width: 100%;
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.chart-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.grid-line {
+    stroke: #e5e5ea;
+    stroke-width: 1;
+}
+
+.target-line {
+    stroke: #34c759; /* Green for target */
+    stroke-width: 2;
+    stroke-dasharray: 4 4; /* Dotted */
+    opacity: 0.7;
+}
+
+.forecast-line {
+    stroke: #0071e3;
+    stroke-width: 2;
+    stroke-dasharray: 6 4; /* Dashed */
+    fill: none;
+    opacity: 0.5;
+}
+
+.collected-area {
+    fill: url(#collectedGradient);
+}
+
+.collected-line {
+    stroke: #0071e3;
+    stroke-width: 3;
+    fill: none;
+}
+
+.current-dot {
+    fill: #fff;
+    stroke: #0071e3;
+    stroke-width: 2;
+}
+
+.current-line {
+    stroke: #0071e3;
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+    opacity: 0.5;
+}
+
+.axis-label {
+    font-size: 11px;
+    fill: #86868b;
+}
+
+.chart-label {
+    font-size: 11px;
     font-weight: 500;
+    fill: #34c759;
 }
 
 .ledger-legend {
@@ -191,11 +248,11 @@
             background: #0071e3;
         }
 
-        &.outstanding {
-            background: #ff9500;
+        &.forecast {
+            background: #a0cfff; /* Lighter blue */
         }
 
-        &.projected {
+        &.target {
             background: #34c759;
         }
     }
@@ -261,6 +318,10 @@
 
 .text-right {
     text-align: right;
+}
+
+.text-right.axis-label {
+    text-anchor: end;
 }
 
 /* Import shared modal styles if available, otherwise rely on local styles defined in user-management.component.scss which are global-like */
