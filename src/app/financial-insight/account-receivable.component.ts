@@ -46,27 +46,24 @@ export class AccountReceivableComponent implements OnInit {
         this.showForm = false;
     }
 
-    saveAccount() {
+    async saveAccount() {
         if (this.accountForm.invalid) return;
 
         const formVal = this.accountForm.value;
 
-        if (this.isEditing) {
-            // Update existing
-            const index = this.accounts.findIndex(a => a.id === formVal.id);
-            if (index !== -1) {
-                this.accounts[index] = { ...formVal };
+        try {
+            if (this.isEditing && formVal.id) {
+                // Update existing
+                await this.accountService.updateAccount(formVal);
+            } else {
+                // Add new
+                const { id, ...newAccount } = formVal;
+                await this.accountService.addAccount(newAccount as PaymentAccount);
             }
-        } else {
-            // Add new
-            const newAccount: PaymentAccount = {
-                ...formVal,
-                id: Date.now().toString()
-            };
-            this.accounts.push(newAccount);
+            this.showForm = false;
+        } catch (error) {
+            console.error('Error saving account:', error);
         }
-
-        this.showForm = false;
     }
 
     editAccount(account: PaymentAccount) {
