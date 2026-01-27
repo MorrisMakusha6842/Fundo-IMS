@@ -1,0 +1,93 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+interface PaymentAccount {
+    id: string;
+    name: string;
+    provider: 'Ecocash' | 'OneMoney' | 'Bank';
+    accountNumber: string;
+    paynowId: string;
+    paynowKey: string;
+    status: 'Active' | 'Inactive';
+}
+
+@Component({
+    selector: 'app-account-receivable',
+    standalone: true,
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
+    templateUrl: './account-receivable.component.html',
+    styleUrls: ['./account-receivable.component.scss']
+})
+export class AccountReceivableComponent implements OnInit {
+    accounts: PaymentAccount[] = [];
+    showForm = false;
+    accountForm: FormGroup;
+    isEditing = false;
+
+    constructor(private fb: FormBuilder) {
+        this.accountForm = this.fb.group({
+            id: [null],
+            name: ['', Validators.required],
+            provider: ['Ecocash', Validators.required],
+            accountNumber: ['', Validators.required],
+            paynowId: ['', Validators.required],
+            paynowKey: ['', Validators.required],
+            status: ['Active']
+        });
+    }
+
+    ngOnInit(): void {
+        // Dummy Data
+        this.accounts = [
+            { id: '1', name: 'Main Ecocash', provider: 'Ecocash', accountNumber: '0771234567', paynowId: '12345', paynowKey: '••••••••', status: 'Active' },
+            { id: '2', name: 'Business OneMoney', provider: 'OneMoney', accountNumber: '0712345678', paynowId: '67890', paynowKey: '••••••••', status: 'Inactive' }
+        ];
+    }
+
+    initAddAccount() {
+        if (this.accounts.length >= 5) return;
+        this.isEditing = false;
+        this.accountForm.reset({ provider: 'Ecocash', status: 'Active' });
+        this.showForm = true;
+    }
+
+    cancelForm() {
+        this.showForm = false;
+    }
+
+    saveAccount() {
+        if (this.accountForm.invalid) return;
+
+        const formVal = this.accountForm.value;
+
+        if (this.isEditing) {
+            // Update existing
+            const index = this.accounts.findIndex(a => a.id === formVal.id);
+            if (index !== -1) {
+                this.accounts[index] = { ...formVal };
+            }
+        } else {
+            // Add new
+            const newAccount: PaymentAccount = {
+                ...formVal,
+                id: Date.now().toString()
+            };
+            this.accounts.push(newAccount);
+        }
+
+        this.showForm = false;
+    }
+
+    editAccount(account: PaymentAccount) {
+        this.isEditing = true;
+        this.accountForm.patchValue(account);
+        this.showForm = true;
+    }
+
+    deleteAccount(id: string) {
+        if (confirm('Are you sure you want to remove this payment method?')) {
+            this.accounts = this.accounts.filter(a => a.id !== id);
+        }
+    }
+}

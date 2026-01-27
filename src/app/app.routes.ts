@@ -16,6 +16,10 @@ import { UserManagementComponent } from './user-management/user-management.compo
 import { VehicleRegisterComponent } from './vehicle-register/vehicle-register.component';
 import { AssetRegistryComponent } from './asset-registry/asset-registry.component';
 import { FinancialInsightComponent } from './financial-insight/financial-insight.component';
+import { AccountReceivableComponent } from './financial-insight/account-receivable.component';
+import { BillingOverviewComponent } from './billing/billing-overview.component';
+import { BillingInformationComponent } from './billing/billing-information.component';
+import { PaymentHistoryComponent } from './billing/payment-history.component';
 
 export const routes: Routes = [
   {
@@ -42,7 +46,18 @@ export const routes: Routes = [
       { path: 'notifications', component: NotificationsComponent, canActivate: [AuthGuard] },
       { path: 'reminders', component: RemindersComponent, canActivate: [AuthGuard] },
       { path: 'analytics', component: AnalyticsComponent, canActivate: [AuthGuard] },
-      { path: 'billing', component: BillingComponent, canActivate: [AuthGuard] },
+      {
+        path: 'billing',
+        component: BillingComponent,
+        canActivate: [AuthGuard],
+        children: [
+          { path: '', redirectTo: 'overview', pathMatch: 'full' },
+          { path: 'overview', component: BillingOverviewComponent },
+          { path: 'information', component: BillingInformationComponent },
+          { path: 'receivable', component: AccountReceivableComponent },
+          { path: 'history', component: PaymentHistoryComponent }
+        ]
+      },
       { path: 'financial-insight', component: FinancialInsightComponent, canActivate: [AuthGuard] },
       { path: 'policies', component: PoliciesComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
       { path: 'settings', component: SettingsComponent, canActivate: [AuthGuard] },
