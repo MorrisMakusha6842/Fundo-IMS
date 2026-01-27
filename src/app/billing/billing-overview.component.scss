@@ -1,0 +1,267 @@
+:host {
+    display: block;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.billing-overview {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* HEADER */
+.billing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1d1d1f;
+        margin: 0;
+    }
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #d2d2d7;
+    background-color: #fff;
+    font-size: 13px;
+    color: #1d1d1f;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+
+    &:focus {
+        border-color: #0071e3;
+    }
+}
+
+/* SUMMARY CARDS */
+.billing-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.summary-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #86868b;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .card-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1d1d1f;
+        margin-bottom: 4px;
+        letter-spacing: -0.02em;
+    }
+
+    .card-subtext {
+        font-size: 13px;
+        color: #86868b;
+        margin-bottom: 16px;
+    }
+
+    .card-action {
+        margin-top: auto;
+        padding-top: 16px;
+        border-top: 1px solid #f5f5f7;
+    }
+}
+
+.trend {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+
+    &.positive {
+        color: #166534;
+        background: #dcfce7;
+    }
+
+    &.negative {
+        color: #991b1b;
+        background: #fee2e2;
+    }
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: #0071e3;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+/* LEDGER SECTION */
+.billing-ledger {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.ledger-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+
+    h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0;
+        color: #1d1d1f;
+    }
+}
+
+.ledger-chart {
+    height: 300px;
+    background: #fbfbfd;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #d2d2d7;
+}
+
+.chart-placeholder-box {
+    color: #86868b;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.ledger-legend {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #424245;
+
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+
+        &.collected {
+            background: #0071e3;
+        }
+
+        &.outstanding {
+            background: #ff9500;
+        }
+
+        &.projected {
+            background: #34c759;
+        }
+    }
+
+    strong {
+        color: #1d1d1f;
+        font-weight: 600;
+    }
+}
+
+/* BUTTONS */
+.btn-secondary {
+    background: #fff;
+    border: 1px solid #d2d2d7;
+    color: #1d1d1f;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: #86868b;
+        background: #f5f5f7;
+    }
+}
+
+/* TABLE STYLES (Consistent with User Management) */
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    thead {
+        background-color: #f5f5f7;
+        border-bottom: 1px solid #e5e5ea;
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: #86868b;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+        }
+    }
+
+    tbody tr {
+        border-bottom: 1px solid #e5e5ea;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    td {
+        padding: 12px 16px;
+        color: #1d1d1f;
+    }
+}
+
+.text-right {
+    text-align: right;
+}
+
+/* Import shared modal styles if available, otherwise rely on local styles defined in user-management.component.scss which are global-like */
+@import '../user-management/user-management.component.scss';
