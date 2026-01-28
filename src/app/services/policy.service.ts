@@ -4,18 +4,13 @@ import { Observable } from 'rxjs';
 
 export interface PolicyCoverage {
     name: string;
-    percentage: number;
-}
-
-export interface PolicyFee {
-    name: string;
-    amount: number;
+    percentage?: number;
+    amount?: number;
 }
 
 export interface PolicyPackage {
     name: string;
     coverages: PolicyCoverage[];
-    flatFees: PolicyFee[];
 }
 
 export interface PolicyData {

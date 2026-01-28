@@ -302,12 +302,13 @@ export class PoliciesComponent implements OnInit {
           amount: Number(f.amount)
         }));
 
+        // Destructure to separate flatFees from the rest of the package properties
+        const { flatFees, ...restPkg } = pkg;
+
         return {
-          ...pkg,
+          ...restPkg,
           // merged coverages array contains both percentage-based coverages and fee-based coverages
-          coverages: [...normCoverages, ...feeAsCoverages],
-          // keep flatFees for backward compatibility but normalize amounts
-          flatFees: (pkg.flatFees || []).map((f: any) => ({ name: f.name, amount: Number(f.amount) }))
+          coverages: [...normCoverages, ...feeAsCoverages]
         } as any;
       });
 

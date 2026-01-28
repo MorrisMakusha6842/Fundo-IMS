@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
+import { FinancialInsightService } from '../financial-insight/financial-insight.service';
 
 @Component({
     selector: 'app-policy-detail-modal',
@@ -22,6 +23,7 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
 
     private assetsService = inject(AssetsService);
     private authService = inject(AuthService);
+    private financialService = inject(FinancialInsightService);
 
     isLoading = false;
     packages: any[] = [];
@@ -33,13 +35,28 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     selectedAssetId: string | null = null;
     paymentFrequency: 'monthly' | 'annually' = 'monthly';
 
-    // Pricing
-    basePackagePrice = 0;
-    selectedOptionalCoverages = new Set<string>();
     quotePremium = 0;
+
+    // Financial Data
+    currentTaxRate = 0;
+    currentFxRate = 0;
 
     ngOnInit() {
         this.loadUserAssets();
+        this.loadFinancialData();
+    }
+
+    async loadFinancialData() {
+        try {
+            const record = await this.financialService.getLatestRecord();
+            if (record) {
+                this.currentTaxRate = record.currentTaxRate || 0;
+                this.currentFxRate = record.currentFxRate || 0;
+                this.calculatePremium(); // Recalculate if data comes in late
+            }
+        } catch (error) {
+            console.error('Error fetching financial data:', error);
+        }
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -60,7 +77,14 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
                         if (typeof cov === 'string') {
                             return { name: cov, included: true, price: 0 };
                         }
-                        return cov;
+                        // Handle objects: assume included by default if not specified
+                        // If it has an amount, treat it as price/fee
+                        return {
+                            name: cov.name,
+                            included: true,
+                            price: cov.amount || 0,
+                            percentage: cov.percentage
+                        };
                     });
                 }
 
@@ -86,66 +110,64 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         }
     }
 
-    selectPackage(pkg: any) {
-        if (this.selectedPackageId === pkg.id) {
-            this.selectedPackageId = null; // Collapse
-            this.basePackagePrice = 0;
-            this.quotePremium = 0;
+    selectPackage(pkgId: string) {
+        if (this.selectedPackageId === pkgId) {
+            // If already selected, maybe just keep it selected? 
+            // Or allow deselect? User said "selection feature" for coverages not needed, 
+            // but for packages it is.
             return;
         }
 
-        this.selectedPackageId = pkg.id;
-        this.basePackagePrice = pkg.price || 0;
-        this.selectedOptionalCoverages.clear();
+        this.selectedPackageId = pkgId;
         this.calculatePremium();
     }
 
-    toggleOptionalCoverage(cov: any) {
-        if (this.selectedOptionalCoverages.has(cov.name)) {
-            this.selectedOptionalCoverages.delete(cov.name);
-        } else {
-            this.selectedOptionalCoverages.add(cov.name);
-        }
-        this.calculatePremium();
-    }
-
-    isCoverageSelected(name: string): boolean {
-        return this.selectedOptionalCoverages.has(name);
-    }
+    // Optional coverages removed as requested
 
     onAssetChange(assetId: any) {
         this.calculatePremium();
     }
 
     calculatePremium() {
-        let total = this.basePackagePrice;
+        let total = 0;
+        let assuredValue = 0;
 
-        // Add optional coverages
-        this.selectedOptionalCoverages.forEach(name => {
-            const pkg = this.packages.find(p => p.id === this.selectedPackageId);
-            if (pkg) {
-                const cov = pkg.coverages.find((c: any) => c.name === name);
-                if (cov && cov.price) {
-                    total += cov.price;
-                }
-            }
-        });
-
-        // Asset value factor
+        // 1. Get Assured Value from selected asset
         if (this.selectedAssetId) {
             const asset = this.availableAssets.find(a => a.id === this.selectedAssetId);
             if (asset && asset.assetValue) {
-                const value = parseFloat(asset.assetValue);
-                if (!isNaN(value)) {
-                    // Example calculation
-                    const annualBase = value * 0.05;
-                    if (this.paymentFrequency === 'monthly') {
-                        total += (annualBase / 12);
-                    } else {
-                        total += annualBase;
-                    }
+                const val = parseFloat(asset.assetValue);
+                if (!isNaN(val)) {
+                    assuredValue = val;
                 }
             }
+        } else {
+            // If no asset selected, we can't calculate meaningful premium yet
+            this.quotePremium = 0;
+            return;
+        }
+
+        // Base Premium starts with the Assured Value itself (per specific request)
+        total += assuredValue;
+
+        const pkg = this.packages.find(p => p.id === this.selectedPackageId);
+        if (pkg) {
+            // 2. Add Package Coverages (all are now considered included)
+            pkg.coverages.forEach((cov: any) => {
+                // Percentage based (of Assured Value)
+                if (cov.percentage) {
+                    total += (cov.percentage / 100) * assuredValue;
+                }
+                // Fixed Amount
+                if (cov.price) {
+                    total += cov.price;
+                }
+            });
+        }
+
+        // 3. Add Tax (Percentage of Assured Value)
+        if (this.currentTaxRate > 0) {
+            total += (this.currentTaxRate / 100) * assuredValue;
         }
 
         this.quotePremium = total;
@@ -167,8 +189,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         this.isQuoteAccordionOpen = false;
         this.selectedAssetId = null;
         this.selectedPackageId = null;
-        this.basePackagePrice = 0;
-        this.selectedOptionalCoverages.clear();
         this.paymentFrequency = 'monthly';
         this.quotePremium = 0;
     }
