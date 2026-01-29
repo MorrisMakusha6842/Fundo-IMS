@@ -15,6 +15,7 @@ export interface PolicyPackage {
 
 export interface PolicyData {
     policyName: string;
+    policyType?: 'standard' | 'renewal';
     tenure: string;
     packages: PolicyPackage[];
     [key: string]: any; // Allow other props like timestamps/status

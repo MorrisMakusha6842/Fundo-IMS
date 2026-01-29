@@ -41,6 +41,10 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     currentTaxRate = 0;
     currentFxRate = 0;
 
+    get isRenewalPolicy(): boolean {
+        return (this.policy?.policyType || '').toLowerCase() === 'renewal';
+    }
+
     ngOnInit() {
         this.loadUserAssets();
         this.loadFinancialData();
@@ -131,6 +135,7 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     calculatePremium() {
         let total = 0;
         let assuredValue = 0;
+        const isRenewal = this.isRenewalPolicy;
 
         // 1. Get Assured Value from selected asset
         if (this.selectedAssetId) {
@@ -147,11 +152,24 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
             return;
         }
 
+        // For renewals, the asset value is ignored for calculation
+        if (isRenewal) {
+            assuredValue = 0;
+        }
+
         // Base Premium starts with the Assured Value itself (per specific request)
-        total += assuredValue;
+        // Only add assuredValue to total if it is NOT a renewal policy
+        if (!isRenewal) {
+            total += assuredValue;
+        }
 
         const pkg = this.packages.find(p => p.id === this.selectedPackageId);
         if (pkg) {
+            // Add base package price if it exists
+            if (pkg.price) {
+                total += pkg.price;
+            }
+
             // 2. Add Package Coverages (all are now considered included)
             pkg.coverages.forEach((cov: any) => {
                 // Percentage based (of Assured Value)
@@ -168,6 +186,13 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         // 3. Add Tax (Percentage of Assured Value)
         if (this.currentTaxRate > 0) {
             total += (this.currentTaxRate / 100) * assuredValue;
+        }
+
+        // 4. Add FX Rate for Renewals
+        if (isRenewal) {
+            // Apply Tax Rate as a percentage of the total premium (Package Cost)
+            console.log(`Applying Tax Rate: ${this.currentTaxRate}% to Base: ${total}`);
+            total += total * (this.currentTaxRate / 100);
         }
 
         this.quotePremium = total;

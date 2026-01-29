@@ -373,6 +373,13 @@
             <input type="text" formControlName="policyName" placeholder="e.g. Motor Comprehensive" />
           </div>
           <div class="field">
+            <label>Policy Type</label>
+            <select formControlName="policyType">
+              <option value="standard">Standard</option>
+              <option value="renewal">Renewal</option>
+            </select>
+          </div>
+          <div class="field">
             <label>Tenure (Duration)</label>
             <input type="text" formControlName="tenure" placeholder="e.g. 12 Months" />
           </div>

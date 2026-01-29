@@ -16,7 +16,14 @@
             <!-- LEFT PANEL: POLICY DETAILS -->
             <div class="policy-details-panel">
                 <div class="panel-header">
-                    <span class="policy-category-badge">{{ policy.category || 'Insurance' }}</span>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <span class="policy-category-badge">{{ policy.category || 'Insurance' }}</span>
+                        <span class="policy-category-badge"
+                            [style.background-color]="isRenewalPolicy ? '#dbeafe' : '#dcfce7'"
+                            [style.color]="isRenewalPolicy ? '#1e40af' : '#166534'">
+                            {{ (policy.policyType | titlecase) || 'Standard' }}
+                        </span>
+                    </div>
                     <h1>{{ policy.policyName || policy.name }}</h1>
                     <p class="policy-description">{{ policy.description }}</p>
                 </div>
@@ -92,7 +99,7 @@
                         <p class="hint" *ngIf="availableAssets.length === 0">No registered assets found.</p>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" *ngIf="!isRenewalPolicy">
                         <label>Payment Frequency</label>
                         <div class="frequency-toggle">
                             <div class="toggle-option" [class.selected]="paymentFrequency === 'monthly'"
@@ -107,16 +114,18 @@
                     </div>
 
                     <div class="summary-card">
-                        <h3>Estimated Premium</h3>
+                        <h3>{{ isRenewalPolicy ? 'Total Payable' : 'Estimated Premium' }}</h3>
                         <div class="premium-display">
                             <span class="amount">
-                                {{ (paymentFrequency === 'monthly' ? (quotePremium / 12) : quotePremium) |
+                                {{ (!isRenewalPolicy && paymentFrequency === 'monthly' ? (quotePremium /
+                                12) : quotePremium) |
                                 currency:'USD':'symbol':'1.2-2' }}
                             </span>
-                            <span class="period">/ {{ paymentFrequency === 'monthly' ? 'mo' : 'yr' }}</span>
+                            <span class="period" *ngIf="!isRenewalPolicy">/ {{ paymentFrequency ===
+                                'monthly' ? 'mo' : 'yr' }}</span>
                         </div>
-                        <div class="breakdown" *ngIf="quotePremium > 0">
-                            Based on 4% of selected asset value.
+                        <div class="breakdown" *ngIf="quotePremium > 0 && !isRenewalPolicy">
+                            Based on {{ currentTaxRate }}% of selected asset value.
                         </div>
                     </div>
 

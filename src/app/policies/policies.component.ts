@@ -67,6 +67,7 @@ export class PoliciesComponent implements OnInit {
     this.createPolicyForm = this.fb.group({
       subCategory: ['', Validators.required],
       policyName: ['', Validators.required],
+      policyType: ['standard', Validators.required],
       // tenure expected as number of months (integers). We'll store server timestamp + months in Firestore.
       tenure: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
       packages: this.fb.array([])
@@ -232,7 +233,7 @@ export class PoliciesComponent implements OnInit {
       return;
     }
     this.isSubmitting = true;
-    const { subCategory, policyName, tenure, packages } = this.createPolicyForm.value;
+    const { subCategory, policyName, policyType, tenure, packages } = this.createPolicyForm.value;
 
     // tenure should be integer months; ensure it's numeric
     const tenureMonths = Number(tenure);
@@ -316,6 +317,7 @@ export class PoliciesComponent implements OnInit {
       // Also store tenureMonths so other parts of the system can compute expiry reliably.
       await this.policyService.addPolicy(subCategory, {
         policyName,
+        policyType,
         // keep legacy `tenure` string for compatibility with PolicyData
         tenure: String(tenure),
         tenureMonths,
