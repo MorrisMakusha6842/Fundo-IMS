@@ -1,0 +1,149 @@
+/* MODAL BACKDROP */
+.payment-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* CARD */
+.payment-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* HEADER */
+.payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.label {
+  font-size: 12px;
+  color: #777;
+}
+
+.amount {
+  margin: 4px 0 0;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.invoice-meta {
+  text-align: right;
+}
+
+.invoice-id {
+  font-size: 12px;
+  color: #666;
+}
+
+.status {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status.unpaid {
+  background: #fdecea;
+  color: #c62828;
+}
+
+/* POLICY SUMMARY */
+.policy-summary {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f7f9fc;
+  border-radius: 10px;
+}
+
+.policy-title {
+  font-weight: 600;
+  margin: 0;
+}
+
+.asset {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+/* BREAKDOWN */
+.breakdown {
+  margin-top: 16px;
+}
+
+.breakdown-item {
+  border-bottom: 1px solid #eee;
+  padding: 12px 0;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 500;
+}
+
+.item-body {
+  margin-top: 8px;
+  padding-left: 8px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #555;
+  margin-top: 4px;
+}
+
+/* PAYMENT SUMMARY */
+.payment-summary {
+  margin-top: 16px;
+  background: #f7f9fc;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.summary-row.total {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* PAY BUTTON */
+.pay-btn {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pay-btn:hover {
+  background: #1e4ed8;
+}

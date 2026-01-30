@@ -15,6 +15,7 @@ import { FinancialInsightService } from '../financial-insight/financial-insight.
 export class PolicyDetailModalComponent implements OnInit, OnChanges {
     @Input() policy: any = null;
     @Output() close = new EventEmitter<void>();
+    @Output() purchase = new EventEmitter<any>();
 
     @HostBinding('class.visible')
     get isVisible(): boolean {
@@ -203,7 +204,72 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     }
 
     purchasePackage() {
-        alert('Purchase initiated.');
+        if (!this.selectedAssetId || !this.selectedPackageId) {
+            // A toast message would be better here in the future.
+            console.error('Asset and Package must be selected to purchase.');
+            return;
+        }
+
+        const selectedPackage = this.packages.find(p => p.id === this.selectedPackageId);
+        const selectedAsset = this.availableAssets.find(a => a.id === this.selectedAssetId);
+
+        if (!selectedPackage || !selectedAsset) {
+            console.error('Selected package or asset not found.');
+            return;
+        }
+
+        // --- Calculate Breakdown for Billing Modal ---
+        const isRenewal = this.isRenewalPolicy;
+        const assetValue = parseFloat(selectedAsset.assetValue) || 0;
+
+        // Base Premium is asset value for new policies, 0 for renewals
+        const basePremium = !isRenewal ? assetValue : 0;
+        const packagePrice = selectedPackage.price || 0;
+
+        let coveragesTotal = 0;
+        const coveragesWithPrice = selectedPackage.coverages.map((cov: any) => {
+            let price = 0;
+            if (cov.percentage) {
+                // Percentage is based on assuredValue (which is 0 for renewals in calculatePremium)
+                const assuredValue = isRenewal ? 0 : assetValue;
+                price = (cov.percentage / 100) * assuredValue;
+            } else if (cov.price) {
+                price = cov.price;
+            }
+            coveragesTotal += price;
+            return { name: cov.name, price: price };
+        });
+
+        // Calculate tax matching calculatePremium logic
+        let taxAmount = 0;
+        if (isRenewal) {
+            // For renewals, tax is on the sum of package price and coverages
+            taxAmount = (packagePrice + coveragesTotal) * (this.currentTaxRate / 100);
+        } else if (this.currentTaxRate > 0) {
+            // For new policies, tax is on the asset value (basePremium)
+            taxAmount = basePremium * (this.currentTaxRate / 100);
+        }
+
+        const subtotal = basePremium + packagePrice + coveragesTotal;
+
+        const purchaseDetails = {
+            userId: this.authService.currentUser?.uid,
+            policy: this.policy,
+            selectedPackage: selectedPackage,
+            selectedAsset: selectedAsset,
+            premium: this.quotePremium,
+            paymentFrequency: this.isRenewalPolicy ? 'once' : this.paymentFrequency,
+            isRenewal: isRenewal,
+            breakdown: {
+                basePremium: basePremium,
+                packagePrice: packagePrice,
+                coverages: coveragesWithPrice,
+                coveragesTotal: coveragesTotal,
+                taxAmount: taxAmount,
+                subtotal: subtotal
+            }
+        };
+        this.purchase.emit(purchaseDetails);
     }
 
     closeModal() {

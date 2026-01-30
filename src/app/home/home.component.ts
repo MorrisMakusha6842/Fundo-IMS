@@ -10,10 +10,11 @@ import { switchMap, catchError, map } from 'rxjs/operators';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
 import { PolicyDetailModalComponent } from './policy-detail-modal.component';
+import { BillingDebitComponent } from '../billing/billing-debit.component';
 
 @Component({
   selector: 'app-home',
-  imports: [CommonModule, FormsModule, PolicyDetailModalComponent],
+  imports: [CommonModule, FormsModule, PolicyDetailModalComponent, BillingDebitComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
@@ -57,6 +58,28 @@ export class HomeComponent implements OnInit {
 
   // Policy Modal State
   selectedPolicy: any = null;
+
+  // 3. Add these new properties to your class
+  isBillingDebitModalOpen = false;
+  purchaseData: any = null;
+
+  // ... your existing methods
+
+  // 4. Add these new methods to handle the modal flow
+  handlePurchase(data: any) {
+    // Enrich data with client name for Invoice generation later
+    this.purchaseData = {
+      ...data,
+      clientName: this.displayName || 'Valued Client'
+    };
+    this.closePolicyModal(); // Close the details modal
+    this.isBillingDebitModalOpen = true; // Open the new billing modal
+  }
+
+  closeBillingDebitModal() {
+    this.isBillingDebitModalOpen = false;
+    this.purchaseData = null;
+  }
 
   ngOnInit() {
     this.subCategories$ = this.policyService.getSubCategories();

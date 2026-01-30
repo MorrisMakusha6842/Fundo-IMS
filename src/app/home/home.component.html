@@ -369,4 +369,7 @@
 </div>
 
 <!-- Policy Detail Modal (Child Component) -->
-<app-policy-detail-modal [policy]="selectedPolicy" (close)="closePolicyModal()"></app-policy-detail-modal>
+<app-policy-detail-modal [policy]="selectedPolicy" (close)="closePolicyModal()" (purchase)="handlePurchase($event)"></app-policy-detail-modal>
+
+<!-- Billing Debit Modal (New) -->
+<app-billing-debit *ngIf="isBillingDebitModalOpen" [purchaseData]="purchaseData" (close)="closeBillingDebitModal()"></app-billing-debit>

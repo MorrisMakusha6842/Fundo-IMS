@@ -1,0 +1,75 @@
+<div class="payment-modal" (click)="closeModal()">
+  <div class="payment-card" (click)="$event.stopPropagation()" *ngIf="purchaseData">
+    <!-- CLOSE BUTTON -->
+    <button class="btn-close-modal" (click)="closeModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    <!-- HEADER -->
+    <div class="payment-header">
+      <div>
+        <p class="label">Amount</p>
+        <h1 class="amount">{{ purchaseData.premium | currency:'USD':'symbol':'1.2-2' }}</h1>
+      </div>
+      <div class="invoice-meta">
+        <p class="invoice-id">Bill ID #BILL0214</p> <!-- NOTE: Bill ID is static for now -->
+        <span class="status unpaid">UNPAID</span>
+      </div>
+    </div>
+    <!-- POLICY / ASSET SUMMARY -->
+    <div class="policy-summary">
+      <p class="policy-title">{{ purchaseData.policy?.policyName }} – {{ purchaseData.selectedPackage?.name }}</p>
+      <p class="asset">{{ purchaseData.selectedAsset?.year }} {{ purchaseData.selectedAsset?.make }} {{
+        purchaseData.selectedAsset?.model }}</p>
+    </div>
+    <!-- BREAKDOWN -->
+    <div class="breakdown">
+      <div class="breakdown-item" *ngIf="purchaseData.breakdown?.basePremium > 0">
+        <div class="item-header">
+          <span>Base Premium</span>
+          <span>{{ purchaseData.breakdown.basePremium | currency:'USD':'symbol':'1.2-2' }}</span>
+        </div>
+      </div>
+      <div class="breakdown-item" *ngIf="purchaseData.breakdown?.coveragesTotal > 0">
+        <div class="item-header">
+          <span>Coverages</span>
+          <span>{{ purchaseData.breakdown.coveragesTotal | currency:'USD':'symbol':'1.2-2' }}</span>
+        </div>
+        <div class="item-body">
+          <div class="row" *ngFor="let cov of purchaseData.breakdown?.coverages">
+            <span *ngIf="cov.price > 0">{{ cov.name }}</span>
+            <span *ngIf="cov.price > 0">{{ cov.price | currency:'USD':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="breakdown-item" *ngIf="purchaseData.breakdown?.packagePrice > 0">
+        <div class="item-header">
+          <span>Admin & Service Fees</span>
+          <span>{{ purchaseData.breakdown.packagePrice | currency:'USD':'symbol':'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+    <!-- PAYMENT SUMMARY -->
+    <div class="payment-summary">
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>{{ purchaseData.breakdown?.subtotal | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Tax</span>
+        <span>{{ purchaseData.breakdown?.taxAmount | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
+      <div class="summary-row total">
+        <span>Total Payable</span>
+        <span>{{ purchaseData.premium | currency:'USD':'symbol':'1.2-2' }}</span>
+      </div>
+    </div>
+    <!-- ACTION -->
+    <button class="pay-btn" (click)="processPayment()" [disabled]="isProcessing"
+      [style.opacity]="isProcessing ? '0.7' : '1'">
+      <span *ngIf="!isProcessing">Pay Now</span>
+      <span *ngIf="isProcessing">Processing...</span>
+    </button>
+  </div>
+</div>
