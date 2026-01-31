@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, query, orderBy, collectionData } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, query, orderBy, collectionData, where } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 export interface Invoice {
@@ -9,7 +9,7 @@ export interface Invoice {
     clientId: string;
     clientName: string;
     amount: number;
-    status: 'Pending' | 'Paid';
+    status: 'Pending' | 'Paid' | 'Unpaid';
     createdAt: any;
     generatedBy: string; // Admin UID
     description?: string;
@@ -26,8 +26,8 @@ export class InvoiceService {
     async createInvoice(invoice: Invoice): Promise<string> {
         try {
             const type = invoice.invoiceType || 'proforma';
-            // Structure: invoices/{clientId}/{type}/{invoiceId}
-            const invoicesRef = collection(this.firestore, 'invoices', invoice.clientId, type);
+            // Store in a root collection for easier querying. We include clientId in the doc data.
+            const invoicesRef = collection(this.firestore, 'invoices');
             const docRef = await addDoc(invoicesRef, invoice);
             console.log("Invoice created with ID: ", docRef.id);
             return docRef.id;
@@ -39,10 +39,18 @@ export class InvoiceService {
 
     /**
      * Get invoices for a specific user
-     * Fetches from: invoices/{userId}/{type}
      */
-    getUserInvoices(userId: string, type: string = 'proforma'): Observable<Invoice[]> {
-        const invoicesRef = collection(this.firestore, 'invoices', userId, type);
+    getUserInvoices(userId: string): Observable<Invoice[]> {
+        const invoicesRef = collection(this.firestore, 'invoices');
+        const q = query(invoicesRef, where('clientId', '==', userId), orderBy('createdAt', 'desc'));
+        return collectionData(q, { idField: 'id' }) as Observable<Invoice[]>;
+    }
+
+    /**
+     * Get all invoices (for Admin/Agent)
+     */
+    getAllInvoices(): Observable<Invoice[]> {
+        const invoicesRef = collection(this.firestore, 'invoices');
         const q = query(invoicesRef, orderBy('createdAt', 'desc'));
         return collectionData(q, { idField: 'id' }) as Observable<Invoice[]>;
     }

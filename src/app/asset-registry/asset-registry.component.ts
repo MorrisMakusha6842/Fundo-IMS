@@ -507,7 +507,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
         clientId: this.pendingApprovalAsset.uid, // Owner ID
         clientName: this.pendingApprovalAsset.clientName || 'Unknown',
         amount: this.assuredValue,
-        status: 'Pending',
+        status: 'Unpaid',
         createdAt: serverTimestamp(),
         generatedBy: currentUser.uid,
         description: `Insurance premium for ${this.pendingApprovalAsset.assetName}`,

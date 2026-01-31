@@ -204,7 +204,8 @@ export class NotificationService {
     private startInvoiceListener(userId: string) {
         this.stopInvoiceListener(); // Ensure no duplicate subscriptions
 
-        this.invoiceSubscription = this.invoiceService.getUserInvoices(userId, 'proforma').subscribe(async invoices => {
+        // Use the local method that queries the nested structure (proforma & receipt)
+        this.invoiceSubscription = this.getProformaInvoices(userId).subscribe(async invoices => {
             if (!invoices || invoices.length === 0) return;
 
             // Get existing system messages to avoid duplicates
@@ -227,8 +228,11 @@ export class NotificationService {
                         ts = new Date().toISOString();
                     }
 
+                    // Determine message text based on type
+                    const typeLabel = inv.invoiceType === 'receipt' ? 'Receipt' : 'Proforma Invoice';
+
                     const message: Message = {
-                        text: `New Proforma Invoice: ${inv.assetName}`,
+                        text: `New ${typeLabel}: ${inv.assetName || 'Unknown Asset'}`,
                         timestamp: ts,
                         read: false, // Default to unread so user sees it
                         senderId: 'system',
@@ -264,11 +268,11 @@ export class NotificationService {
             const pendingAssets = vehicles.filter(asset => {
                 if (asset.status !== 'Pending') return false;
                 if (!asset.documents || asset.documents.length === 0) return false;
-                
+
                 // Check if any document is recent
                 return asset.documents.some((doc: any) => {
-                     const uploadDate = doc.uploadedAt ? new Date(doc.uploadedAt) : null;
-                     return uploadDate && uploadDate > oneWeekAgo;
+                    const uploadDate = doc.uploadedAt ? new Date(doc.uploadedAt) : null;
+                    return uploadDate && uploadDate > oneWeekAgo;
                 });
             });
 
@@ -431,18 +435,32 @@ export class NotificationService {
     }
 
     /**
-     * Get proforma invoices for a specific user
-     * Fetches from: invoices/{userId}/proforma
+     * Get invoices (proforma and receipts) for a specific user
+     * Fetches from: invoices/{userId}/proforma AND invoices/{userId}/receipt
      */
     getProformaInvoices(userId: string): Observable<any[]> {
-        const invoicesRef = collection(
-            this.firestore,
-            'invoices',
-            userId,
-            'proforma'
+        const proformaRef = collection(this.firestore, 'invoices', userId, 'proforma');
+        const receiptRef = collection(this.firestore, 'invoices', userId, 'receipt');
+
+        // Query both subcollections
+        const qP = query(proformaRef, orderBy('createdAt', 'desc'));
+        const qR = query(receiptRef, orderBy('createdAt', 'desc'));
+
+        const proforma$ = collectionData(qP, { idField: 'id' });
+        const receipt$ = collectionData(qR, { idField: 'id' });
+
+        // Combine streams
+        return combineLatest([proforma$, receipt$]).pipe(
+            map(([proformas, receipts]) => {
+                const p = proformas.map(i => ({ ...i, invoiceType: i['invoiceType'] || 'proforma' }));
+                const r = receipts.map(i => ({ ...i, invoiceType: i['invoiceType'] || 'receipt' }));
+                return [...p, ...r].sort((a, b) => {
+                    const tA = a['createdAt']?.seconds || 0;
+                    const tB = b['createdAt']?.seconds || 0;
+                    return tB - tA;
+                });
+            })
         );
-        const q = query(invoicesRef, orderBy('createdAt', 'desc'));
-        return collectionData(q, { idField: 'id' });
     }
 
     /**
