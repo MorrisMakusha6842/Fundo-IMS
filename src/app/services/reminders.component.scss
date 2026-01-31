@@ -24,37 +24,41 @@
     }
 }
 
-/* QUICK OPTIONS */
-.quick-options {
+/* FILTERS */
+.filters {
     display: flex;
-    gap: 12px;
-    margin-bottom: 24px;
+    gap: 16px;
+    margin-bottom: 16px;
+    background: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    align-items: center;
 }
 
-.btn-create {
-    background-color: #0071e3;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
+.filter-group {
     display: flex;
     align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0, 113, 227, 0.2);
+    gap: 10px;
+}
 
-    &:hover {
-        background-color: #0077ed;
-        transform: translateY(-1px);
-    }
+.filter-label {
+    font-size: 13px;
+    color: #86868b;
+    font-weight: 500;
+    margin: 0;
+    white-space: nowrap;
+}
 
-    svg {
-        width: 16px;
-        height: 16px;
-    }
+.filter-select {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #d2d2d7;
+    background-color: #fff;
+    font-size: 13px;
+    color: #1d1d1f;
+    outline: none;
+    min-width: 140px;
 }
 
 /* TABLE CARD */

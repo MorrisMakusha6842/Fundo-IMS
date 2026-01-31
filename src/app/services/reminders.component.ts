@@ -1,9 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { RemindersService, Reminder } from '../services/reminders.service';
-import { ToastService } from '../services/toast.service';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { Observable, combineLatest, of } from 'rxjs';
+import { map, startWith, switchMap } from 'rxjs/operators';
+import { InvoiceService, Invoice } from '../services/invoice.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
     selector: 'app-reminders',
@@ -13,58 +14,63 @@ import { ToastService } from '../services/toast.service';
     styleUrl: './reminders.component.scss'
 })
 export class RemindersComponent implements OnInit {
-    private remindersService = inject(RemindersService);
+    private invoiceService = inject(InvoiceService);
+    private authService = inject(AuthService);
     private fb = inject(FormBuilder);
-    private toast = inject(ToastService);
 
     today = new Date();
-    reminders$!: Observable<Reminder[]>;
+    purchases$!: Observable<Invoice[]>;
     isLoading = true;
 
-    isModalOpen = false;
-    isSubmitting = false;
-    reminderForm!: FormGroup;
+    searchControl = new FormControl('');
+    dateRangeForm: FormGroup;
+
+    constructor() {
+        this.dateRangeForm = this.fb.group({
+            start: [''],
+            end: ['']
+        });
+    }
 
     ngOnInit(): void {
-        this.reminders$ = this.remindersService.getReminders();
-        this.reminders$.subscribe(() => this.isLoading = false);
+        const invoices$ = this.authService.user$.pipe(
+            switchMap(user => {
+                if (!user) return of([]);
+                return this.invoiceService.getUserInvoices(user.uid);
+            })
+        );
 
-        this.reminderForm = this.fb.group({
-            title: ['', Validators.required],
-            description: [''],
-            dueDate: ['', Validators.required],
-            type: ['custom', Validators.required]
-        });
-    }
+        this.purchases$ = combineLatest([
+            invoices$,
+            this.searchControl.valueChanges.pipe(startWith('')),
+            this.dateRangeForm.valueChanges.pipe(startWith(this.dateRangeForm.value))
+        ]).pipe(
+            map(([invoices, search, dates]) => {
+                this.isLoading = false;
+                const term = (search || '').toLowerCase();
+                
+                return invoices.filter(inv => {
+                    // Filter by search term
+                    const matchesSearch = !term || 
+                        (inv.assetName && inv.assetName.toLowerCase().includes(term)) ||
+                        (inv.description && inv.description.toLowerCase().includes(term)) ||
+                        (inv.id && inv.id.toLowerCase().includes(term));
 
-    openModal(): void {
-        this.isModalOpen = true;
-        this.reminderForm.reset({
-            type: 'custom' // Default value
-        });
-    }
-
-    closeModal(): void {
-        this.isModalOpen = false;
-    }
-
-    async onSubmit(): Promise<void> {
-        if (this.reminderForm.invalid) {
-            this.toast.show('Please fill in all required fields.', 'error');
-            return;
-        }
-
-        this.isSubmitting = true;
-        try {
-            const formValue = this.reminderForm.value;
-            await this.remindersService.createReminder(formValue);
-            this.toast.show('Reminder created successfully!', 'success');
-            this.closeModal();
-        } catch (error) {
-            console.error('Error creating reminder:', error);
-            this.toast.show('Failed to create reminder.', 'error');
-        } finally {
-            this.isSubmitting = false;
-        }
+                    // Filter by date range
+                    let matchesDate = true;
+                    if (inv.createdAt && inv.createdAt.toDate) {
+                        const date = inv.createdAt.toDate();
+                        if (dates.start) matchesDate = matchesDate && date >= new Date(dates.start);
+                        if (dates.end) {
+                            const end = new Date(dates.end);
+                            end.setHours(23, 59, 59, 999);
+                            matchesDate = matchesDate && date <= end;
+                        }
+                    }
+                    
+                    return matchesSearch && matchesDate;
+                });
+            })
+        );
     }
 }

@@ -56,7 +56,7 @@
                 <p class="header-user-status">{{selectedUser.role || 'User'}}</p>
             </div>
             <!-- Message Filter -->
-            <div class="message-filters" *ngIf="selectedUser.uid !== 'system'">
+            <div class="message-filters" *ngIf="selectedUser.uid !== 'system' && selectedUser.uid !== 'purchases'">
                 <button [class.active]="messageFilter === 'all'" (click)="setFilter('all')">All</button>
                 <button [class.active]="messageFilter === 'read'" (click)="setFilter('read')">Read</button>
                 <button [class.active]="messageFilter === 'unread'" (click)="setFilter('unread')">Unread</button>
@@ -68,7 +68,7 @@
             <div *ngIf="isLoadingMessages" class="loading-text">Loading messages...</div>
 
             <div *ngIf="!isLoadingMessages && allMessages.length === 0" class="no-messages">
-                {{ selectedUser.uid === 'system' ? 'No system notifications.' : 'No messages yet. Start the
+                {{ (selectedUser.uid === 'system' || selectedUser.uid === 'purchases') ? 'No notifications.' : 'No messages yet. Start the
                 conversation!' }}
             </div>
 
@@ -136,10 +136,10 @@
         <!-- MESSAGE INPUT (Sticky at bottom) -->
         <footer class="message-input-footer">
             <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()"
-                [placeholder]="selectedUser.uid === 'system' ? 'System notifications are read-only' : 'Type a message...'"
-                class="message-input" [disabled]="selectedUser.uid === 'system'" />
+                [placeholder]="(selectedUser.uid === 'system' || selectedUser.uid === 'purchases') ? 'System notifications are read-only' : 'Type a message...'"
+                class="message-input" [disabled]="selectedUser.uid === 'system' || selectedUser.uid === 'purchases'" />
             <button class="send-button" (click)="sendMessage()"
-                [disabled]="!newMessage.trim() || selectedUser.uid === 'system'">
+                [disabled]="!newMessage.trim() || selectedUser.uid === 'system' || selectedUser.uid === 'purchases'">
                 Send
             </button>
         </footer>

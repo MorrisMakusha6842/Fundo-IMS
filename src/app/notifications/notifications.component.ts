@@ -90,10 +90,19 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
           avatarDataUrl: null
         };
 
+        // Add Purchases User for Invoices/Receipts
+        const purchasesUser = {
+          uid: 'purchases',
+          displayName: 'Purchases',
+          email: 'purchases@insurance.app',
+          role: 'System',
+          avatarDataUrl: null
+        };
+
         // Filter out the current authenticated user from the list
         const filteredUsers = users.filter(u => u.uid !== currentUserId);
 
-        this.users = [systemUser, ...filteredUsers];
+        this.users = [systemUser, purchasesUser, ...filteredUsers];
         this.isLoadingUsers = false;
       },
       error: (error) => {
@@ -155,7 +164,7 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
   }
 
   async sendMessage() {
-    if (!this.newMessage.trim() || !this.selectedUser || this.selectedUser.uid === 'system') return;
+    if (!this.newMessage.trim() || !this.selectedUser || this.selectedUser.uid === 'system' || this.selectedUser.uid === 'purchases') return;
 
     try {
       await this.notificationService.sendMessage(this.selectedUser.uid, this.newMessage.trim());

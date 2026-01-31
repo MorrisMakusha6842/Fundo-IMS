@@ -235,7 +235,7 @@ export class NotificationService {
                         text: `New ${typeLabel}: ${inv.assetName || 'Unknown Asset'}`,
                         timestamp: ts,
                         read: false, // Default to unread so user sees it
-                        senderId: 'system',
+                        senderId: 'purchases',
                         recipientId: userId,
                         type: 'invoice',
                         invoiceData: inv
