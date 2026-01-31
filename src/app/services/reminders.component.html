@@ -1,68 +1,143 @@
 <!-- HEADER -->
 <div class="header">
-    <h1>Purchased Policies</h1>
+    <h1>Reminders</h1>
+    <input type="text" [formControl]="searchControl" placeholder="Search reminders..." class="filter-select"
+        style="min-width: 200px;">
 </div>
 
-<!-- FILTERS -->
-<div class="filters">
-    <div class="filter-group">
-        <label class="filter-label">Search</label>
-        <input type="text" [formControl]="searchControl" placeholder="Policy, Asset or ID" class="filter-select" style="min-width: 200px;">
-    </div>
-    <form [formGroup]="dateRangeForm" class="filter-group">
-        <label class="filter-label">Date Range</label>
-        <input type="date" formControlName="start" class="filter-select">
-        <span style="color: #86868b;">to</span>
-        <input type="date" formControlName="end" class="filter-select">
-    </form>
+<!-- QUICK OPTIONS -->
+<div class="quick-options">
+    <!-- Filter Dropdown (placeholder) -->
+    <select [formControl]="severityControl" class="btn-secondary" style="height: 38px; padding-right: 30px;">
+        <option value="All">All Severities</option>
+        <option value="expired">Expired</option>
+        <option value="red">Critical (Red)</option>
+        <option value="orange">Urgent (Orange)</option>
+        <option value="yellow">Warning (Yellow)</option>
+        <option value="green">Good (Green)</option>
+    </select>
+
+    <!-- Create Schedule Button -->
+    <button class="btn-create" (click)="openCreateModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+        </svg>
+        Create Schedule
+    </button>
 </div>
 
-<!-- PURCHASES TABLE -->
+<!-- REMINDERS TABLE -->
 <div class="table-card">
     <table class="reminders-table">
         <thead>
             <tr>
+                <th>Severity</th>
                 <th>Policy / Asset</th>
-                <th>Date</th>
-                <th>Amount</th>
+                <th>Due Date</th>
                 <th>Type</th>
                 <th>Status</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             <tr *ngIf="isLoading">
-                <td colspan="5">
+                <td colspan="6">
                     <div class="loading-spinner-container">
                         <div class="loading-spinner"></div>
                     </div>
                 </td>
             </tr>
-            <ng-container *ngIf="(purchases$ | async) as purchases">
-                <tr *ngFor="let item of purchases">
+            <ng-container *ngIf="(reminders$ | async) as reminders">
+                <tr *ngFor="let reminder of reminders">
                     <td>
-                        <div>{{ item.assetName }}</div>
-                        <div style="font-size: 11px; color: #86868b;">{{ item.description }}</div>
-                    </td>
-                    <td>{{ item.createdAt?.toDate() | date:'mediumDate' }}</td>
-                    <td>{{ item.amount | currency }}</td>
-                    <td>
-                        <span class="badge" style="background: #f5f5f7; color: #666;">{{ (item.invoiceType || 'Proforma') | titlecase }}</span>
+                        <div class="severity-dot" [ngClass]="reminder.severity"></div>
                     </td>
                     <td>
-                        <span class="badge" [ngClass]="{
-                            'completed': item.status === 'Paid',
-                            'pending': item.status === 'Pending' || item.status === 'Unpaid'
-                        }">
-                            {{ item.status }}
+                        <div>{{ reminder.title }}</div>
+                        <div style="font-size: 11px; color: #86868b;">{{ reminder.description }}</div>
+                    </td>
+                    <td>{{ reminder.dueDate ? (reminder.dueDate | date:'mediumDate') : 'N/A' }}</td>
+                    <td>
+                        <span class="badge" [ngClass]="reminder.type === 'Custom' ? 'pending' : 'active'">
+                            {{ reminder.type }}
                         </span>
                     </td>
+                    <td>
+                        <span class="badge" [ngClass]="reminder.severity">
+                            {{ reminder.statusText }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-secondary" style="padding: 4px 8px; font-size: 12px;"
+                            (click)="openViewModal(reminder)">View</button>
+                    </td>
                 </tr>
-                <tr *ngIf="!isLoading && purchases.length === 0">
-                    <td colspan="5" style="text-align: center; padding: 24px; color: #86868b;">
-                        No purchases found.
+                <tr *ngIf="!isLoading && reminders.length === 0">
+                    <td colspan="6" style="text-align: center; padding: 24px; color: #86868b;">
+                        No reminders found.
                     </td>
                 </tr>
             </ng-container>
         </tbody>
     </table>
+</div>
+
+<!-- CREATE REMINDER MODAL -->
+<div class="modal-overlay" *ngIf="isCreateModalOpen">
+    <div class="modal-card">
+        <form [formGroup]="reminderForm" (ngSubmit)="onSubmit()">
+            <div class="modal-header">
+                <h2>Create New Reminder</h2>
+            </div>
+            <div class="modal-body">
+                <div class="field">
+                    <label for="title">Title</label>
+                    <input id="title" type="text" formControlName="title" placeholder="e.g. Renew vehicle insurance" />
+                </div>
+                <div class="field">
+                    <label for="description">Description (Optional)</label>
+                    <textarea id="description" formControlName="description"
+                        placeholder="Add more details..."></textarea>
+                </div>
+                <div class="field">
+                    <label for="dueDate">Due Date</label>
+                    <input id="dueDate" type="date" formControlName="dueDate" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" (click)="closeCreateModal()">Cancel</button>
+                <button type="submit" class="btn-primary" [disabled]="reminderForm.invalid || isSubmitting">
+                    {{ isSubmitting ? 'Creating...' : 'Create Reminder' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- VIEW REMINDER MODAL -->
+<div class="modal-overlay" *ngIf="isViewModalOpen && selectedReminder">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>Reminder Details</h2>
+        </div>
+        <div class="modal-body">
+            <div class="field">
+                <label>Asset / Policy</label>
+                <div style="font-weight: 500;">{{ selectedReminder.title }}</div>
+            </div>
+            <div class="field">
+                <label>Description</label>
+                <div>{{ selectedReminder.description }}</div>
+            </div>
+            <div class="field">
+                <label>Due Date</label>
+                <div>{{ selectedReminder.dueDate ? (selectedReminder.dueDate | date:'fullDate') : 'Date not set' }}
+                </div>
+            </div>
+            <!-- Placeholder for future updates -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="closeViewModal()">Close</button>
+        </div>
+    </div>
 </div>

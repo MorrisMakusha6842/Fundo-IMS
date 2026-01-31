@@ -59,8 +59,6 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
   editAssetForm: FormGroup = this.fb.group({
     assetValue: ['', Validators.required],
     safetyFeatures: [''],
-    policyDeploymentDate: [''],
-    policyExpiryDate: [''],
     vehicleRegistrationBook: [null],
     vehicleRegistrationBookExpiry: [''],
     radioLicense: [null],
@@ -178,8 +176,6 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
 
       // Compliance & Documents
       assetValue: ['', Validators.required],
-      policyDeploymentDate: [''],
-      policyExpiryDate: [''],
 
       // File placeholders (we store the base64 string here)
       vehicleRegistrationBook: [null],
@@ -392,8 +388,6 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
           createdAt: serverTimestamp(),
           assetValue: String(v.assetValue),
           safetyFeatures: v.safetyFeatures,
-          policyDeploymentDate: v.policyDeploymentDate,
-          policyExpiryDate: v.policyExpiryDate,
           documents: docs,
           status: 'Pending'
         };
@@ -432,8 +426,6 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
     this.editAssetForm.patchValue({
       assetValue: asset.assetValue,
       safetyFeatures: asset.safetyFeatures,
-      policyDeploymentDate: asset.policyDeploymentDate,
-      policyExpiryDate: asset.policyExpiryDate,
       vehicleRegistrationBookExpiry: getDocExpiry('Vehicle Registration Book'),
       radioLicenseExpiry: getDocExpiry('Radio License'),
       driversLicenseExpiry: getDocExpiry('Drivers License'),
@@ -636,8 +628,6 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
         status: this.selectedAsset.status,
         safetyFeatures: formValues.safetyFeatures,
         assetValue: String(formValues.assetValue),
-        policyDeploymentDate: formValues.policyDeploymentDate,
-        policyExpiryDate: formValues.policyExpiryDate,
         documents: docsForStorage
       };
 

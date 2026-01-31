@@ -17,8 +17,6 @@ export interface VehicleAsset {
     updatedAt?: any; // Timestamp
     assetValue: string;
     safetyFeatures?: string;
-    policyDeploymentDate?: string;
-    policyExpiryDate?: string;
     documents?: {
         name: string;
         type: string;

@@ -49,20 +49,22 @@ export class RemindersService {
                         const now = new Date();
 
                         assets.forEach(asset => {
-                            if (asset.policyExpiryDate) {
-                                const expiry = new Date(asset.policyExpiryDate);
-                                assetReminders.push({
-                                    id: `expiry-${asset.id}`,
-                                    title: `Policy Expiry: ${asset.make} ${asset.numberPlate}`,
-                                    description: 'Insurance policy is expiring',
-                                    dueDate: this.createTimestamp(expiry),
-                                    type: 'asset_expiry',
-                                    relatedAssetId: asset.id,
-                                    userId: user.uid,
-                                    status: expiry < now ? 'pending' : 'pending', // Mark as pending so it shows up
-                                    createdAt: asset.createdAt
-                                });
-                            }
+                            (asset.documents || []).forEach(doc => {
+                                if (doc.expiryDate) {
+                                    const expiry = new Date(doc.expiryDate);
+                                    assetReminders.push({
+                                        id: `expiry-${asset.id}-${doc.field}`,
+                                        title: `${doc.field}: ${asset.make} ${asset.numberPlate}`,
+                                        description: `Document expiring`,
+                                        dueDate: this.createTimestamp(expiry),
+                                        type: 'asset_expiry',
+                                        relatedAssetId: asset.id,
+                                        userId: user.uid,
+                                        status: expiry < now ? 'pending' : 'pending', // Mark as pending so it shows up
+                                        createdAt: asset.createdAt
+                                    });
+                                }
+                            });
                         });
 
                         // Merge and Sort by Due Date
