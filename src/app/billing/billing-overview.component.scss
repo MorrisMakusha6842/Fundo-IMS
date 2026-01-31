@@ -177,16 +177,19 @@
 }
 
 .target-line {
-    stroke: #34c759; /* Green for target */
+    stroke: #34c759;
+    /* Green for target */
     stroke-width: 2;
-    stroke-dasharray: 4 4; /* Dotted */
+    stroke-dasharray: 4 4;
+    /* Dotted */
     opacity: 0.7;
 }
 
 .forecast-line {
     stroke: #0071e3;
     stroke-width: 2;
-    stroke-dasharray: 6 4; /* Dashed */
+    stroke-dasharray: 6 4;
+    /* Dashed */
     fill: none;
     opacity: 0.5;
 }
@@ -249,7 +252,8 @@
         }
 
         &.forecast {
-            background: #a0cfff; /* Lighter blue */
+            background: #a0cfff;
+            /* Lighter blue */
         }
 
         &.target {
@@ -323,6 +327,3 @@
 .text-right.axis-label {
     text-anchor: end;
 }
-
-/* Import shared modal styles if available, otherwise rely on local styles defined in user-management.component.scss which are global-like */
-@import '../user-management/user-management.component.scss';
