@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, addDoc, collectionData, doc, query, where, collectionGroup, deleteDoc, updateDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, doc, query, where, collectionGroup, deleteDoc, updateDoc, Bytes } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 export interface PolicyCoverage {
@@ -18,6 +18,14 @@ export interface PolicyData {
     policyType?: 'standard' | 'renewal';
     tenure: string;
     packages: PolicyPackage[];
+    expiryDate?: any; // Timestamp or Date string
+    paymentFrequency?: 'Monthly' | 'Upfront';
+    policyDocument?: {
+        name: string;
+        type: string;
+        storageData: any; // Bytes
+        uploadedAt: string;
+    };
     [key: string]: any; // Allow other props like timestamps/status
 }
 

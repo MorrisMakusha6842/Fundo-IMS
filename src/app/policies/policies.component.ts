@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators, For
 import { PolicyService } from '../services/policy.service';
 import { ToastService } from '../services/toast.service';
 import { Observable, tap, combineLatest, map, startWith } from 'rxjs';
-import { serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp, Bytes } from 'firebase/firestore';
 
 @Component({
   selector: 'app-policies',
@@ -55,6 +55,12 @@ export class PoliciesComponent implements OnInit {
   renewalFilterType: 'insurance' | 'radio' = 'insurance';
   renewalSearchControl = new FormControl('');
 
+  // Camera / File Upload State
+  cameraModalOpen = false;
+  mediaStream: MediaStream | null = null;
+  tempImagePreview: string | null = null;
+  tempFile: File | null = null;
+
   constructor(
     private fb: FormBuilder,
     private policyService: PolicyService
@@ -70,7 +76,10 @@ export class PoliciesComponent implements OnInit {
       policyType: ['standard', Validators.required],
       // tenure expected as number of months (integers). We'll store server timestamp + months in Firestore.
       tenure: ['', [Validators.required, Validators.pattern('^[0-9]+$')]],
-      packages: this.fb.array([])
+      packages: this.fb.array([]),
+      expiryDate: ['', Validators.required],
+      paymentFrequency: ['Monthly', Validators.required],
+      policyDocument: [null] // Stores the processed file object
     });
 
     this.subCategories$ = this.policyService.getSubCategories();
@@ -233,7 +242,7 @@ export class PoliciesComponent implements OnInit {
       return;
     }
     this.isSubmitting = true;
-    const { subCategory, policyName, policyType, tenure, packages } = this.createPolicyForm.value;
+    const { subCategory, policyName, policyType, tenure, packages, expiryDate, paymentFrequency, policyDocument } = this.createPolicyForm.value;
 
     // tenure should be integer months; ensure it's numeric
     const tenureMonths = Number(tenure);
@@ -326,7 +335,10 @@ export class PoliciesComponent implements OnInit {
         subCategoryId: subCategory,
         subCategoryName: subCategoryName,
         createdAt: serverTimestamp(),
-        status: 'active'
+        status: 'active',
+        expiryDate: expiryDate ? new Date(expiryDate).toISOString() : null,
+        paymentFrequency,
+        policyDocument: policyDocument || null
       });
       this.toast.show('Policy created successfully', 'success');
       this.closeCreatePolicyModal();
@@ -578,5 +590,119 @@ export class PoliciesComponent implements OnInit {
       this.dashboardClaimsPage--;
       this.updateDashboardClaimsPagination();
     }
+  }
+
+  // --- File & Camera Handling (Adapted from AssetRegistry) ---
+
+  async onFileChange(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        const processed = await this.processFile(file);
+        this.createPolicyForm.patchValue({
+          policyDocument: {
+            name: file.name,
+            type: processed.type,
+            storageData: processed.storageData,
+            uploadedAt: new Date().toISOString()
+          }
+        });
+      } catch (e: any) {
+        console.error('File read error', e);
+        this.toast.show(e.message || 'Error reading file', 'error');
+      }
+    }
+  }
+
+  openCamera() {
+    this.cameraModalOpen = true;
+    this.tempImagePreview = null;
+    this.tempFile = null;
+    setTimeout(() => this.startCamera(), 50);
+  }
+
+  async startCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this.toast.show('Camera not supported', 'error');
+      return;
+    }
+    try {
+      if (this.mediaStream) return;
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      setTimeout(async () => {
+        const video: HTMLVideoElement | null = document.querySelector('#policyCameraModalVideo');
+        if (video) {
+          video.srcObject = this.mediaStream;
+          await video.play().catch(() => {});
+        }
+      }, 50);
+    } catch (err: any) {
+      console.warn('Camera error', err);
+      this.toast.show('Unable to access camera', 'error');
+    }
+  }
+
+  stopCamera() {
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(t => t.stop());
+      this.mediaStream = null;
+    }
+    const video: HTMLVideoElement | null = document.querySelector('#policyCameraModalVideo');
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+    }
+  }
+
+  async takePhoto() {
+    const video: HTMLVideoElement | null = document.querySelector('#policyCameraModalVideo');
+    if (!video) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    const blob = await (await fetch(dataUrl)).blob();
+    this.tempFile = new File([blob], `policy_doc_${Date.now()}.jpg`, { type: blob.type });
+    this.tempImagePreview = dataUrl;
+  }
+
+  retake() {
+    this.tempImagePreview = null;
+    this.tempFile = null;
+  }
+
+  async savePhoto() {
+    if (!this.tempFile) return;
+    try {
+      const processed = await this.processFile(this.tempFile);
+      this.createPolicyForm.patchValue({
+        policyDocument: {
+          name: this.tempFile.name,
+          type: processed.type,
+          storageData: processed.storageData,
+          uploadedAt: new Date().toISOString()
+        }
+      });
+      this.toast.show('Document captured successfully', 'success');
+    } catch (e: any) {
+      this.toast.show('Error processing photo', 'error');
+    }
+    this.cameraModalOpen = false;
+    this.stopCamera();
+  }
+
+  private async processFile(file: File): Promise<{ type: string, storageData: Bytes }> {
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        resolve({ type: file.type, storageData: Bytes.fromBase64String(base64) });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 }

@@ -385,6 +385,47 @@
           </div>
         </div>
 
+        <!-- Additional Policy Details -->
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="field">
+            <label>Policy Expiry Date</label>
+            <input type="date" formControlName="expiryDate" />
+          </div>
+          <div class="field">
+            <label>Payment Frequency</label>
+            <select formControlName="paymentFrequency">
+              <option value="Monthly">Monthly Installments</option>
+              <option value="Upfront">Upfront Payment</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Policy Document Upload -->
+        <div class="field" style="margin-top: 16px;">
+          <label>Policy Document (Scan/Upload)</label>
+          <div class="file-upload-container" style="display: flex; gap: 12px; align-items: center;">
+            <input type="file" (change)="onFileChange($event)" accept="image/*,application/pdf" style="display: none" #fileInput>
+            
+            <button type="button" class="btn-secondary" (click)="fileInput.click()">
+              Upload File
+            </button>
+            
+            <button type="button" class="btn-secondary" (click)="openCamera()">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16" style="margin-right: 4px;">
+                <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+              </svg>
+              Take Photo
+            </button>
+
+            <div *ngIf="createPolicyForm.get('policyDocument')?.value" style="font-size: 13px; color: #166534; display: flex; align-items: center; gap: 4px;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              Document Attached: {{ createPolicyForm.get('policyDocument')?.value.name }}
+            </div>
+          </div>
+        </div>
+
         <!-- Dynamic Packages Section -->
         <div class="packages-section">
           <div class="section-header">
@@ -525,6 +566,35 @@
         <span>Page {{ claimsPage }} of {{ totalClaimsPages }}</span>
         <button class="btn-secondary small" (click)="nextClaimsPage()"
           [disabled]="claimsPage === totalClaimsPages">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA MODAL -->
+<div class="modal-overlay" *ngIf="cameraModalOpen" style="z-index: 2000;">
+  <div class="modal-card" style="max-width: 600px;">
+    <div class="modal-header">
+      <h2>Capture Document</h2>
+      <button class="btn-close" (click)="cameraModalOpen = false; stopCamera()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+          <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body" style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+      <div class="camera-viewport" style="width: 100%; background: #000; border-radius: 8px; overflow: hidden; position: relative; aspect-ratio: 4/3;">
+        <video id="policyCameraModalVideo" [style.display]="tempImagePreview ? 'none' : 'block'" style="width: 100%; height: 100%; object-fit: cover;" autoplay playsinline></video>
+        <img *ngIf="tempImagePreview" [src]="tempImagePreview" style="width: 100%; height: 100%; object-fit: contain;" />
+      </div>
+      
+      <div class="camera-controls" style="display: flex; gap: 16px;">
+        <button *ngIf="!tempImagePreview" class="btn-primary" (click)="takePhoto()">Capture</button>
+        
+        <ng-container *ngIf="tempImagePreview">
+          <button class="btn-secondary" (click)="retake()">Retake</button>
+          <button class="btn-primary" (click)="savePhoto()">Use Photo</button>
+        </ng-container>
       </div>
     </div>
   </div>
