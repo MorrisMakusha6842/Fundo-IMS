@@ -43,6 +43,7 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
   policyDuration: number = 12;
   policyDurationUnit: 'weeks' | 'months' | 'years' = 'months';
   isVerifying = false;
+  verificationMessage: string = '';
   cameraModalOpen = false;
   mediaStream: MediaStream | null = null;
   tempImagePreview: string | null = null;
@@ -238,6 +239,13 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
     this.policyPreview = null;
     this.policyDuration = 12;
     this.policyDurationUnit = 'months';
+    this.verificationMessage = `Dear Client,
+
+Your payment has been successfully received and your insurance policy has now been processed. Please find your policy document attached to this message.
+
+For official collection, verification, or any further assistance, you may visit our nearest company branch with a valid ID and proof of payment.
+
+Thank you for choosing our services.`;
     this.isVerifyModalOpen = true;
   }
 
@@ -285,6 +293,19 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
       // 4. Update Invoice Status
       await this.invoiceService.updateInvoice(this.selectedInvoice.id, { status: 'Verified' }, this.selectedInvoice);
       
+      // 5. Send Notification with Attachment
+      if (this.policyPreview) {
+        await this.notificationService.sendMessage(
+          this.selectedInvoice.clientId,
+          this.verificationMessage,
+          {
+            name: this.policyFile.name,
+            url: this.policyPreview,
+            type: this.policyFile.type
+          }
+        );
+      }
+
       this.toastService.show('Policy issued and verified successfully', 'success');
       this.closeVerifyModal();
     } catch (error) {

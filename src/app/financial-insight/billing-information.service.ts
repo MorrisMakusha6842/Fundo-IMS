@@ -10,6 +10,8 @@ export interface BillingAccount {
     phoneNumber: string;
     status: 'Active' | 'Inactive';
     createdAt: any;
+    expDate?: string;
+    accountPassword?: string;
 }
 
 @Injectable({
@@ -39,5 +41,20 @@ export class BillingInformationService {
     async deleteAccount(id: string): Promise<void> {
         const docRef = doc(this.firestore, this.collectionName, id);
         await deleteDoc(docRef);
+    }
+
+    isAccountValid(account: BillingAccount): boolean {
+        if (account.status !== 'Active') {
+            return false;
+        }
+
+        if (account.expDate) {
+            const now = new Date();
+            const expiry = new Date(account.expDate);
+            if (!isNaN(expiry.getTime()) && expiry < now) {
+                return false;
+            }
+        }
+        return true;
     }
 }

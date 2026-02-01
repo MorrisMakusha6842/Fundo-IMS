@@ -1,4 +1,4 @@
-<div class="modal-overlay" (click)="closeModal()">
+<div class="modal-overlay" (click)="closeModal()" *ngIf="!showBillingPassword">
     <div class="modal-container" (click)="$event.stopPropagation()">
         <button class="btn-close-modal" (click)="closeModal()">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -140,3 +140,8 @@
         </div>
     </div>
 </div>
+
+<!-- Billing Password / Account Required Modal -->
+<app-billing-password *ngIf="showBillingPassword" [hasAccount]="hasBillingAccount" (close)="onBillingCancel()"
+    (confirm)="onBillingConfirm($event)" (createAccount)="onCreateBillingAccount()" (signIn)="onSignIn()">
+</app-billing-password>

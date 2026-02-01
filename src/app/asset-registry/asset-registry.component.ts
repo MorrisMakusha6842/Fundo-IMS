@@ -418,7 +418,9 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
     this.isViewModalOpen = true;
 
     const getDocExpiry = (field: string) => {
-      const doc = asset.documents?.find((d: any) => d.field === field);
+      // Filter for all docs of this type and take the last one (most recent)
+      const docs = asset.documents?.filter((d: any) => d.field === field);
+      const doc = docs && docs.length > 0 ? docs[docs.length - 1] : null;
       return doc?.expiryDate || '';
     };
 

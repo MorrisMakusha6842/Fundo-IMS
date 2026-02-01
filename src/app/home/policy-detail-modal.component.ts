@@ -4,11 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
 import { FinancialInsightService } from '../financial-insight/financial-insight.service';
+import { BillingInformationService, BillingAccount } from '../financial-insight/billing-information.service';
+import { BillingPassword } from '../billing-password.component';
+import { firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
+import { ToastService } from '../services/toast.service';
 
 @Component({
     selector: 'app-policy-detail-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, BillingPassword],
     templateUrl: './policy-detail-modal.component.html',
     styleUrls: ['./policy-detail-modal.component.scss']
 })
@@ -25,6 +30,9 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     private assetsService = inject(AssetsService);
     private authService = inject(AuthService);
     private financialService = inject(FinancialInsightService);
+    private billingService = inject(BillingInformationService);
+    private router = inject(Router);
+    private toast = inject(ToastService);
 
     isLoading = false;
     packages: any[] = [];
@@ -37,6 +45,11 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     paymentFrequency: 'monthly' | 'annually' = 'monthly';
 
     quotePremium = 0;
+
+    // Billing Modal State
+    showBillingPassword = false;
+    hasBillingAccount = false;
+    userAccounts: BillingAccount[] = [];
 
     // Financial Data
     currentTaxRate = 0;
@@ -200,16 +213,37 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     }
 
     saveQuote() {
-        alert('Quote saved successfully!');
+        this.toast.show('Quote saved successfully!', 'success');
     }
 
-    purchasePackage() {
+    async purchasePackage() {
         if (!this.selectedAssetId || !this.selectedPackageId) {
-            // A toast message would be better here in the future.
-            console.error('Asset and Package must be selected to purchase.');
+            this.toast.show('Please select an asset and a package to proceed.', 'warn');
             return;
         }
 
+        const user = this.authService.currentUser;
+        if (user) {
+            this.isLoading = true;
+            try {
+                const accounts = await firstValueFrom(this.billingService.getUserAccounts(user.uid));
+                this.userAccounts = accounts || [];
+                this.hasBillingAccount = this.userAccounts.some(acc => this.billingService.isAccountValid(acc));
+                this.showBillingPassword = true;
+            } catch (error) {
+                console.error('Error checking billing account', error);
+                this.hasBillingAccount = false;
+                this.showBillingPassword = true;
+            } finally {
+                this.isLoading = false;
+            }
+        } else {
+            this.hasBillingAccount = false;
+            this.showBillingPassword = true;
+        }
+    }
+
+    executePurchase() {
         const selectedPackage = this.packages.find(p => p.id === this.selectedPackageId);
         const selectedAsset = this.availableAssets.find(a => a.id === this.selectedAssetId);
 
@@ -270,6 +304,35 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
             }
         };
         this.purchase.emit(purchaseDetails);
+    }
+
+    onBillingConfirm(password: string) {
+        const validAccount = this.userAccounts.find(acc =>
+            this.billingService.isAccountValid(acc) && acc.accountPassword === password
+        );
+
+        if (validAccount) {
+            this.showBillingPassword = false;
+            this.executePurchase();
+        } else {
+            this.toast.show('Incorrect password or account is invalid.', 'error');
+        }
+    }
+
+    onBillingCancel() {
+        this.showBillingPassword = false;
+    }
+
+    onCreateBillingAccount() {
+        this.showBillingPassword = false;
+        this.closeModal();
+        this.router.navigate(['/main-layout/billing/information']);
+    }
+
+    onSignIn() {
+        this.showBillingPassword = false;
+        this.closeModal();
+        // this.router.navigate(['/login']); // Uncomment if you have a login route
     }
 
     closeModal() {

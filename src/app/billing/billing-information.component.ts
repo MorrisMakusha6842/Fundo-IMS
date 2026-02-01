@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { BillingInformationService, BillingAccount } from '../financial-insight/billing-information.service';
 import { AuthService } from '../services/auth.service';
 import { serverTimestamp } from '@angular/fire/firestore';
@@ -30,8 +30,11 @@ export class BillingInformationComponent implements OnInit {
             accountName: ['', Validators.required],
             phoneNumber: ['', [Validators.required, Validators.pattern(/^\d+$/)]],
             provider: ['Ecocash', Validators.required],
-            status: ['Active']
-        });
+            status: ['Active'],
+            expDate: ['', Validators.required],
+            accountPassword: ['', [Validators.required, Validators.minLength(4)]],
+            confirmPassword: ['', Validators.required]
+        }, { validators: this.passwordMatchValidator });
     }
 
     ngOnInit() {
@@ -43,6 +46,12 @@ export class BillingInformationComponent implements OnInit {
                 });
             }
         });
+    }
+
+    passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+        const password = control.get('accountPassword');
+        const confirm = control.get('confirmPassword');
+        return password && confirm && password.value === confirm.value ? null : { passwordMismatch: true };
     }
 
     initAddAccount() {
@@ -65,7 +74,8 @@ export class BillingInformationComponent implements OnInit {
     async saveAccount() {
         if (this.accountForm.invalid || !this.currentUser) return;
 
-        const formVal = this.accountForm.value;
+        // Extract confirmPassword to exclude it from the saved object
+        const { confirmPassword, ...formVal } = this.accountForm.value;
 
         if (this.isEditing && formVal.id) {
             await this.billingService.updateAccount(formVal);

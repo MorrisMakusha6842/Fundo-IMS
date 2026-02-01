@@ -106,6 +106,30 @@
                 </div>
             </div>
 
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                    <input type="date" formControlName="expDate"
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Password</label>
+                    <input type="password" formControlName="accountPassword"
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Set a password">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <input type="password" formControlName="confirmPassword"
+                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="Repeat password">
+                    <p *ngIf="accountForm.errors?.['passwordMismatch'] && accountForm.get('confirmPassword')?.touched"
+                        class="text-red-500 text-xs mt-1">
+                        Passwords do not match.
+                    </p>
+                </div>
+            </div>
+
             <div class="flex justify-end space-x-3 pt-6 border-t border-gray-100">
                 <button type="button" (click)="cancelForm()"
                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Cancel</button>

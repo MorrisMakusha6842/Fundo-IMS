@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, doc, updateDoc, collectionGroup, query, deleteDoc, collectionData, getDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, doc, updateDoc, collectionGroup, query, deleteDoc, collectionData, getDoc, arrayUnion } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 export interface VehicleAsset {
@@ -107,28 +107,19 @@ export class AssetsService {
     async updateAssetDocument(uid: string, assetId: string, fieldName: string, data: any): Promise<void> {
         try {
             const assetRef = doc(this.firestore, 'assets', uid, 'vehicles', assetId);
-            const snapshot = await getDoc(assetRef);
 
-            if (snapshot.exists()) {
-                const asset = snapshot.data() as VehicleAsset;
-                const documents = asset.documents || [];
-                const index = documents.findIndex(d => d.field === fieldName);
+            const newDoc = {
+                name: 'Policy Document',
+                type: 'application/pdf',
+                field: fieldName,
+                uploadedAt: new Date().toISOString(),
+                ...data
+            };
 
-                if (index !== -1) {
-                    documents[index] = { ...documents[index], ...data };
-                } else {
-                    // If document doesn't exist, add a placeholder with the provided data
-                    documents.push({
-                        name: 'Policy Document',
-                        type: 'application/pdf',
-                        field: fieldName,
-                        uploadedAt: new Date().toISOString(),
-                        ...data
-                    });
-                }
-
-                await updateDoc(assetRef, { documents });
-            }
+            // Atomically add the new document to the array without overwriting existing ones
+            await updateDoc(assetRef, {
+                documents: arrayUnion(newDoc)
+            });
         } catch (e) {
             console.error("Error updating asset document: ", e);
             throw e;
