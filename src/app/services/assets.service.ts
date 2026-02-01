@@ -22,9 +22,12 @@ export interface VehicleAsset {
         type: string;
         storageData?: any;
         dataUrl?: string;
+        url?: string;
         field: string;
         uploadedAt: string;
         expiryDate?: string;
+        issuedBy?: string;
+        verifiedAt?: string;
     }[];
     status: 'Pending' | 'Approved' | 'Rejected' | 'Active';
     id?: string; // Add optional ID

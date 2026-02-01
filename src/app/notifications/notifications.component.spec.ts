@@ -6,6 +6,7 @@ import { NotificationService } from '../services/notification.service';
 import { InvoiceService } from '../services/invoice.service';
 import { AuthService } from '../services/auth.service';
 import { of } from 'rxjs';
+import { AssetsService } from '../services/assets.service';
 
 describe('NotificationsComponent', () => {
   let component: NotificationsComponent;
@@ -26,6 +27,9 @@ describe('NotificationsComponent', () => {
   const invoiceServiceMock = {
     updateInvoice: () => Promise.resolve()
   };
+  const assetsServiceMock = {
+    updateAssetDocument: () => Promise.resolve()
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -34,7 +38,8 @@ describe('NotificationsComponent', () => {
         { provide: UserService, useValue: userServiceMock },
         { provide: NotificationService, useValue: notificationServiceMock },
         { provide: AuthService, useValue: authServiceMock },
-        { provide: InvoiceService, useValue: invoiceServiceMock }
+        { provide: InvoiceService, useValue: invoiceServiceMock },
+        { provide: AssetsService, useValue: assetsServiceMock }
       ]
     })
       .compileComponents();

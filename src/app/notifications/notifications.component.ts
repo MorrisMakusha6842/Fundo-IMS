@@ -9,6 +9,7 @@ import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 import { ToastService } from '../services/toast.service';
 import { Router } from '@angular/router';
+import { Bytes } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-notifications',
@@ -39,6 +40,9 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
   // Verification & Upload State
   policyFile: File | null = null;
   policyPreview: string | null = null;
+  policyDuration: number = 12;
+  policyDurationUnit: 'weeks' | 'months' | 'years' = 'months';
+  isVerifying = false;
   cameraModalOpen = false;
   mediaStream: MediaStream | null = null;
   tempImagePreview: string | null = null;
@@ -232,6 +236,8 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
     this.selectedInvoice = invoice;
     this.policyFile = null;
     this.policyPreview = null;
+    this.policyDuration = 12;
+    this.policyDurationUnit = 'months';
     this.isVerifyModalOpen = true;
   }
 
@@ -239,31 +245,84 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
     this.isVerifyModalOpen = false;
     this.selectedInvoice = null;
     this.stopCamera();
+    this.isVerifying = false;
   }
 
   async confirmVerify() {
-    if (!this.selectedInvoice) return;
+    if (!this.selectedInvoice || !this.policyFile) return;
+    
+    this.isVerifying = true;
+
     try {
-      // Assuming updateInvoice exists on InvoiceService
+      const currentUser = this.authService.currentUser;
+      if (!currentUser) throw new Error('User not authenticated');
+
+      // 1. Calculate Expiry Date
+      const expiryDate = this.calculateExpiryPreview();
+
+      // 2. Process Policy Document for Firestore (Binary)
+      const storageData = await this.processFileForFirestore(this.policyFile);
+
+      // 3. Update Asset Document with Metadata
+      const docData = {
+        name: this.policyFile.name,
+        type: this.policyFile.type,
+        storageData: storageData,
+        field: 'Insurance Policy',
+        uploadedAt: new Date().toISOString(),
+        expiryDate: expiryDate.toISOString(),
+        issuedBy: currentUser.uid,
+        verifiedAt: new Date().toISOString()
+      };
+
+      await this.assetsService.updateAssetDocument(
+        this.selectedInvoice.clientId,
+        this.selectedInvoice.assetId,
+        'Insurance Policy',
+        docData
+      );
+
+      // 4. Update Invoice Status
       await this.invoiceService.updateInvoice(this.selectedInvoice.id, { status: 'Verified' }, this.selectedInvoice);
       
-      // Update the client's asset document to reflect the verified policy
-      if (this.selectedInvoice.assetId && this.selectedInvoice.clientId) {
-        const expiryDate = new Date();
-        expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Set policy expiry to 1 year from now
-        
-        await this.assetsService.updateAssetDocument(
-          this.selectedInvoice.clientId,
-          this.selectedInvoice.assetId,
-          'Insurance Policy',
-          { expiryDate: expiryDate.toISOString() }
-        );
-      }
-      
+      this.toastService.show('Policy issued and verified successfully', 'success');
       this.closeVerifyModal();
     } catch (error) {
       console.error('Error verifying invoice:', error);
+      this.toastService.show('Verification failed', 'error');
+    } finally {
+      this.isVerifying = false;
     }
+  }
+
+  calculateExpiryPreview(): Date {
+    const date = new Date();
+    if (this.policyDurationUnit === 'weeks') {
+      date.setDate(date.getDate() + (this.policyDuration * 7));
+    } else if (this.policyDurationUnit === 'months') {
+      date.setMonth(date.getMonth() + this.policyDuration);
+    } else if (this.policyDurationUnit === 'years') {
+      date.setFullYear(date.getFullYear() + this.policyDuration);
+    }
+    return date;
+  }
+
+  private async processFileForFirestore(file: File): Promise<Bytes> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        const dataUrl = e.target.result;
+        const base64 = dataUrl.split(',')[1];
+        const byteCharacters = atob(base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        resolve(Bytes.fromUint8Array(new Uint8Array(byteNumbers)));
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   getInvoiceDate(invoice: any): any {

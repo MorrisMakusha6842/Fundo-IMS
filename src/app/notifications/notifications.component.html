@@ -192,6 +192,20 @@
                 </div>
             </div>
 
+            <!-- Duration Section -->
+            <div class="detail-card" style="margin-bottom: 16px;">
+                <h4>Policy Duration</h4>
+                <div class="duration-controls">
+                    <input type="number" [(ngModel)]="policyDuration" min="1" class="duration-input">
+                    <select [(ngModel)]="policyDurationUnit" class="duration-select">
+                        <option value="weeks">Weeks</option>
+                        <option value="months">Months</option>
+                        <option value="years">Years</option>
+                    </select>
+                </div>
+                <p class="expiry-preview">Expires on: <strong>{{ calculateExpiryPreview() | date:'mediumDate' }}</strong></p>
+            </div>
+
             <!-- Upload Section -->
             <div class="upload-section">
                 <h4>Upload Policy Document</h4>
@@ -213,7 +227,9 @@
 
         <div class="modal-footer">
             <button class="cancel-btn" (click)="closeVerifyModal()">Cancel</button>
-            <button class="confirm-btn" (click)="confirmVerify()" [disabled]="!policyFile">Verify & Submit</button>
+            <button class="confirm-btn" (click)="confirmVerify()" [disabled]="!policyFile || isVerifying">
+                {{ isVerifying ? 'Verifying...' : 'Verify & Submit' }}
+            </button>
         </div>
     </div>
 </div>
@@ -296,6 +312,15 @@
     .detail-card .mono { font-family: monospace; color: #1d1d1f; }
     .detail-card .amount { font-weight: 600; color: #1d1d1f; }
     .status-badge { background: #e5e5ea; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+
+    .duration-controls { display: flex; gap: 12px; margin-bottom: 8px; }
+    .duration-input, .duration-select {
+        padding: 8px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 14px;
+    }
+    .duration-input { width: 80px; }
+    .duration-select { flex: 1; }
+    .expiry-preview { font-size: 13px; color: #6e6e73; margin: 0; }
+    .expiry-preview strong { color: #1d1d1f; }
 
     .upload-section {
         border-top: 1px solid #f5f5f7;
