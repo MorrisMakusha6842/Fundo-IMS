@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, doc, updateDoc, collectionGroup, query, deleteDoc, collectionData } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, doc, updateDoc, collectionGroup, query, deleteDoc, collectionData, getDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 export interface VehicleAsset {
@@ -25,8 +25,8 @@ export interface VehicleAsset {
         field: string;
         uploadedAt: string;
         expiryDate?: string;
-    }[]; 
-    status: 'Pending' | 'Approved' | 'Rejected';
+    }[];
+    status: 'Pending' | 'Approved' | 'Rejected' | 'Active';
     id?: string; // Add optional ID
 }
 
@@ -97,6 +97,37 @@ export class AssetsService {
             console.log("Asset approved with ID: ", vehicleId);
         } catch (e) {
             console.error("Error approving asset: ", e);
+            throw e;
+        }
+    }
+
+    async updateAssetDocument(uid: string, assetId: string, fieldName: string, data: any): Promise<void> {
+        try {
+            const assetRef = doc(this.firestore, 'assets', uid, 'vehicles', assetId);
+            const snapshot = await getDoc(assetRef);
+
+            if (snapshot.exists()) {
+                const asset = snapshot.data() as VehicleAsset;
+                const documents = asset.documents || [];
+                const index = documents.findIndex(d => d.field === fieldName);
+
+                if (index !== -1) {
+                    documents[index] = { ...documents[index], ...data };
+                } else {
+                    // If document doesn't exist, add a placeholder with the provided data
+                    documents.push({
+                        name: 'Policy Document',
+                        type: 'application/pdf',
+                        field: fieldName,
+                        uploadedAt: new Date().toISOString(),
+                        ...data
+                    });
+                }
+
+                await updateDoc(assetRef, { documents });
+            }
+        } catch (e) {
+            console.error("Error updating asset document: ", e);
             throw e;
         }
     }

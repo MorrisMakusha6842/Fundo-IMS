@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../services/user.service';
 import { NotificationService, Message } from '../services/notification.service';
+import { InvoiceService } from '../services/invoice.service';
+import { AssetsService } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
@@ -17,6 +19,8 @@ import { Router } from '@angular/router';
 export class NotificationsComponent implements OnInit, AfterViewChecked {
   private userService = inject(UserService);
   private notificationService = inject(NotificationService);
+  private invoiceService = inject(InvoiceService);
+  private assetsService = inject(AssetsService);
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -27,6 +31,8 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
   newMessage: string = '';
   isLoadingUsers = true;
   isLoadingMessages = false;
+  isVerifyModalOpen = false;
+  selectedInvoice: any = null;
 
   messageFilter: 'all' | 'read' | 'unread' = 'all';
 
@@ -90,19 +96,10 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
           avatarDataUrl: null
         };
 
-        // Add Purchases User for Invoices/Receipts
-        const purchasesUser = {
-          uid: 'purchases',
-          displayName: 'Purchases',
-          email: 'purchases@insurance.app',
-          role: 'System',
-          avatarDataUrl: null
-        };
-
         // Filter out the current authenticated user from the list
         const filteredUsers = users.filter(u => u.uid !== currentUserId);
 
-        this.users = [systemUser, purchasesUser, ...filteredUsers];
+        this.users = [systemUser, ...filteredUsers];
         this.isLoadingUsers = false;
       },
       error: (error) => {
@@ -164,7 +161,7 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
   }
 
   async sendMessage() {
-    if (!this.newMessage.trim() || !this.selectedUser || this.selectedUser.uid === 'system' || this.selectedUser.uid === 'purchases') return;
+    if (!this.newMessage.trim() || !this.selectedUser || this.selectedUser.uid === 'system') return;
 
     try {
       await this.notificationService.sendMessage(this.selectedUser.uid, this.newMessage.trim());
@@ -219,5 +216,40 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
 
   backToUsers() {
     this.selectedUser = null;
+  }
+
+  openVerifyModal(invoice: any) {
+    this.selectedInvoice = invoice;
+    this.isVerifyModalOpen = true;
+  }
+
+  closeVerifyModal() {
+    this.isVerifyModalOpen = false;
+    this.selectedInvoice = null;
+  }
+
+  async confirmVerify() {
+    if (!this.selectedInvoice) return;
+    try {
+      // Assuming updateInvoice exists on InvoiceService
+      await this.invoiceService.updateInvoice(this.selectedInvoice.id, { status: 'Verified' }, this.selectedInvoice);
+      
+      // Update the client's asset document to reflect the verified policy
+      if (this.selectedInvoice.assetId && this.selectedInvoice.clientId) {
+        const expiryDate = new Date();
+        expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Set policy expiry to 1 year from now
+        
+        await this.assetsService.updateAssetDocument(
+          this.selectedInvoice.clientId,
+          this.selectedInvoice.assetId,
+          'Insurance Policy',
+          { expiryDate: expiryDate.toISOString() }
+        );
+      }
+      
+      this.closeVerifyModal();
+    } catch (error) {
+      console.error('Error verifying invoice:', error);
+    }
   }
 }

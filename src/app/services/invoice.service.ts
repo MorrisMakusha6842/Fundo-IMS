@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, addDoc, query, orderBy, collectionData, where, collectionGroup } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, query, orderBy, collectionData, where, collectionGroup, doc, updateDoc } from '@angular/fire/firestore';
 import { Observable, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -10,7 +10,7 @@ export interface Invoice {
     clientId: string;
     clientName: string;
     amount: number;
-    status: 'Pending' | 'Paid' | 'Unpaid';
+    status: 'Pending' | 'Paid' | 'Unpaid' | 'Verified';
     createdAt: any;
     generatedBy: string; // Admin UID
     description?: string;
@@ -36,6 +36,14 @@ export class InvoiceService {
             console.error("Error creating invoice: ", e);
             throw e;
         }
+    }
+
+    async updateInvoice(id: string, data: Partial<Invoice>, context?: { clientId: string, invoiceType?: string }): Promise<void> {
+        if (!context?.clientId) throw new Error('Missing client ID for invoice update');
+
+        const type = context.invoiceType || 'proforma';
+        const docRef = doc(this.firestore, 'invoices', context.clientId, type, id);
+        await updateDoc(docRef, data);
     }
 
     /**

@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationsComponent } from './notifications.component';
 import { UserService } from '../services/user.service';
 import { NotificationService } from '../services/notification.service';
+import { InvoiceService } from '../services/invoice.service';
 import { AuthService } from '../services/auth.service';
 import { of } from 'rxjs';
 
@@ -22,6 +23,9 @@ describe('NotificationsComponent', () => {
   const authServiceMock = {
     user$: of({ uid: 'test-uid' })
   };
+  const invoiceServiceMock = {
+    updateInvoice: () => Promise.resolve()
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -29,7 +33,8 @@ describe('NotificationsComponent', () => {
       providers: [
         { provide: UserService, useValue: userServiceMock },
         { provide: NotificationService, useValue: notificationServiceMock },
-        { provide: AuthService, useValue: authServiceMock }
+        { provide: AuthService, useValue: authServiceMock },
+        { provide: InvoiceService, useValue: invoiceServiceMock }
       ]
     })
       .compileComponents();

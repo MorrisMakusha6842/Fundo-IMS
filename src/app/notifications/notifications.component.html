@@ -56,7 +56,7 @@
                 <p class="header-user-status">{{selectedUser.role || 'User'}}</p>
             </div>
             <!-- Message Filter -->
-            <div class="message-filters" *ngIf="selectedUser.uid !== 'system' && selectedUser.uid !== 'purchases'">
+            <div class="message-filters" *ngIf="selectedUser.uid !== 'system'">
                 <button [class.active]="messageFilter === 'all'" (click)="setFilter('all')">All</button>
                 <button [class.active]="messageFilter === 'read'" (click)="setFilter('read')">Read</button>
                 <button [class.active]="messageFilter === 'unread'" (click)="setFilter('unread')">Unread</button>
@@ -68,7 +68,7 @@
             <div *ngIf="isLoadingMessages" class="loading-text">Loading messages...</div>
 
             <div *ngIf="!isLoadingMessages && allMessages.length === 0" class="no-messages">
-                {{ (selectedUser.uid === 'system' || selectedUser.uid === 'purchases') ? 'No notifications.' : 'No messages yet. Start the
+                {{ (selectedUser.uid === 'system') ? 'No notifications.' : 'No messages yet. Start the
                 conversation!' }}
             </div>
 
@@ -104,7 +104,8 @@
                                 <span style="font-weight: 600; font-size: 15px;">{{message.invoiceData?.amount |
                                     currency}}</span>
                                 <button
-                                    style="background: #0071e3; color: white; border: none; padding: 4px 12px; border-radius: 12px; font-size: 12px; cursor: pointer;">View</button>
+                                    style="background: #0071e3; color: white; border: none; padding: 4px 12px; border-radius: 12px; font-size: 12px; cursor: pointer;"
+                                    (click)="openVerifyModal(message.invoiceData)">Verify</button>
                             </div>
                         </div>
 
@@ -136,10 +137,10 @@
         <!-- MESSAGE INPUT (Sticky at bottom) -->
         <footer class="message-input-footer">
             <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()"
-                [placeholder]="(selectedUser.uid === 'system' || selectedUser.uid === 'purchases') ? 'System notifications are read-only' : 'Type a message...'"
-                class="message-input" [disabled]="selectedUser.uid === 'system' || selectedUser.uid === 'purchases'" />
+                [placeholder]="(selectedUser.uid === 'system') ? 'System notifications are read-only' : 'Type a message...'"
+                class="message-input" [disabled]="selectedUser.uid === 'system'" />
             <button class="send-button" (click)="sendMessage()"
-                [disabled]="!newMessage.trim() || selectedUser.uid === 'system' || selectedUser.uid === 'purchases'">
+                [disabled]="!newMessage.trim() || selectedUser.uid === 'system'">
                 Send
             </button>
         </footer>
@@ -157,3 +158,68 @@
         </div>
     </section>
 </div>
+
+<!-- VERIFY MODAL -->
+<div class="modal-overlay" *ngIf="isVerifyModalOpen" (click)="closeVerifyModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>Verify Invoice</h3>
+        <p>Are you sure you want to verify this invoice?</p>
+        <div class="invoice-details" *ngIf="selectedInvoice">
+            <p><strong>ID:</strong> {{selectedInvoice.id}}</p>
+            <p><strong>Amount:</strong> {{selectedInvoice.amount | currency}}</p>
+            <p><strong>Status:</strong> {{selectedInvoice.status}}</p>
+        </div>
+        <div class="modal-actions">
+            <button class="cancel-btn" (click)="closeVerifyModal()">Cancel</button>
+            <button class="confirm-btn" (click)="confirmVerify()">Confirm Verification</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+    }
+
+    .cancel-btn {
+        background: #f5f5f7;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .confirm-btn {
+        background: #0071e3;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+</style>

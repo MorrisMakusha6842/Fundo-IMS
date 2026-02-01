@@ -16,6 +16,11 @@ export interface Message {
     type?: 'text' | 'invoice' | 'asset';
     invoiceData?: Invoice;
     assetId?: string;
+    attachment?: {
+        name: string;
+        url: string;
+        type: string;
+    };
 }
 
 export interface Conversation {
@@ -36,6 +41,7 @@ export class NotificationService {
     private assetsService = inject(AssetsService);
     private userService = inject(UserService);
     private invoiceSubscription?: Subscription;
+    private adminInvoiceSubscription?: Subscription;
     private assetSubscription?: Subscription;
 
     private unreadMessagesSubject = new BehaviorSubject<Message[]>([]);
@@ -57,6 +63,7 @@ export class NotificationService {
                     const profile = await this.userService.getUserProfile(user.uid);
                     if (profile && (profile['role'] === 'admin' || profile['role'] === 'agent')) {
                         this.startAssetListener(user.uid);
+                        this.startAdminInvoiceListener(user.uid);
                     }
                 } catch (e) {
                     console.error('Error checking role for notifications', e);
@@ -65,6 +72,7 @@ export class NotificationService {
                 this.stopInvoiceListener();
                 this.stopUnreadListener();
                 this.stopAssetListener();
+                this.stopAdminInvoiceListener();
             }
         });
     }
@@ -73,7 +81,7 @@ export class NotificationService {
      * Send a message to another user
      * Creates entries in both sender's sent and recipient's received collections
      */
-    async sendMessage(toUserId: string, messageText: string): Promise<void> {
+    async sendMessage(toUserId: string, messageText: string, attachment?: { name: string, url: string, type: string }): Promise<void> {
         const currentUser = this.auth.currentUser;
         if (!currentUser) {
             throw new Error('User must be logged in to send messages');
@@ -84,7 +92,8 @@ export class NotificationService {
             timestamp: new Date().toISOString(),
             read: false,
             senderId: currentUser.uid,
-            recipientId: toUserId
+            recipientId: toUserId,
+            attachment: attachment
         };
 
         try {
@@ -131,6 +140,13 @@ export class NotificationService {
         if (this.assetSubscription) {
             this.assetSubscription.unsubscribe();
             this.assetSubscription = undefined;
+        }
+    }
+
+    private stopAdminInvoiceListener() {
+        if (this.adminInvoiceSubscription) {
+            this.adminInvoiceSubscription.unsubscribe();
+            this.adminInvoiceSubscription = undefined;
         }
     }
 
@@ -235,7 +251,7 @@ export class NotificationService {
                         text: `New ${typeLabel}: ${inv.assetName || 'Unknown Asset'}`,
                         timestamp: ts,
                         read: false, // Default to unread so user sees it
-                        senderId: 'purchases',
+                        senderId: 'system',
                         recipientId: userId,
                         type: 'invoice',
                         invoiceData: inv
@@ -249,6 +265,68 @@ export class NotificationService {
             if (batchCount > 0) {
                 await batch.commit();
                 console.log(`Synced ${batchCount} system notifications`);
+            }
+        });
+    }
+
+    /**
+     * Realtime listener for ALL invoices (Admins/Agents).
+     */
+    private startAdminInvoiceListener(userId: string) {
+        this.stopAdminInvoiceListener();
+
+        this.adminInvoiceSubscription = this.invoiceService.getAllInvoices().subscribe(async invoices => {
+            if (!invoices || invoices.length === 0) return;
+
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+            // Filter recent invoices
+            const recentInvoices = invoices.filter(inv => {
+                let ts = inv.createdAt;
+                if (ts && typeof ts.toDate === 'function') ts = ts.toDate();
+                else if (ts) ts = new Date(ts);
+                return ts && ts > oneWeekAgo;
+            });
+
+            if (recentInvoices.length === 0) return;
+
+            const systemRef = collection(this.firestore, 'notifications', userId, 'received', 'system', 'messages');
+            const snapshot = await getDocs(systemRef);
+            const existingInvoiceIds = new Set(snapshot.docs.map(d => d.id));
+
+            const batch = writeBatch(this.firestore);
+            let batchCount = 0;
+
+            recentInvoices.forEach(inv => {
+                if (inv.id && !existingInvoiceIds.has(inv.id)) {
+                    const docRef = doc(this.firestore, 'notifications', userId, 'received', 'system', 'messages', inv.id);
+                    
+                    let ts = inv.createdAt;
+                    if (ts && typeof ts.toDate === 'function') {
+                        ts = ts.toDate().toISOString();
+                    } else if (!ts) {
+                        ts = new Date().toISOString();
+                    }
+
+                    const message: Message = {
+                        text: `New Invoice for Verification: ${inv.assetName || 'Unknown Asset'} - ${inv.amount}`,
+                        timestamp: ts,
+                        read: false,
+                        senderId: 'system',
+                        recipientId: userId,
+                        type: 'invoice',
+                        invoiceData: inv
+                    };
+
+                    batch.set(docRef, message);
+                    batchCount++;
+                }
+            });
+
+            if (batchCount > 0) {
+                await batch.commit();
+                console.log(`Synced ${batchCount} admin invoice notifications`);
             }
         });
     }
