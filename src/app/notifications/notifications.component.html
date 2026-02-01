@@ -161,17 +161,78 @@
 
 <!-- VERIFY MODAL -->
 <div class="modal-overlay" *ngIf="isVerifyModalOpen" (click)="closeVerifyModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-        <h3>Verify Invoice</h3>
-        <p>Are you sure you want to verify this invoice?</p>
-        <div class="invoice-details" *ngIf="selectedInvoice">
-            <p><strong>ID:</strong> {{selectedInvoice.id}}</p>
-            <p><strong>Amount:</strong> {{selectedInvoice.amount | currency}}</p>
-            <p><strong>Status:</strong> {{selectedInvoice.status}}</p>
+    <div class="modal-content verify-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Verify Payment & Issue Policy</h3>
+            <button class="close-icon" (click)="closeVerifyModal()">&times;</button>
         </div>
-        <div class="modal-actions">
+
+        <div class="modal-body" *ngIf="selectedInvoice">
+            <div class="details-grid">
+                <!-- Client Data -->
+                <div class="detail-card">
+                    <h4>Client Details</h4>
+                    <p><span class="label">Name:</span> {{selectedInvoice.clientName || 'Unknown'}}</p>
+                    <p><span class="label">Client ID:</span> <span class="mono">{{selectedInvoice.clientId}}</span></p>
+                </div>
+
+                <!-- Asset Data -->
+                <div class="detail-card">
+                    <h4>Asset Details</h4>
+                    <p><span class="label">Asset:</span> {{selectedInvoice.assetName}}</p>
+                    <p><span class="label">Asset ID:</span> <span class="mono">{{selectedInvoice.assetId}}</span></p>
+                </div>
+
+                <!-- Payment Data -->
+                <div class="detail-card">
+                    <h4>Payment Details</h4>
+                    <p><span class="label">Amount:</span> <span class="amount">{{selectedInvoice.amount | currency}}</span></p>
+                    <p><span class="label">Date:</span> {{getInvoiceDate(selectedInvoice) | date:'medium'}}</p>
+                    <p><span class="label">Status:</span> <span class="status-badge">{{selectedInvoice.status}}</span></p>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <h4>Upload Policy Document</h4>
+                <p class="upload-hint">Please upload the signed policy document or payment proof to complete verification.</p>
+
+                <div class="upload-controls" *ngIf="!policyPreview">
+                    <button class="btn-upload" (click)="fileInput.click()">Upload Image</button>
+                    <input #fileInput type="file" (change)="onPolicyFileSelected($event)" accept="image/*" hidden>
+                    <span class="divider">or</span>
+                    <button class="btn-camera" (click)="openCameraModal()">Take Photo</button>
+                </div>
+
+                <div class="preview-container" *ngIf="policyPreview">
+                    <img [src]="policyPreview" alt="Policy Preview">
+                    <button class="remove-btn" (click)="removePolicyFile()">Remove</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
             <button class="cancel-btn" (click)="closeVerifyModal()">Cancel</button>
-            <button class="confirm-btn" (click)="confirmVerify()">Confirm Verification</button>
+            <button class="confirm-btn" (click)="confirmVerify()" [disabled]="!policyFile">Verify & Submit</button>
+        </div>
+    </div>
+</div>
+
+<!-- CAMERA MODAL -->
+<div class="camera-modal" *ngIf="cameraModalOpen">
+    <div class="camera-backdrop" (click)="closeCameraModal()"></div>
+    <div class="camera-dialog">
+        <h3>Take Photo</h3>
+        <div class="camera-preview">
+            <video id="verifyCameraVideo" autoplay playsinline *ngIf="!tempImagePreview"></video>
+            <img [src]="tempImagePreview" *ngIf="tempImagePreview" class="capture-preview">
+        </div>
+        <div class="camera-controls">
+            <button class="btn" *ngIf="!tempImagePreview" (click)="closeCameraModal()">Cancel</button>
+            <button class="btn btn-primary" *ngIf="!tempImagePreview" (click)="takePhoto()">Capture</button>
+            
+            <button class="btn" *ngIf="tempImagePreview" (click)="retake()">Retake</button>
+            <button class="btn btn-primary" *ngIf="tempImagePreview" (click)="savePhoto()">Use Photo</button>
         </div>
     </div>
 </div>
@@ -192,34 +253,146 @@
 
     .modal-content {
         background: white;
-        padding: 24px;
         border-radius: 12px;
         width: 90%;
-        max-width: 400px;
+        max-width: 600px;
         box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
     }
 
-    .modal-actions {
+    .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #f5f5f7;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-header h3 { margin: 0; font-size: 18px; font-weight: 600; }
+    .close-icon { background: none; border: none; font-size: 24px; cursor: pointer; color: #86868b; }
+
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .detail-card {
+        background: #fbfbfd;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #e5e5ea;
+    }
+    .detail-card:last-child { grid-column: span 2; }
+    .detail-card h4 { margin: 0 0 12px 0; font-size: 14px; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .detail-card p { margin: 4px 0; font-size: 14px; display: flex; justify-content: space-between; }
+    .detail-card .label { color: #6e6e73; }
+    .detail-card .mono { font-family: monospace; color: #1d1d1f; }
+    .detail-card .amount { font-weight: 600; color: #1d1d1f; }
+    .status-badge { background: #e5e5ea; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+
+    .upload-section {
+        border-top: 1px solid #f5f5f7;
+        padding-top: 20px;
+    }
+    .upload-section h4 { margin: 0 0 8px 0; font-size: 16px; font-weight: 600; }
+    .upload-hint { margin: 0 0 16px 0; font-size: 13px; color: #86868b; }
+
+    .upload-controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: #f5f5f7;
+        padding: 20px;
+        border-radius: 8px;
+        justify-content: center;
+        border: 1px dashed #d2d2d7;
+    }
+    .btn-upload, .btn-camera {
+        background: white;
+        border: 1px solid #d2d2d7;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-upload:hover, .btn-camera:hover { border-color: #0071e3; color: #0071e3; }
+    .divider { color: #86868b; font-size: 13px; }
+
+    .preview-container {
+        position: relative;
+        margin-top: 16px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e5e5ea;
+        max-height: 300px;
+        display: flex;
+        justify-content: center;
+        background: #000;
+    }
+    .preview-container img { max-width: 100%; max-height: 300px; object-fit: contain; }
+    .remove-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #f5f5f7;
         display: flex;
         justify-content: flex-end;
         gap: 12px;
-        margin-top: 24px;
     }
 
     .cancel-btn {
-        background: #f5f5f7;
+        background: white;
         border: none;
-        padding: 8px 16px;
+        padding: 10px 20px;
         border-radius: 8px;
         cursor: pointer;
+        color: #1d1d1f;
+        font-weight: 500;
     }
 
     .confirm-btn {
         background: #0071e3;
         color: white;
         border: none;
-        padding: 8px 16px;
+        padding: 10px 20px;
         border-radius: 8px;
         cursor: pointer;
+        font-weight: 500;
+    }
+    .confirm-btn:disabled { background: #99c7f4; cursor: not-allowed; }
+
+    /* Camera Modal Styles */
+    .camera-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; }
+    .camera-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.8); }
+    .camera-dialog { position: relative; background: white; padding: 16px; border-radius: 12px; z-index: 2; width: 400px; max-width: 95%; }
+    .camera-preview { position: relative; width: 100%; height: 300px; background: #000; overflow: hidden; border-radius: 8px; display:flex; align-items:center; justify-content:center; margin: 16px 0; }
+    .camera-preview video, .capture-preview { width: 100%; height: 100%; object-fit: cover; }
+    .camera-controls { display:flex; gap:12px; justify-content:center; }
+    .camera-controls .btn { padding: 8px 16px; border-radius:6px; background:#f5f5f7; border:none; cursor: pointer; font-weight: 500; }
+    .camera-controls .btn-primary { background: #0071e3; color: white; }
+
+    @media (max-width: 600px) {
+        .details-grid { grid-template-columns: 1fr; }
+        .detail-card:last-child { grid-column: auto; }
     }
 </style>

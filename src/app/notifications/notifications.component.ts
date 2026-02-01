@@ -7,6 +7,7 @@ import { InvoiceService } from '../services/invoice.service';
 import { AssetsService } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
+import { ToastService } from '../services/toast.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -22,6 +23,7 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
   private invoiceService = inject(InvoiceService);
   private assetsService = inject(AssetsService);
   private authService = inject(AuthService);
+  private toastService = inject(ToastService);
   private router = inject(Router);
 
   users: any[] = [];
@@ -33,6 +35,14 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
   isLoadingMessages = false;
   isVerifyModalOpen = false;
   selectedInvoice: any = null;
+
+  // Verification & Upload State
+  policyFile: File | null = null;
+  policyPreview: string | null = null;
+  cameraModalOpen = false;
+  mediaStream: MediaStream | null = null;
+  tempImagePreview: string | null = null;
+  tempFile: File | null = null;
 
   messageFilter: 'all' | 'read' | 'unread' = 'all';
 
@@ -220,12 +230,15 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
 
   openVerifyModal(invoice: any) {
     this.selectedInvoice = invoice;
+    this.policyFile = null;
+    this.policyPreview = null;
     this.isVerifyModalOpen = true;
   }
 
   closeVerifyModal() {
     this.isVerifyModalOpen = false;
     this.selectedInvoice = null;
+    this.stopCamera();
   }
 
   async confirmVerify() {
@@ -250,6 +263,126 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
       this.closeVerifyModal();
     } catch (error) {
       console.error('Error verifying invoice:', error);
+    }
+  }
+
+  getInvoiceDate(invoice: any): any {
+    if (!invoice?.createdAt) return null;
+    // Handle Firestore Timestamp
+    if (typeof invoice.createdAt.toDate === 'function') {
+      return invoice.createdAt.toDate();
+    }
+    // Handle seconds/nanoseconds object if toDate is missing
+    if (invoice.createdAt.seconds) {
+      return new Date(invoice.createdAt.seconds * 1000);
+    }
+    return invoice.createdAt;
+  }
+
+  // --- File Upload Logic ---
+
+  onPolicyFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    
+    const file = input.files[0];
+    this.processSelectedFile(file);
+  }
+
+  processSelectedFile(file: File) {
+    this.policyFile = file;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.policyPreview = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removePolicyFile() {
+    this.policyFile = null;
+    this.policyPreview = null;
+  }
+
+  // --- Camera Logic ---
+
+  openCameraModal() {
+    this.cameraModalOpen = true;
+    this.tempImagePreview = null;
+    this.tempFile = null;
+    setTimeout(() => this.startCamera(), 50);
+  }
+
+  closeCameraModal() {
+    this.cameraModalOpen = false;
+    this.stopCamera();
+  }
+
+  async startCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this.toastService.show('Camera not supported', 'error');
+      return;
+    }
+
+    try {
+      if (this.mediaStream) return;
+
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      
+      setTimeout(async () => {
+        const video: HTMLVideoElement | null = document.querySelector('#verifyCameraVideo');
+        if (video) {
+          video.srcObject = this.mediaStream;
+          await video.play().catch(() => {});
+        }
+      }, 50);
+    } catch (err: any) {
+      console.warn('Camera error', err);
+      this.toastService.show('Unable to access camera', 'error');
+    }
+  }
+
+  stopCamera() {
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(t => t.stop());
+      this.mediaStream = null;
+    }
+    const video: HTMLVideoElement | null = document.querySelector('#verifyCameraVideo');
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+    }
+  }
+
+  async takePhoto() {
+    const video: HTMLVideoElement | null = document.querySelector('#verifyCameraVideo');
+    if (!video) return;
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], `capture_${Date.now()}.jpg`, { type: blob.type });
+    
+    this.tempImagePreview = dataUrl;
+    this.tempFile = file;
+  }
+
+  retake() {
+    this.tempImagePreview = null;
+    this.tempFile = null;
+  }
+
+  savePhoto() {
+    if (this.tempFile && this.tempImagePreview) {
+      this.policyFile = this.tempFile;
+      this.policyPreview = this.tempImagePreview;
+      this.closeCameraModal();
     }
   }
 }
