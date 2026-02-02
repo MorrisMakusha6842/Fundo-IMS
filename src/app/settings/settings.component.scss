@@ -11,6 +11,10 @@ $danger: #dc2626;
   min-height: 100vh;
   background: $bg;
   font-family: Inter, system-ui, sans-serif;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 }
 
 /* Sidebar */
@@ -19,6 +23,16 @@ $danger: #dc2626;
   background: $card-bg;
   border-right: 1px solid $border;
   padding: 24px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid $border;
+  }
 
   .sidebar-title {
     font-size: 12px;
@@ -52,6 +66,10 @@ $danger: #dc2626;
 .settings-content {
   flex: 1;
   padding: 32px 40px;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
 }
 
 .page-title {
@@ -90,10 +108,11 @@ $danger: #dc2626;
 
   .avatar-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     gap: 8px;
-
-    small {
+    
+    small { // In case small tag is re-added later
       color: $muted;
       font-size: 12px;
     }
@@ -129,6 +148,11 @@ $danger: #dc2626;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
   input {
     width: 280px;
@@ -218,6 +242,21 @@ $danger: #dc2626;
     color: white;
     border: none;
   }
+
+  .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-right: 8px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 }
 
 /* Danger Rows */
@@ -234,5 +273,125 @@ $danger: #dc2626;
   p {
     font-size: 13px;
     color: $muted;
+  }
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-card {
+  background: $card-bg;
+  padding: 24px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+  }
+
+  .modal-body {
+    margin-bottom: 24px;
+    .modal-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid $border;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+    .error-text {
+      color: $danger;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+}
+
+/* Camera Modal */
+.camera-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .camera-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+  }
+
+  .camera-dialog {
+    position: relative;
+    background: #000;
+    padding: 16px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .camera-preview {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background: #222;
+    border-radius: 8px;
+    overflow: hidden;
+
+    video, img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .capture-preview {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
+  }
+
+  .camera-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
   }
 }

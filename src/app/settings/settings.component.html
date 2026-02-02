@@ -1,112 +1,139 @@
 <div class="settings-page">
-  <!-- Sidebar -->
-  <aside class="settings-sidebar">
-    <h4 class="sidebar-title">GENERAL SETTINGS</h4>
-    <ul class="sidebar-nav">
-      <li class="nav-item">Apps</li>
-      <li class="nav-item active">Account</li>
-      <li class="nav-item">Notifications</li>
-      <li class="nav-item">Language & Region</li>
-    </ul>
-  </aside>
+    <!-- Sidebar -->
+    <aside class="settings-sidebar">
+        <h4 class="sidebar-title">GENERAL SETTINGS</h4>
+        <ul class="sidebar-nav">
+            <li class="nav-item active">Account</li>
+            <li class="nav-item">Notifications</li>
+            <li class="nav-item" (click)="toggleDarkMode()">Dark/Light Mode <span *ngIf="darkMode">🌙</span></li>
+        </ul>
+    </aside>
 
-  <!-- Main Content -->
-  <main class="settings-content">
-    <h2 class="page-title">Account Settings</h2>
+    <!-- Main Content -->
+    <main class="settings-content">
+        <h2 class="page-title">Account Settings</h2>
 
-    <!-- Profile Section -->
-    <section class="card">
-      <h3 class="card-title">My Profile</h3>
+        <!-- Profile Section -->
+        <section class="card">
+            <h3 class="card-title">My Profile</h3>
 
-      <div class="profile-row">
-        <div class="avatar-block">
-          <img src="https://via.placeholder.com/64" alt="Avatar" />
-          <div class="avatar-actions">
-            <button class="btn btn-primary">+ Change Image</button>
-            <button class="btn btn-secondary">Remove Image</button>
-            <small>We support PNGs, JPEGs and GIFs under 2MB</small>
-          </div>
+            <div class="profile-row">
+                <div class="avatar-block">
+                    <img [src]="userProfile.photoURL || 'https://via.placeholder.com/64'" alt="Avatar" />
+                    <div class="avatar-actions">
+            <label class="btn btn-primary" style="cursor: pointer;">
+              Upload <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+            </label>
+            <button class="btn btn-primary" (click)="openCameraModal()">Capture</button>
+            <button class="btn btn-secondary" (click)="removeImage()">Remove</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" [(ngModel)]="userProfile.firstName" />
+                </div>
+
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" [(ngModel)]="userProfile.lastName" />
+                </div>
+            </div>
+            <div style="margin-top: 16px; text-align: right;">
+                <button class="btn btn-primary" (click)="updateProfile()" [disabled]="isSavingProfile">
+                    <span class="spinner" *ngIf="isSavingProfile"></span>
+                    {{ isSavingProfile ? 'Saving...' : 'Save Profile' }}
+                </button>
+            </div>
+        </section>
+
+        <!-- Account Security -->
+        <section class="card">
+            <h3 class="card-title">Account Security</h3>
+
+            <div class="security-row">
+                <div>
+                    <label>Email</label>
+                    <input type="email" [(ngModel)]="newEmail" />
+                </div>
+                <button class="btn btn-outline" (click)="onUpdateEmail()">Update Email</button>
+            </div>
+
+            <div class="security-row">
+                <div>
+                    <label>Password</label>
+                    <input type="password" [(ngModel)]="newPassword" placeholder="New Password" />
+                </div>
+                <button class="btn btn-outline" (click)="onUpdatePassword()">Update Password</button>
+            </div>
+
+            <div class="security-toggle">
+                <div>
+                    <strong>2-Step Verifications</strong>
+                    <p>Add an additional layer of security to your account during login.</p>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
+
+        <section class="card danger-zone">
+            <div class="danger-row">
+                <div>
+                    <strong>Log out of all devices</strong>
+                    <p>Log out of all other active sessions on other devices.</p>
+                </div>
+                <button class="btn btn-outline">Log out</button>
+            </div>
+
+            <div class="danger-row danger">
+                <div>
+                    <strong>Delete my account</strong>
+                    <p>Permanently delete the account and remove access from all workspaces.</p>
+                </div>
+                <button class="btn btn-danger" (click)="openDeleteModal()">Delete Account</button>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" *ngIf="isDeleteModalOpen">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Confirm Account Deletion</h3>
+            <button class="btn-close" (click)="closeDeleteModal()">×</button>
         </div>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-group">
-          <label>First Name</label>
-          <input type="text" value="Brian" />
+        <div class="modal-body">
+            <p>Please enter your password to confirm deletion. This action cannot be undone.</p>
+            <input type="password" [(ngModel)]="deletePassword" placeholder="Current Password" class="modal-input" />
+            <p class="error-text" *ngIf="deleteError">{{ deleteError }}</p>
         </div>
-
-        <div class="form-group">
-          <label>Last Name</label>
-          <input type="text" value="Frederin" />
+        <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+            <button class="btn btn-danger" (click)="confirmDeleteAccount()" [disabled]="isDeleting">{{ isDeleting ?
+                'Deleting...' : 'Confirm Delete' }}</button>
         </div>
-      </div>
-    </section>
+    </div>
+</div>
 
-    <!-- Account Security -->
-    <section class="card">
-      <h3 class="card-title">Account Security</h3>
-
-      <div class="security-row">
-        <div>
-          <label>Email</label>
-          <input type="email" placeholder="brianfrederin@gmail.com" disabled />
-        </div>
-        <button class="btn btn-outline">Change email</button>
-      </div>
-
-      <div class="security-row">
-        <div>
-          <label>Password</label>
-          <input type="password" placeholder="••••••••" disabled />
-        </div>
-        <button class="btn btn-outline">Change password</button>
-      </div>
-
-      <div class="security-toggle">
-        <div>
-          <strong>2-Step Verifications</strong>
-          <p>Add an additional layer of security to your account during login.</p>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" />
-          <span class="slider"></span>
-        </label>
-      </div>
-    </section>
-
-    <!-- Support Access -->
-    <section class="card">
-      <h3 class="card-title">Support Access</h3>
-
-      <div class="security-toggle">
-        <div>
-          <strong>Support access</strong>
-          <p>
-            You have granted us access to your account for support purposes until
-            Aug 31, 2023, 9:40 PM.
-          </p>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" checked />
-          <span class="slider"></span>
-        </label>
-      </div>
-
-      <div class="danger-row">
-        <div>
-          <strong>Log out of all devices</strong>
-          <p>Log out of all other active sessions on other devices.</p>
-        </div>
-        <button class="btn btn-outline">Log out</button>
-      </div>
-
-      <div class="danger-row danger">
-        <div>
-          <strong>Delete my account</strong>
-          <p>Permanently delete the account and remove access from all workspaces.</p>
-        </div>
-        <button class="btn btn-danger">Delete Account</button>
-      </div>
-    </section>
-  </main>
+<!-- Camera Modal -->
+<div class="camera-modal" *ngIf="cameraModalOpen">
+  <div class="camera-backdrop" (click)="stopCamera(); cameraModalOpen=false"></div>
+  <div class="camera-dialog">
+    <div class="camera-preview">
+      <video id="settingsCameraVideo" autoplay muted playsinline></video>
+      <img *ngIf="tempImagePreview" [src]="tempImagePreview" alt="capture preview" class="capture-preview" />
+    </div>
+    <div class="camera-controls">
+      <button type="button" class="btn btn-primary" (click)="takePhoto()">Capture</button>
+      <button type="button" class="btn btn-primary" *ngIf="tempImagePreview" (click)="savePhoto()">Save</button>
+      <button type="button" class="btn btn-secondary" *ngIf="tempImagePreview" (click)="retake()">Retake</button>
+      <button type="button" class="btn btn-secondary" (click)="stopCamera(); cameraModalOpen=false">Cancel</button>
+    </div>
+  </div>
 </div>

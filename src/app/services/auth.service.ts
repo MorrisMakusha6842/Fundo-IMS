@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signOut, User, Auth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail, linkWithCredential } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signOut, User, Auth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, fetchSignInMethodsForEmail, linkWithCredential, deleteUser, reauthenticateWithCredential, EmailAuthProvider, updateEmail, updatePassword } from 'firebase/auth';
 import { serverTimestamp } from 'firebase/firestore';
 import { UserService } from './user.service';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -140,6 +140,33 @@ export class AuthService {
       let message = 'Failed to link accounts.';
       if (err?.message) message = err.message;
       throw new Error(message);
+    }
+  }
+
+  async updateEmail(newEmail: string) {
+    if (this.auth.currentUser) {
+      await updateEmail(this.auth.currentUser, newEmail);
+    }
+  }
+
+  async updatePassword(newPassword: string) {
+    if (this.auth.currentUser) {
+      await updatePassword(this.auth.currentUser, newPassword);
+    }
+  }
+
+  async deleteAccount(password: string) {
+    const user = this.auth.currentUser;
+    if (user) {
+      // Re-authenticate first
+      if (user.email) {
+        const credential = EmailAuthProvider.credential(user.email, password);
+        await reauthenticateWithCredential(user, credential);
+      }
+      // Delete from Auth
+      await deleteUser(user);
+      // Note: Firestore user document deletion is handled by UserService or Cloud Functions usually, 
+      // but we can trigger it here if needed.
     }
   }
 }

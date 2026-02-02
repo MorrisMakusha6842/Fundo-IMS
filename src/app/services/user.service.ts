@@ -145,7 +145,7 @@ export class UserService {
 	/** Save a profile image as a data URL in the user's Firestore document and return it. */
 	async uploadProfileImage(uid: string, file: File): Promise<string> {
 		try {
-			const dataUrl = await this.fileToDataUrl(file);
+			const dataUrl = await this.compressImage(file);
 			const userRef = doc(this.db, 'users', uid);
 			await setDoc(userRef, { avatarDataUrl: dataUrl }, { merge: true });
 			return dataUrl;
@@ -155,12 +155,36 @@ export class UserService {
 		}
 	}
 
-	private fileToDataUrl(file: File): Promise<string> {
+	private compressImage(file: File, maxWidth = 1024, quality = 0.85): Promise<string> {
 		return new Promise((resolve, reject) => {
 			const reader = new FileReader();
-			reader.onload = () => resolve(reader.result as string);
-			reader.onerror = (e) => reject(e);
 			reader.readAsDataURL(file);
+			reader.onload = (event) => {
+				const img = new Image();
+				img.src = event.target?.result as string;
+				img.onload = () => {
+					const canvas = document.createElement('canvas');
+					let width = img.width;
+					let height = img.height;
+
+					if (width > maxWidth) {
+						height = Math.round((height * maxWidth) / width);
+						width = maxWidth;
+					}
+
+					canvas.width = width;
+					canvas.height = height;
+					const ctx = canvas.getContext('2d');
+					if (ctx) {
+						ctx.drawImage(img, 0, 0, width, height);
+						resolve(canvas.toDataURL('image/jpeg', quality));
+					} else {
+						reject(new Error('Canvas context not available'));
+					}
+				};
+				img.onerror = (error) => reject(error);
+			};
+			reader.onerror = (e) => reject(e);
 		});
 	}
 
