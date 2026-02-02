@@ -21,6 +21,11 @@ export class BillingInformationService {
     private firestore = inject(Firestore);
     private collectionName = 'billing_information';
 
+    getAllAccounts(): Observable<BillingAccount[]> {
+        const colRef = collection(this.firestore, this.collectionName);
+        return collectionData(colRef, { idField: 'id' }) as Observable<BillingAccount[]>;
+    }
+
     getUserAccounts(uid: string): Observable<BillingAccount[]> {
         const colRef = collection(this.firestore, this.collectionName);
         const q = query(colRef, where('uid', '==', uid));

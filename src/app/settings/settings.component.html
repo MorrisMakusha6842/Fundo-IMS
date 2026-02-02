@@ -1,1 +1,112 @@
-<p>settings works!</p>
+<div class="settings-page">
+  <!-- Sidebar -->
+  <aside class="settings-sidebar">
+    <h4 class="sidebar-title">GENERAL SETTINGS</h4>
+    <ul class="sidebar-nav">
+      <li class="nav-item">Apps</li>
+      <li class="nav-item active">Account</li>
+      <li class="nav-item">Notifications</li>
+      <li class="nav-item">Language & Region</li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="settings-content">
+    <h2 class="page-title">Account Settings</h2>
+
+    <!-- Profile Section -->
+    <section class="card">
+      <h3 class="card-title">My Profile</h3>
+
+      <div class="profile-row">
+        <div class="avatar-block">
+          <img src="https://via.placeholder.com/64" alt="Avatar" />
+          <div class="avatar-actions">
+            <button class="btn btn-primary">+ Change Image</button>
+            <button class="btn btn-secondary">Remove Image</button>
+            <small>We support PNGs, JPEGs and GIFs under 2MB</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" value="Brian" />
+        </div>
+
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" value="Frederin" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Account Security -->
+    <section class="card">
+      <h3 class="card-title">Account Security</h3>
+
+      <div class="security-row">
+        <div>
+          <label>Email</label>
+          <input type="email" placeholder="brianfrederin@gmail.com" disabled />
+        </div>
+        <button class="btn btn-outline">Change email</button>
+      </div>
+
+      <div class="security-row">
+        <div>
+          <label>Password</label>
+          <input type="password" placeholder="••••••••" disabled />
+        </div>
+        <button class="btn btn-outline">Change password</button>
+      </div>
+
+      <div class="security-toggle">
+        <div>
+          <strong>2-Step Verifications</strong>
+          <p>Add an additional layer of security to your account during login.</p>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Support Access -->
+    <section class="card">
+      <h3 class="card-title">Support Access</h3>
+
+      <div class="security-toggle">
+        <div>
+          <strong>Support access</strong>
+          <p>
+            You have granted us access to your account for support purposes until
+            Aug 31, 2023, 9:40 PM.
+          </p>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="danger-row">
+        <div>
+          <strong>Log out of all devices</strong>
+          <p>Log out of all other active sessions on other devices.</p>
+        </div>
+        <button class="btn btn-outline">Log out</button>
+      </div>
+
+      <div class="danger-row danger">
+        <div>
+          <strong>Delete my account</strong>
+          <p>Permanently delete the account and remove access from all workspaces.</p>
+        </div>
+        <button class="btn btn-danger">Delete Account</button>
+      </div>
+    </section>
+  </main>
+</div>

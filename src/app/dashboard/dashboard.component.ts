@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
 import { AssetsService } from '../services/assets.service';
-import { Subscription } from 'rxjs';
+import { AccountReceivableService } from '../financial-insight/account-receivable.service';
+import { Subscription, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 
 @Component({
@@ -17,6 +19,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private userService = inject(UserService);
   private assetsService = inject(AssetsService);
+  private accountReceivableService = inject(AccountReceivableService);
   private router = inject(Router);
 
   displayName: string = '';
@@ -24,16 +27,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Dummy Data for UI
   kpiData = {
-    totalUsers: 1284,
-    registeredVehicles: 3762,
-    expiringPolicies: 146,
-    revenue: 248900,
+    totalUsers: 0,
+    registeredAssets: 0,
+    expiringPolicies: 0,
+    revenue: 0,
     pendingRenewals: 89
   };
 
   newlyRegisteredVehicles: any[] = [];
   isLoadingVehicles: boolean = true;
   private assetsSubscription?: Subscription;
+  private usersSubscription?: Subscription;
+  private revenueSubscription?: Subscription;
 
   activityLog = [
     { action: 'Policy renewed for vehicle ZW-7843', source: 'System', time: '2 hours ago' },
@@ -44,11 +49,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.fetchUserProfile();
-    this.fetchNewlyRegisteredVehicles();
+    this.fetchTotalUsers();
+    this.fetchAssetsData();
+    this.fetchRevenueData();
   }
 
   ngOnDestroy() {
     this.assetsSubscription?.unsubscribe();
+    this.usersSubscription?.unsubscribe();
+    this.revenueSubscription?.unsubscribe();
+  }
+
+  fetchTotalUsers() {
+    this.usersSubscription = this.userService.getAllUsers().subscribe((users) => {
+      this.kpiData.totalUsers = users.length;
+    });
   }
 
   async fetchUserProfile() {
@@ -67,9 +82,50 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.isLoadingProfile = false;
   }
 
-  fetchNewlyRegisteredVehicles() {
+  fetchRevenueData() {
+    this.revenueSubscription = this.authService.userRole$.pipe(
+      switchMap(role => {
+        const user = this.authService.currentUser;
+        if (!user) return of([]);
+        return (role === 'admin' || role === 'agent')
+          ? this.accountReceivableService.getAllPayments()
+          : this.accountReceivableService.getUserPayments(user.uid);
+      })
+    ).subscribe(payments => {
+      // Sum up the 'amount' field from all payment records
+      this.kpiData.revenue = payments.reduce((sum, record) => sum + (Number(record.amount) || 0), 0);
+    });
+  }
+
+  fetchAssetsData() {
     this.isLoadingVehicles = true;
-    this.assetsSubscription = this.assetsService.getAllVehicles().subscribe(async (assets) => {
+    this.assetsSubscription = this.authService.userRole$.pipe(
+      switchMap(role => {
+        const user = this.authService.currentUser;
+        if (!user) return of([]);
+        return (role === 'admin' || role === 'agent')
+          ? this.assetsService.getAllVehicles()
+          : this.assetsService.getUserVehicles(user.uid);
+      })
+    ).subscribe(async (assets) => {
+      // 1. Update Registered Assets KPI
+      this.kpiData.registeredAssets = assets.length;
+
+      // 2. Update Expiring Policies KPI
+      let expiringCount = 0;
+
+      assets.forEach(asset => {
+        if (asset.documents && Array.isArray(asset.documents)) {
+          asset.documents.forEach((doc: any) => {
+            if (doc.expiryDate) {
+              expiringCount++;
+            }
+          });
+        }
+      });
+      this.kpiData.expiringPolicies = expiringCount;
+
+      // 3. Update Newly Registered Vehicles Table
       const oneWeekAgo = new Date();
       oneWeekAgo.setHours(oneWeekAgo.getHours() - 168);
 

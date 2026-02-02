@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, addDoc, updateDoc, deleteDoc, doc, collectionData, query, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, updateDoc, deleteDoc, doc, collectionData, query, serverTimestamp, collectionGroup, where } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 export interface PaymentAccount {
@@ -54,5 +54,15 @@ export class AccountReceivableService {
         const txWithTimestamp = { ...transaction, createdAt: serverTimestamp() };
         const docRef = await addDoc(colRef, txWithTimestamp);
         return docRef.id;
+    }
+
+    getAllPayments(): Observable<any[]> {
+        const q = query(collectionGroup(this.firestore, 'payment-history'));
+        return collectionData(q, { idField: 'id' });
+    }
+
+    getUserPayments(userId: string): Observable<any[]> {
+        const q = query(collectionGroup(this.firestore, 'payment-history'), where('userId', '==', userId));
+        return collectionData(q, { idField: 'id' });
     }
 }

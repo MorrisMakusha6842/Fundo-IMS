@@ -1,5 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../services/auth.service';
+import { AccountReceivableService } from '../financial-insight/account-receivable.service';
+import { BillingInformationService, BillingAccount } from '../financial-insight/billing-information.service';
+import { Subscription, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 export interface BillingTrend {
   date: string;          // 2026-01-01
@@ -8,11 +13,11 @@ export interface BillingTrend {
 }
 
 @Component({
-    selector: 'app-billing-overview',
-    standalone: true,
-    imports: [CommonModule],
-    styleUrl: './billing-overview.component.scss',
-    template: `
+  selector: 'app-billing-overview',
+  standalone: true,
+  imports: [CommonModule],
+  styleUrl: './billing-overview.component.scss',
+  template: `
     <div class="billing-overview">
   <!-- HEADER -->
   <div class="billing-header">
@@ -38,7 +43,7 @@ export interface BillingTrend {
       </div>
 
       <div class="card-value">
-        $5,893.00
+        {{ totalPremium | currency }}
       </div>
 
       <div class="card-subtext">
@@ -70,7 +75,7 @@ export interface BillingTrend {
       </div>
 
       <div class="card-value">
-        142
+        {{ activeAccountsCount }}
       </div>
 
       <div class="card-subtext">
@@ -176,18 +181,20 @@ export interface BillingTrend {
       <table class="user-table">
         <thead>
           <tr>
-            <th>Account Name</th>
-            <th>Account No.</th>
-            <th>Last Payment</th>
-            <th class="text-right">Total Paid</th>
+            <th>Name</th>
+            <th>Provider</th>
+            <th>Phone / Account</th>
+            <th class="text-right">Status</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let acc of activeAccounts">
-            <td>{{ acc.name }}</td>
-            <td>{{ acc.accountNo }}</td>
-            <td>{{ acc.lastPayment }}</td>
-            <td class="text-right">{{ acc.totalPaid | currency }}</td>
+          <tr *ngFor="let acc of activeAccountsList">
+            <td>{{ acc.accountName }}</td>
+            <td>{{ acc.provider }}</td>
+            <td>{{ acc.phoneNumber }}</td>
+            <td class="text-right">
+                <span class="badge" [ngClass]="acc.status === 'Active' ? 'success' : 'warning'">{{ acc.status }}</span>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -199,26 +206,61 @@ export interface BillingTrend {
 </div>
   `
 })
-export class BillingOverviewComponent {
-    isActiveAccountsModalOpen = false;
-    
-    // Data Model Properties
-    monthlyTarget: number = 12393;
+export class BillingOverviewComponent implements OnInit, OnDestroy {
+  private authService = inject(AuthService);
+  private accountService = inject(AccountReceivableService);
+  private billingService = inject(BillingInformationService);
 
-    // Dummy data for the modal
-    activeAccounts = [
-        { name: 'John Doe', accountNo: 'ACC-001', lastPayment: '2023-10-01', totalPaid: 1200 },
-        { name: 'Jane Smith', accountNo: 'ACC-002', lastPayment: '2023-09-28', totalPaid: 850 },
-        { name: 'Acme Corp', accountNo: 'CORP-101', lastPayment: '2023-10-05', totalPaid: 5000 },
-        { name: 'Robert Brown', accountNo: 'ACC-005', lastPayment: '2023-10-02', totalPaid: 320 },
-        { name: 'Sarah Connor', accountNo: 'ACC-009', lastPayment: '2023-10-06', totalPaid: 1500 },
-    ];
+  isActiveAccountsModalOpen = false;
 
-    openActiveAccountsModal() {
-        this.isActiveAccountsModalOpen = true;
-    }
+  // Data Model Properties
+  monthlyTarget: number = 12393;
+  totalPremium: number = 0;
+  activeAccountsCount: number = 0;
+  activeAccountsList: BillingAccount[] = [];
 
-    closeActiveAccountsModal() {
-        this.isActiveAccountsModalOpen = false;
-    }
+  private subscriptions: Subscription[] = [];
+
+  ngOnInit() {
+    // 1. Fetch Total Premium Collection
+    const premiumSub = this.authService.userRole$.pipe(
+      switchMap(role => {
+        const user = this.authService.currentUser;
+        if (!user) return of([]);
+        return (role === 'admin' || role === 'agent')
+          ? this.accountService.getAllPayments()
+          : this.accountService.getUserPayments(user.uid);
+      })
+    ).subscribe(payments => {
+      this.totalPremium = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    });
+    this.subscriptions.push(premiumSub);
+
+    // 2. Fetch Active Accounts
+    const accountsSub = this.authService.userRole$.pipe(
+      switchMap(role => {
+        const user = this.authService.currentUser;
+        if (!user) return of([]);
+        return (role === 'admin' || role === 'agent')
+          ? this.billingService.getAllAccounts()
+          : this.billingService.getUserAccounts(user.uid);
+      })
+    ).subscribe(accounts => {
+      this.activeAccountsList = accounts;
+      this.activeAccountsCount = accounts.filter(a => a.status === 'Active').length;
+    });
+    this.subscriptions.push(accountsSub);
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  openActiveAccountsModal() {
+    this.isActiveAccountsModalOpen = true;
+  }
+
+  closeActiveAccountsModal() {
+    this.isActiveAccountsModalOpen = false;
+  }
 }
