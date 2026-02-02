@@ -256,4 +256,13 @@ export class SettingsComponent implements OnInit {
       this.isDeleting = false;
     }
   }
+
+  async logout() {
+    try {
+      await this.authService.signOut();
+      this.router.navigate(['/']);
+    } catch (error) {
+      console.error('Logout failed', error);
+    }
+  }
 }

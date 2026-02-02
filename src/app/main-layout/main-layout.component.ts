@@ -44,10 +44,18 @@ export class MainLayoutComponent implements OnInit {
 
   ngOnInit() {
     // subscribe to auth user to show photo and name if available
-    this.auth.user$.subscribe(u => {
+    this.auth.user$.subscribe(async u => {
       if (u) {
-        this.userPhotoUrl = u.photoURL;
-        this.userDisplayName = u.displayName || u.email;
+        // Fetch latest profile data from Firestore to ensure avatar is sync'd
+        try {
+          const profile = await this.userService.getUserProfile(u.uid);
+          // Prioritize avatarDataUrl from Firestore, fallback to Auth photoURL
+          this.userPhotoUrl = profile?.['avatarDataUrl'] || profile?.['photoURL'] || u.photoURL;
+          this.userDisplayName = profile?.['displayName'] || u.displayName || u.email;
+        } catch (e) {
+          this.userPhotoUrl = u.photoURL;
+          this.userDisplayName = u.displayName || u.email;
+        }
         this.checkUserInit(u.uid);
       } else {
         this.userPhotoUrl = null;

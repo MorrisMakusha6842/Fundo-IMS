@@ -1,3 +1,16 @@
+<style>
+  /* Responsive visibility for mobile menu button */
+  .mobile-menu-btn {
+    display: none; /* Hidden by default on larger screens */
+  }
+  @media (max-width: 768px) {
+    .mobile-menu-btn {
+      display: flex; /* Visible on mobile */
+      align-items: center;
+      justify-content: center;
+    }
+  }
+</style>
 <div class="top-nav">
 	<div class="top-nav-inner">
 		<div class="left">
@@ -52,12 +65,19 @@
 			</button>
 
 			<!-- mobile hamburger (animated into X) -->
-			<button class="hamburger mobile-only" [class.open]="mobileMenuOpen" (click)="toggleMobileMenu()"
-				aria-label="menu" title="Menu">
-				<span></span>
-				<span></span>
-				<span></span>
-			</button>
+      <button class="icon-btn mobile-menu-btn" (click)="toggleMobileMenu()" aria-label="menu">
+        <!-- Menu Icon (3 lines) -->
+        <svg *ngIf="!mobileMenuOpen" class="app-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+        <!-- Close Icon (X) -->
+        <svg *ngIf="mobileMenuOpen" class="app-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
 
 			<div class="user-wrap">
 				<button class="user-btn" (click)="toggleUserMenu()" aria-label="user menu">
