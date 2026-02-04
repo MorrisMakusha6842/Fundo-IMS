@@ -7,6 +7,8 @@
   </div>
 
   <div class="right-panel">
+    <!-- logo -->
+    <h1 class="mb-5 font-bold text-2xl text-blue-600">Fundo IMS</h1>
     <h3>Sign in</h3>
     <p class="subtitle">Enter your credentials</p>
 
@@ -24,12 +26,11 @@
 
       <div class="server-error" *ngIf="error">{{ error }}</div>
 
-      <button type="submit" [disabled]="submitting">{{ submitting ? 'Signing in...' : 'Sign in' }}</button>
+      <button  class="primary-btn" type="submit" [disabled]="submitting">{{ submitting ? 'Signing in...' : 'Sign in' }}</button>
+      <div class="existing-account">Don't have an account? <a class="cursor-pointer" (click)="navigateTo('landing-page')">Create one</a></div>
     </form>
 
     <div class="divider">or</div>
-
-    <div class="divider">or sign in with</div>
     <div class="social-buttons">
       <button class="google" aria-label="Sign in with Google" (click)="signInWithGoogle()">
         <!-- Google multicolor SVG -->
@@ -37,7 +38,6 @@
         <span class="btn-text">Sign in with Google</span>
       </button>
     </div>
-  <div class="existing-account">Don't have an account? <a class="cursor-pointer" (click)="navigateTo('landing-page')">Create one</a></div>
   </div>
 </div>
  

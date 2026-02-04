@@ -1,41 +1,80 @@
 .signup-container {
   display: flex;
-  min-height: 70vh;
+  height: 100vh;
   font-family: Inter, sans-serif;
 }
 
 .left-panel {
   flex: 1;
   background: #f4f6f8;
-  padding: 3rem;
+  padding: 4rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.left-panel h2 {
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.left-panel p {
+  color: #6b7280;
+  margin-bottom: 30px;
+}
+
+.illustration {
+  max-width: 80%;
+  margin: 30px 0;
 }
 
 .right-panel {
   flex: 1;
-  padding: 3rem;
+  padding: 4rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 520px;
 }
 
-.subtitle { color: #6b7280; margin-bottom: 18px }
-form input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 6px; border: 1px solid #e5e7eb }
-.primary-btn, button { padding: 12px; background: #2563eb; color: white; border: none; border-radius: 6px }
-.illustration { max-width: 80%; margin: 18px 0 }
-.server-error { background: #fff1f2; border: 1px solid #fecaca; padding: 8px; border-radius: 6px }
-.divider { text-align:center; margin: 12px 0 }
-.existing-account { color: #6b7280; margin-top: 8px }
-.existing-account a { color: #2563eb; font-weight: 600 }
+.right-panel h3 {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
 
-/* Make the Google button visually match the landing page's social button */
+.subtitle {
+  color: #6b7280;
+  margin-bottom: 25px;
+}
+
+form input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 12px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.divider {
+  text-align: center;
+  margin: 20px 0;
+  color: #9ca3af;
+}
+
 .social-buttons {
   display: block;
   margin-top: 8px;
 }
+
 .social-buttons .google {
   display: flex;
   align-items: center;
@@ -48,14 +87,36 @@ form input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 6px
   font-weight: 600;
   width: 100%;
   justify-content: center;
-  color: #111827;
 }
+
 .social-buttons .google .btn-text { display: inline-block }
+
 .social-buttons .google svg { display: block }
 
-/* Ensure head/subtitle sizes match landing-page */
-.right-panel h3 { font-size: 24px; margin-bottom: 5px }
-.subtitle { color: #6b7280; margin-bottom: 25px }
+/* Styles for the compact signup form shown on the landing page */
+.landing-signup-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-signup-form input {
+  border: 1px solid #e5e7eb;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.existing-account {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.existing-account a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
 
 /* Mobile: hide left panel and make right panel full width for small screens */
 @media (max-width: 640px) {

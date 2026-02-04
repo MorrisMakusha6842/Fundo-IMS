@@ -15,8 +15,8 @@
 
   <!-- RIGHT PANEL -->
   <div class="right-panel">
+    <h1 class="mb-5 font-bold text-2xl text-blue-600">Fundo IMS</h1>
     <h3>Get started for free</h3>
-    <p class="subtitle">Enjoy a 14-day trial with full features.</p>
 
     <form (ngSubmit)="continue(signupForm)" #signupForm="ngForm" class="landing-signup-form">
       <input name="email" ngModel #emailRef="ngModel" type="email" placeholder="Your unique email" required />
@@ -46,7 +46,7 @@
       </div>
     </form>
 
-    <div class="divider">or sign up with</div>
+    <div class="divider">or</div>
 
     <div class="social-buttons">
       <button class="google" aria-label="Sign up with Google" (click)="signInWithGoogle()">
