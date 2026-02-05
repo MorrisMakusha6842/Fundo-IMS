@@ -520,7 +520,7 @@ export class PoliciesComponent implements OnInit {
   }
 
   // --- Accordion Logic ---
-  isPoliciesExpanded = true;
+  isPoliciesExpanded = false;
   isClaimsExpanded = false;
 
   // --- Dashboard Claims Logic ---
