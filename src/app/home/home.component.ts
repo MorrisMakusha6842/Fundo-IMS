@@ -48,7 +48,7 @@ export class HomeComponent implements OnInit {
   claimType: string = 'Accident'; // Default
 
   // Accordion State
-  isActiveExpanded: boolean = true;
+  isActiveExpanded: boolean = false;
   isExpiringExpanded: boolean = false;
   isLapsedExpanded: boolean = false;
 

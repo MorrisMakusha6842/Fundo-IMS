@@ -35,6 +35,66 @@
     }
 }
 
+/* TABLE CARD (Accordion Style) */
+.table-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    overflow-x: auto;
+    margin-bottom: 24px;
+    /* Consistent spacing between accordions */
+}
+
+.table-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #e5e5ea;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: #fbfbfd;
+    }
+}
+
+.table-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+
+    h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1d1d1f;
+    }
+}
+
+.accordion-icon {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #86868b;
+
+    &.expanded {
+        transform: rotate(180deg);
+    }
+}
+
+.badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
 /* ASSET TABLE STYLES */
 table {
     width: 100%;

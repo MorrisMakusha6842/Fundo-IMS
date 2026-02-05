@@ -68,11 +68,12 @@
 </div>
 
 <!-- POLICY TABLE ACCORDION -->
-<div class="table-card" style="margin-bottom: 24px;">
+<div class="table-card">
   <!-- Header -->
   <div class="table-card-header" (click)="togglePoliciesAccordion()">
     <div class="table-title">
       <h3>All Policies</h3>
+      <span class="badge-count">{{ (filteredPolicies$ | async)?.length || 0 }}</span>
       <input type="text" [formControl]="searchControl" placeholder="Search policies..."
         (click)="$event.stopPropagation()"
         style="width: 200px; padding: 6px 12px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 13px;">
@@ -142,6 +143,7 @@
   <div class="table-card-header" (click)="toggleClaimsAccordion()">
     <div class="table-title">
       <h3>Recent Claims</h3>
+      <span class="badge-count">{{ dashboardClaimsList.length }}</span>
       <input type="text" [formControl]="dashboardClaimsSearchControl" placeholder="Search claims..."
         (click)="$event.stopPropagation()"
         style="width: 200px; padding: 6px 12px; border: 1px solid #d2d2d7; border-radius: 6px; font-size: 13px;">
