@@ -1,0 +1,85 @@
+<!-- HEADER -->
+<div class="header">
+  <h1>Claims Management</h1>
+  <!-- Placeholder for potential manual claim creation if needed later -->
+</div>
+
+<div class="container">
+  <!-- FILTERS -->
+  <div class="filters">
+    <div class="filter-group">
+      <label class="filter-label">Search</label>
+      <input type="text" [formControl]="searchControl" placeholder="Claim ID, Policy, or Claimant" class="filter-select"
+        style="min-width: 250px;">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Status</label>
+      <select class="filter-select">
+        <option>All</option>
+        <option>Pending</option>
+        <option>Approved</option>
+        <option>Rejected</option>
+        <option>In Review</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- CLAIMS TABLE -->
+  <div class="user-table-card">
+    <table class="user-table">
+      <thead>
+        <tr>
+          <th>Claim ID</th>
+          <th>Claimant</th>
+          <th>Policy / Asset</th>
+          <th>Type</th>
+          <th>Date Submitted</th>
+          <th>Status</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoading">
+          <td colspan="7">
+            <div class="loading-spinner-container">
+              <div class="loading-spinner"></div>
+            </div>
+          </td>
+        </tr>
+        <tr *ngFor="let claim of paginatedClaims">
+          <td>
+            <span style="font-family: monospace; font-weight: 500;">{{ claim.claimId }}</span>
+          </td>
+          <td>{{ claim.displayName || 'Unknown' }}</td>
+          <td>
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-weight: 500;">{{ claim.policyName }}</span>
+              <span style="font-size: 11px; color: #86868b;">{{ claim.assetDescription }}</span>
+            </div>
+          </td>
+          <td>{{ claim.claimType }}</td>
+          <td>{{ claim.createdAt?.toDate() | date:'mediumDate' }}</td>
+          <td><span class="status" [ngClass]="claim.status?.toLowerCase().replace(' ', '-')">{{ claim.status }}</span></td>
+          <td class="actions">
+            <button class="btn-icon" (click)="viewClaim(claim)" title="View Details">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="20" height="20">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fill-rule="evenodd" d="M.458 10C3.32 4.943 7.522 3 10 3s6.68 1.943 9.542 7c-2.862 5.057-7.022 7-9.542 7S3.32 15.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="paginatedClaims.length === 0 && !isLoading">
+          <td colspan="7" style="text-align: center; padding: 24px; color: #86868b;">No claims found.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- PAGINATION -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn-page" [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)">Previous</button>
+      <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button class="btn-page" [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)">Next</button>
+    </div>
+  </div>
+</div>

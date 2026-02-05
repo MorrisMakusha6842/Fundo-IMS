@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, addDoc, serverTimestamp } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, serverTimestamp, collectionData, query, orderBy } from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
 
 export interface ClaimData {
     userId: string;
@@ -9,6 +10,7 @@ export interface ClaimData {
     assetDescription: string;
     policyId: string;
     policyName: string;
+  policyExpiryDate?: string;
   policy: any;
     claimType: string;
     description: string;
@@ -38,4 +40,10 @@ export class ClaimsService {
             throw error;
         }
     }
+
+  getAllClaims(): Observable<ClaimData[]> {
+    const claimsRef = collection(this.firestore, 'claims');
+    const q = query(claimsRef, orderBy('createdAt', 'desc'));
+    return collectionData(q, { idField: 'id' }) as Observable<ClaimData[]>;
+  }
 }

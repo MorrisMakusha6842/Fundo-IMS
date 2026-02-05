@@ -5,6 +5,7 @@ import { PolicyService } from '../services/policy.service';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
+import { ToastService } from '../services/toast.service';
 import { ClaimsService } from '../services/claims.service';
 import { Observable, BehaviorSubject, of, combineLatest } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
@@ -27,6 +28,7 @@ export class HomeComponent implements OnInit {
   private claimsService = inject(ClaimsService);
   private firestore = inject(Firestore);
   private router = inject(Router);
+  private toast = inject(ToastService);
 
   displayName: string = '';
   userPhotoUrl: string | null = null;
@@ -51,6 +53,7 @@ export class HomeComponent implements OnInit {
   claimType: string = 'Accident'; // Default
   availablePoliciesForAsset: any[] = [];
   selectedPolicyToClaim: any = null;
+  isSubmittingClaim: boolean = false;
 
   // Accordion State
   isActiveExpanded: boolean = false;
@@ -271,17 +274,17 @@ export class HomeComponent implements OnInit {
 
   async onSubmitClaim() {
     if (!this.selectedAsset) {
-      alert('Please select an asset to claim.');
+      this.toast.show('Please select an asset to claim.', 'warn');
       return;
     }
 
     if (!this.selectedPolicyToClaim) {
-      alert('Please select the active policy you wish to claim against.');
+      this.toast.show('Please select the active policy you wish to claim against.', 'warn');
       return;
     }
 
     if (!this.claimDescription.trim()) {
-      alert('Please provide a description for your claim.');
+      this.toast.show('Please provide a description for your claim.', 'warn');
       return;
     }
 
@@ -289,6 +292,7 @@ export class HomeComponent implements OnInit {
       const user = this.authService.currentUser;
       if (!user) return;
 
+      this.isSubmittingClaim = true;
       // Generate a unique Claim ID (client-side generation for the payload)
       const claimId = `CLM-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
@@ -300,21 +304,25 @@ export class HomeComponent implements OnInit {
         assetDescription: `${this.selectedAsset.year} ${this.selectedAsset.make} (${this.selectedAsset.numberPlate})`,
         policyId: this.selectedPolicyToClaim.name, // Using document name as ID reference
         policyName: this.selectedPolicyToClaim.field || 'Insurance Policy',
+        policyExpiryDate: this.selectedPolicyToClaim.expiryDate || null,
         policy: this.selectedPolicyToClaim, // The full policy object from the asset
         claimType: this.claimType,
         description: this.claimDescription,
       });
 
-      alert(`Claim submitted successfully for ${this.selectedAsset.make} (${this.selectedAsset.numberPlate})`);
+      this.toast.show(`Claim submitted successfully for ${this.selectedAsset.make}`, 'success');
 
       // Reset form
       this.selectedAsset = null;
+      this.availablePoliciesForAsset = [];
       this.selectedPolicyToClaim = null;
       this.claimDescription = '';
       this.claimType = 'Accident';
     } catch (error) {
       console.error('Error submitting claim:', error);
-      alert('Failed to submit claim. Please try again.');
+      this.toast.show('Failed to submit claim. Please try again.', 'error');
+    } finally {
+      this.isSubmittingClaim = false;
     }
   }
 

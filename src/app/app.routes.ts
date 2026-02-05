@@ -20,6 +20,7 @@ import { AccountReceivableComponent } from './financial-insight/account-receivab
 import { BillingOverviewComponent } from './billing/billing-overview.component';
 import { BillingInformationComponent } from './billing/billing-information.component';
 import { PaymentHistoryComponent } from './billing/payment-history.component';
+import { ClaimsManagementComponent } from './claims-management/claims-management.component';
 
 export const routes: Routes = [
   {
@@ -64,6 +65,7 @@ export const routes: Routes = [
       { path: 'user-management', component: UserManagementComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
       { path: 'vehicle-register', component: VehicleRegisterComponent, canActivate: [AuthGuard] },
       { path: 'asset-registry', component: AssetRegistryComponent, canActivate: [AuthGuard] },
+      { path: 'claims-management', component: ClaimsManagementComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
     ]
   },
   // Fallback route here 
