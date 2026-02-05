@@ -147,7 +147,7 @@ export class UserService {
 		try {
 			const dataUrl = await this.compressImage(file);
 			const userRef = doc(this.db, 'users', uid);
-			await setDoc(userRef, { avatarDataUrl: dataUrl }, { merge: true });
+			await setDoc(userRef, { avatarDataUrl: dataUrl, photoURL: dataUrl }, { merge: true });
 			return dataUrl;
 		} catch (err) {
 			console.warn('uploadProfileImage failed (firestore)', err);

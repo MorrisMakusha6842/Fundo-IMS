@@ -23,6 +23,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private router = inject(Router);
 
   displayName: string = '';
+  userPhotoUrl: string | null = null;
   isLoadingProfile: boolean = true;
 
   // Dummy Data for UI
@@ -39,6 +40,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private assetsSubscription?: Subscription;
   private usersSubscription?: Subscription;
   private revenueSubscription?: Subscription;
+  private userSubscription?: Subscription;
 
   activityLog = [
     { action: 'Policy renewed for vehicle ZW-7843', source: 'System', time: '2 hours ago' },
@@ -48,7 +50,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit() {
-    this.fetchUserProfile();
+    // Subscribe to user changes to handle page refreshes reliably
+    this.userSubscription = this.authService.user$.subscribe(user => {
+      if (user) {
+        this.fetchUserProfile(user.uid);
+      }
+    });
+
     this.fetchTotalUsers();
     this.fetchAssetsData();
     this.fetchRevenueData();
@@ -58,6 +66,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.assetsSubscription?.unsubscribe();
     this.usersSubscription?.unsubscribe();
     this.revenueSubscription?.unsubscribe();
+    this.userSubscription?.unsubscribe();
   }
 
   fetchTotalUsers() {
@@ -66,14 +75,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  async fetchUserProfile() {
+  async fetchUserProfile(uid?: string) {
     this.isLoadingProfile = true;
-    const user = this.authService.currentUser;
-    if (user?.uid) {
+    const userId = uid || this.authService.currentUser?.uid;
+    if (userId) {
       try {
-        const profile = await this.userService.getUserProfile(user.uid);
+        const profile = await this.userService.getUserProfile(userId);
         if (profile) {
           this.displayName = profile['displayName'];
+          this.userPhotoUrl = profile['photoURL'] || profile['avatarDataUrl'];
         }
       } catch (error) {
         console.error('Error fetching user profile:', error);

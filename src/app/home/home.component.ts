@@ -27,6 +27,7 @@ export class HomeComponent implements OnInit {
   private router = inject(Router);
 
   displayName: string = '';
+  userPhotoUrl: string | null = null;
   isLoadingProfile: boolean = true;
   subCategories$: Observable<any[]> | undefined;
   filteredPolicies$: Observable<any[]> | undefined;
@@ -132,6 +133,7 @@ export class HomeComponent implements OnInit {
       const profile = await this.userService.getUserProfile(uid);
       if (profile) {
         this.displayName = profile['displayName'];
+        this.userPhotoUrl = profile['photoURL'] || profile['avatarDataUrl'];
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);

@@ -3,15 +3,27 @@
   <!-- HEADER -->
   <div class="header">
     <ng-container *ngIf="isLoadingProfile; else loadedHeader">
-      <div class="animate-pulse">
-        <div class="h-8 bg-gray-200 rounded w-64 mb-2"></div>
-        <div class="h-4 bg-gray-200 rounded w-48"></div>
+      <div class="animate-pulse flex items-center gap-4">
+        <div class="h-16 w-16 bg-gray-200 rounded-full"></div>
+        <div>
+          <div class="h-8 bg-gray-200 rounded w-48 mb-2"></div>
+          <div class="h-4 bg-gray-200 rounded w-32"></div>
+        </div>
       </div>
     </ng-container>
     <ng-template #loadedHeader>
-      <div>
-        <h1>Welcome, {{ displayName || 'User' }}</h1>
-        <p>Insurance management system overview</p>
+      <div class="header-content">
+        <div class="user-avatar-container">
+          <img *ngIf="userPhotoUrl; else defaultAvatar" [src]="userPhotoUrl" alt="Profile" class="user-avatar">
+          <ng-template #defaultAvatar>
+            <div class="user-initials">{{ displayName ? displayName.charAt(0).toUpperCase() : 'U' }}</div>
+          </ng-template>
+        </div>
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Welcome, {{ displayName || 'User' }}
+          </h1>
+          <p class="mt-1 text-sm text-gray-600">Insurance management system overview</p>
+        </div>
       </div>
     </ng-template>
   </div>
