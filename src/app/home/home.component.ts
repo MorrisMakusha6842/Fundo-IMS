@@ -5,6 +5,7 @@ import { PolicyService } from '../services/policy.service';
 import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
+import { ClaimsService } from '../services/claims.service';
 import { Observable, BehaviorSubject, of, combineLatest } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
@@ -23,6 +24,7 @@ export class HomeComponent implements OnInit {
   private authService = inject(AuthService);
   private userService = inject(UserService);
   private assetsService = inject(AssetsService);
+  private claimsService = inject(ClaimsService);
   private firestore = inject(Firestore);
   private router = inject(Router);
 
@@ -47,6 +49,8 @@ export class HomeComponent implements OnInit {
   selectedAsset: VehicleAsset | null = null;
   claimDescription: string = '';
   claimType: string = 'Accident'; // Default
+  availablePoliciesForAsset: any[] = [];
+  selectedPolicyToClaim: any = null;
 
   // Accordion State
   isActiveExpanded: boolean = false;
@@ -221,12 +225,26 @@ export class HomeComponent implements OnInit {
 
   onSelectAsset(asset: VehicleAsset) {
     this.selectedAsset = asset;
+    this.claimDescription = '';
+    this.claimType = 'Accident';
+    
+    // Filter for active insurance policies on this asset
+    const now = new Date();
+    this.availablePoliciesForAsset = (asset.documents || []).filter((doc: any) => {
+      const isPolicy = doc.field === 'Insurance Policy';
+      const isNotExpired = doc.expiryDate ? new Date(doc.expiryDate) > now : true;
+      return isPolicy && isNotExpired;
+    });
+
+    // Auto-select if there's only one policy
+    this.selectedPolicyToClaim = this.availablePoliciesForAsset.length === 1 ? this.availablePoliciesForAsset[0] : null;
   }
 
   // Placeholder Logic for Table Columns
   hasAppliedPolicy(asset: VehicleAsset): boolean {
-    // Check if documents array contains an Insurance Policy
-    return !!asset.documents?.some((doc: any) => doc.field === 'Insurance Policy');
+    // Check if documents array contains an Insurance Policy that hasn't expired
+    const now = new Date();
+    return !!asset.documents?.some((doc: any) => doc.field === 'Insurance Policy' && (!doc.expiryDate || new Date(doc.expiryDate) > now));
   }
 
   getExpiryStatus(asset: VehicleAsset): 'UP TO DATE' | 'ATTENTION NEEDED' {
@@ -251,23 +269,53 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  onSubmitClaim() {
+  async onSubmitClaim() {
     if (!this.selectedAsset) {
       alert('Please select an asset to claim.');
       return;
     }
-    console.log('Submitting Claim:', {
-      asset: this.selectedAsset,
-      type: this.claimType,
-      description: this.claimDescription
-    });
-    // Here you would call a service to save the claim
-    alert(`Claim submitted for ${this.selectedAsset.make} (${this.selectedAsset.numberPlate})`);
 
-    // Reset form
-    this.selectedAsset = null;
-    this.claimDescription = '';
-    this.claimType = 'Accident';
+    if (!this.selectedPolicyToClaim) {
+      alert('Please select the active policy you wish to claim against.');
+      return;
+    }
+
+    if (!this.claimDescription.trim()) {
+      alert('Please provide a description for your claim.');
+      return;
+    }
+
+    try {
+      const user = this.authService.currentUser;
+      if (!user) return;
+
+      // Generate a unique Claim ID (client-side generation for the payload)
+      const claimId = `CLM-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+      await this.claimsService.createClaim({
+        userId: user.uid,
+        displayName: this.displayName || 'Unknown User',
+        claimId: claimId,
+        assetId: this.selectedAsset.id || this.selectedAsset.uid, // Fallback if id missing
+        assetDescription: `${this.selectedAsset.year} ${this.selectedAsset.make} (${this.selectedAsset.numberPlate})`,
+        policyId: this.selectedPolicyToClaim.name, // Using document name as ID reference
+        policyName: this.selectedPolicyToClaim.field || 'Insurance Policy',
+        policy: this.selectedPolicyToClaim, // The full policy object from the asset
+        claimType: this.claimType,
+        description: this.claimDescription,
+      });
+
+      alert(`Claim submitted successfully for ${this.selectedAsset.make} (${this.selectedAsset.numberPlate})`);
+
+      // Reset form
+      this.selectedAsset = null;
+      this.selectedPolicyToClaim = null;
+      this.claimDescription = '';
+      this.claimType = 'Accident';
+    } catch (error) {
+      console.error('Error submitting claim:', error);
+      alert('Failed to submit claim. Please try again.');
+    }
   }
 
   navigateToAssetRegistry(event: Event) {
