@@ -15,6 +15,9 @@ export interface Invoice {
     generatedBy: string; // Admin UID
     description?: string;
     invoiceType?: 'proforma' | 'tax' | 'receipt';
+    policyId?: string;
+    policyName?: string;
+    policyType?: 'standard' | 'renewal';
 }
 
 @Injectable({

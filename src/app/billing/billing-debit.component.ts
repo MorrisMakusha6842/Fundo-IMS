@@ -68,7 +68,10 @@ export class BillingDebitComponent {
         createdAt: serverTimestamp(),
         generatedBy: 'System',
         description: `Insurance Premium: ${this.purchaseData.policy?.policyName}`,
-        invoiceType: 'receipt' // It's a receipt since it's paid
+        invoiceType: 'receipt', // It's a receipt since it's paid
+        policyId: this.purchaseData.policy?.id,
+        policyName: this.purchaseData.policy?.policyName,
+        policyType: this.purchaseData.policy?.policyType
       };
 
       await this.invoiceService.createInvoice(invoiceData);

@@ -234,10 +234,10 @@
 			<li *ngIf="(userRole$ | async) === 'admin' || (userRole$ | async) === 'agent'">
 				<a class="nav-link" routerLink="claims-management" routerLinkActive="active" (click)="closeMobileMenu()">
 					<span class="nav-icon">
-						<!-- Clipboard Check / Claims icon -->
-						<svg class="app-icon nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-							stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+						<!-- Claims icon -->
+						<svg class="app-icon" viewBox="0 0 24 24"
+						fill="none" stroke="currentColor" stroke-width="1.6">
+						<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 						</svg>
 					</span>
 					<span class="label">Claims</span>

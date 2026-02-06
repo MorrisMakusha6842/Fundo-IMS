@@ -354,7 +354,7 @@
                             <select [(ngModel)]="selectedPolicyToClaim" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border">
                                 <option [ngValue]="null" disabled>Choose a policy...</option>
                                 <option *ngFor="let policy of availablePoliciesForAsset" [ngValue]="policy">
-                                    {{ policy.field }} (Exp: {{ policy.expiryDate | date:'mediumDate' }})
+                                    {{ policy.policyName || policy.field }} (Exp: {{ policy.expiryDate | date:'mediumDate' }})
                                 </option>
                             </select>
                             <p *ngIf="availablePoliciesForAsset.length === 0" class="text-xs text-red-500 mt-1">

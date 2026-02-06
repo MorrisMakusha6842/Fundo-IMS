@@ -20,7 +20,7 @@ import { AccountReceivableComponent } from './financial-insight/account-receivab
 import { BillingOverviewComponent } from './billing/billing-overview.component';
 import { BillingInformationComponent } from './billing/billing-information.component';
 import { PaymentHistoryComponent } from './billing/payment-history.component';
-import { ClaimsManagementComponent } from './claims-management/claims-management.component';
+import { ClaimsManagementComponent } from './home/claims-management.component';
 
 export const routes: Routes = [
   {

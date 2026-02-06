@@ -234,7 +234,7 @@ export class HomeComponent implements OnInit {
     // Filter for active insurance policies on this asset
     const now = new Date();
     this.availablePoliciesForAsset = (asset.documents || []).filter((doc: any) => {
-      const isPolicy = doc.field === 'Insurance Policy';
+      const isPolicy = doc.policyType === 'standard' || doc.policyType === 'renewal';
       const isNotExpired = doc.expiryDate ? new Date(doc.expiryDate) > now : true;
       return isPolicy && isNotExpired;
     });
@@ -247,7 +247,9 @@ export class HomeComponent implements OnInit {
   hasAppliedPolicy(asset: VehicleAsset): boolean {
     // Check if documents array contains an Insurance Policy that hasn't expired
     const now = new Date();
-    return !!asset.documents?.some((doc: any) => doc.field === 'Insurance Policy' && (!doc.expiryDate || new Date(doc.expiryDate) > now));
+    return !!asset.documents?.some((doc: any) =>
+      (doc.policyType === 'standard' || doc.policyType === 'renewal') &&
+      (!doc.expiryDate || new Date(doc.expiryDate) > now));
   }
 
   getExpiryStatus(asset: VehicleAsset): 'UP TO DATE' | 'ATTENTION NEEDED' {
@@ -302,8 +304,8 @@ export class HomeComponent implements OnInit {
         claimId: claimId,
         assetId: this.selectedAsset.id || this.selectedAsset.uid, // Fallback if id missing
         assetDescription: `${this.selectedAsset.year} ${this.selectedAsset.make} (${this.selectedAsset.numberPlate})`,
-        policyId: this.selectedPolicyToClaim.name, // Using document name as ID reference
-        policyName: this.selectedPolicyToClaim.field || 'Insurance Policy',
+        policyId: this.selectedPolicyToClaim.policyId, // Use the actual policy template ID
+        policyName: this.selectedPolicyToClaim.policyName || 'Insurance Policy',
         policyExpiryDate: this.selectedPolicyToClaim.expiryDate || null,
         policy: this.selectedPolicyToClaim, // The full policy object from the asset
         claimType: this.claimType,

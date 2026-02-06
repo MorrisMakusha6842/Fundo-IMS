@@ -280,7 +280,10 @@ Thank you for choosing our services.`;
         uploadedAt: new Date().toISOString(),
         expiryDate: expiryDate.toISOString(),
         issuedBy: currentUser.uid,
-        verifiedAt: new Date().toISOString()
+        verifiedAt: new Date().toISOString(),
+        policyId: this.selectedInvoice.policyId,
+        policyType: this.selectedInvoice.policyType,
+        policyName: this.selectedInvoice.policyName
       };
 
       await this.assetsService.updateAssetDocument(

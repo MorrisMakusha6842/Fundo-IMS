@@ -29,7 +29,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 24px;
+  padding: 8px 24px; /* Fallback */
+  padding: calc(8px + var(--safe-area-inset-top)) calc(24px + var(--safe-area-inset-right)) 8px calc(24px + var(--safe-area-inset-left));
 }
 
 .top-nav-inner .left {
@@ -482,7 +483,8 @@
 
 .mobile-drawer-header {
   padding: 18px;
-  border-bottom: 1px solid #eef2ff
+  border-bottom: 1px solid #eef2ff;
+  padding-top: calc(18px + var(--safe-area-inset-top));
 }
 
 .mobile-user {
@@ -545,7 +547,8 @@
 .mobile-drawer-footer {
   margin-top: auto;
   padding: 12px;
-  border-top: 1px solid #eef2ff
+  border-top: 1px solid #eef2ff;
+  padding-bottom: calc(12px + var(--safe-area-inset-bottom));
 }
 
 .logout-btn {
