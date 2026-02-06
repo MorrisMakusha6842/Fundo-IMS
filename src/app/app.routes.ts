@@ -68,6 +68,6 @@ export const routes: Routes = [
       { path: 'claims-management', component: ClaimsManagementComponent, canActivate: [AuthGuard], data: { roles: ['admin', 'agent'] } },
     ]
   },
-  // Fallback route here 
-
+  // Fallback route
+  { path: '**', redirectTo: 'landing-page' }
 ];
