@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ClaimsService, ClaimData } from '../services/claims.service';
 import { ToastService } from '../services/toast.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-claims-management',
@@ -13,6 +14,7 @@ import { ToastService } from '../services/toast.service';
 })
 export class ClaimsManagementComponent implements OnInit {
   private claimsService = inject(ClaimsService);
+  private router = inject(Router);
   private toast = inject(ToastService);
 
   claims: ClaimData[] = [];
@@ -74,5 +76,9 @@ export class ClaimsManagementComponent implements OnInit {
   viewClaim(claim: any) {
     console.log('View claim details', claim);
     // Future implementation: Open modal with claim details
+  }
+
+  navigateToPurchase() {
+    this.router.navigate(['/main-layout/home'], { fragment: 'available-policies' });
   }
 }

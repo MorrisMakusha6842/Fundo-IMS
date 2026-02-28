@@ -1,16 +1,3 @@
-<style>
-  /* Responsive visibility for mobile menu button */
-  .mobile-menu-btn {
-    display: none; /* Hidden by default on larger screens */
-  }
-  @media (max-width: 768px) {
-    .mobile-menu-btn {
-      display: flex; /* Visible on mobile */
-      align-items: center;
-      justify-content: center;
-    }
-  }
-</style>
 <div class="top-nav">
 	<div class="top-nav-inner">
 		<div class="left">
@@ -350,3 +337,35 @@
 		</div>
 	</main>
 </div>
+
+<!-- Bottom Nav (Mobile Only) -->
+<nav class="bottom-nav mobile-only">
+	<a routerLink="home" routerLinkActive="active" class="bottom-nav-item" (click)="closeMobileMenu()">
+		<svg class="app-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M3 11.5L12 4l9 7.5" />
+			<path d="M5 21V12h14v9" />
+		</svg>
+		<span class="label">Home</span>
+	</a>
+	<a routerLink="asset-registry" routerLinkActive="active" class="bottom-nav-item" (click)="closeMobileMenu()">
+		<svg class="app-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M3 7l9-4 9 4v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z" />
+			<path d="M12 3v14" />
+		</svg>
+		<span class="label">Register</span>
+	</a>
+	<a routerLink="reminders" routerLinkActive="active" class="bottom-nav-item" (click)="closeMobileMenu()">
+		<svg class="app-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<circle cx="12" cy="12" r="10"></circle>
+			<polyline points="12 6 12 12 16 14"></polyline>
+		</svg>
+		<span class="label">Reminder</span>
+	</a>
+	<a routerLink="settings" routerLinkActive="active" class="bottom-nav-item" (click)="closeMobileMenu()">
+		<svg class="app-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+			<circle cx="12" cy="8" r="3" />
+			<path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+		</svg>
+		<span class="label">Account</span>
+	</a>
+</nav>

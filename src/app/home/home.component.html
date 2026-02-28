@@ -46,7 +46,7 @@
         </div>
 
         <!-- Available Policies Carousel -->
-        <section>
+        <section id="available-policies">
             <h2 class="text-xl font-semibold text-gray-900">Available Policies</h2>
             <div class="carousel-container mt-4" *ngIf="filteredPolicies$ | async as policies">
                 <!-- Loading State -->
@@ -242,8 +242,9 @@
                                             </ng-container>
                                             <ng-template #addPolicyBtn>
                                                 <button
-                                                    class="text-xs font-medium text-indigo-600 hover:text-indigo-900 border border-indigo-200 px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100">
-                                                    + ADD POLICY
+                                                    (click)="scrollToPolicies(); $event.stopPropagation()"
+                                                    class="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 border border-transparent px-3 py-1.5 rounded shadow-sm inline-block transition-colors">
+                                                    + Purchase
                                                 </button>
                                             </ng-template>
                                         </td>

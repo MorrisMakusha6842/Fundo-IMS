@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { PolicyService } from '../services/policy.service';
 import { AuthService } from '../services/auth.service';
@@ -28,6 +28,7 @@ export class HomeComponent implements OnInit {
   private claimsService = inject(ClaimsService);
   private firestore = inject(Firestore);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
 
   displayName: string = '';
@@ -132,6 +133,13 @@ export class HomeComponent implements OnInit {
       this.updateAssetPagination(assets);
       this.isLoadingAssets = false;
     });
+
+    // Listen for fragment to scroll to policies (e.g. from "Purchase" tag or external link)
+    this.route.fragment.subscribe(fragment => {
+      if (fragment === 'available-policies') {
+        setTimeout(() => this.scrollToPolicies(), 600);
+      }
+    });
   }
 
   async fetchUserProfile(uid: string) {
@@ -230,7 +238,7 @@ export class HomeComponent implements OnInit {
     this.selectedAsset = asset;
     this.claimDescription = '';
     this.claimType = 'Accident';
-    
+
     // Filter for active insurance policies on this asset
     const now = new Date();
     this.availablePoliciesForAsset = (asset.documents || []).filter((doc: any) => {
@@ -271,6 +279,13 @@ export class HomeComponent implements OnInit {
     if (newPage >= 1 && newPage <= this.totalAssetPages) {
       this.assetPage = newPage;
       this.updateAssetPagination(this.availableAssets);
+    }
+  }
+
+  scrollToPolicies() {
+    const policiesSection = document.getElementById('available-policies');
+    if (policiesSection) {
+      policiesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
