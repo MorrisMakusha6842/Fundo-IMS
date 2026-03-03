@@ -354,7 +354,7 @@
                         <!-- Active Policy Selection -->
                         <div class="mb-6" *ngIf="selectedAsset">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Select Active Policy</label>
-                            <select [(ngModel)]="selectedPolicyToClaim" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border">
+                        <select [(ngModel)]="selectedPolicyToClaim" (ngModelChange)="onPolicyToClaimChange($event)" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2.5 border">
                                 <option [ngValue]="null" disabled>Choose a policy...</option>
                                 <option *ngFor="let policy of availablePoliciesForAsset" [ngValue]="policy">
                                     {{ policy.policyName || policy.field }} (Exp: {{ policy.expiryDate | date:'mediumDate' }})
@@ -363,6 +363,10 @@
                             <p *ngIf="availablePoliciesForAsset.length === 0" class="text-xs text-red-500 mt-1">
                                 No active policies found for this asset.
                             </p>
+                        <p *ngIf="selectedPolicyToClaim && selectedPolicyHasNoCredits" class="text-xs text-red-500 mt-1">
+                            This policy has no credits. Please <a (click)="rechargePolicy(selectedPolicyToClaim)"
+                                class="recharge-link">recharge</a> to file a claim.
+                        </p>
                         </div>
 
                         <!-- Claim Type -->

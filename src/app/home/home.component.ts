@@ -7,7 +7,7 @@ import { UserService } from '../services/user.service';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { ToastService } from '../services/toast.service';
 import { ClaimsService } from '../services/claims.service';
-import { Observable, BehaviorSubject, of, combineLatest } from 'rxjs';
+import { Observable, BehaviorSubject, of, combineLatest, firstValueFrom } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
@@ -54,6 +54,7 @@ export class HomeComponent implements OnInit {
   claimType: string = 'Accident'; // Default
   availablePoliciesForAsset: any[] = [];
   selectedPolicyToClaim: any = null;
+  selectedPolicyHasNoCredits: boolean = false;
   isSubmittingClaim: boolean = false;
 
   // Accordion State
@@ -238,6 +239,7 @@ export class HomeComponent implements OnInit {
     this.selectedAsset = asset;
     this.claimDescription = '';
     this.claimType = 'Accident';
+    this.selectedPolicyHasNoCredits = false; // Reset on new asset selection
 
     // Filter for active insurance policies on this asset
     const now = new Date();
@@ -249,6 +251,40 @@ export class HomeComponent implements OnInit {
 
     // Auto-select if there's only one policy
     this.selectedPolicyToClaim = this.availablePoliciesForAsset.length === 1 ? this.availablePoliciesForAsset[0] : null;
+
+    // Also check credits for the auto-selected policy
+    this.onPolicyToClaimChange(this.selectedPolicyToClaim);
+  }
+
+  onPolicyToClaimChange(policy: any) {
+    if (policy) {
+      // A policy has no credits if creditRemaining is 0 or less.
+      // For renewal policies, this will be 1 if available, 0 if used.
+      this.selectedPolicyHasNoCredits = !(policy.creditRemaining > 0);
+    } else {
+      this.selectedPolicyHasNoCredits = false;
+    }
+  }
+
+  async rechargePolicy(policyToRecharge: any) {
+    if (!policyToRecharge || !policyToRecharge.policyId) {
+      this.toast.show('Could not identify policy to recharge.', 'error');
+      return;
+    }
+
+    try {
+      const allPolicies = await firstValueFrom(this.policyService.getAllPolicies());
+      const policyTemplate = allPolicies.find(p => p.id === policyToRecharge.policyId);
+
+      if (policyTemplate) {
+        this.openPolicyModal(policyTemplate);
+      } else {
+        this.toast.show(`Could not find policy details for '${policyToRecharge.policyName}'. Please browse available policies.`, 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching policies for recharge:', error);
+      this.toast.show('An error occurred while trying to find policy details.', 'error');
+    }
   }
 
   // Placeholder Logic for Table Columns

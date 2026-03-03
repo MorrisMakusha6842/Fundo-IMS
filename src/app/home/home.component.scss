@@ -297,6 +297,17 @@ section {
     gap: 2rem;
 }
 
+.recharge-link {
+    text-decoration: underline;
+    cursor: pointer;
+    color: #4f46e5; // indigo-600
+    font-weight: 500;
+
+    &:hover {
+        color: #4338ca; // indigo-700
+    }
+}
+
 /* Small screens and mobile */
 @media (max-width: 640px) {
     .header {
