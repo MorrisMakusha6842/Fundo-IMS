@@ -445,4 +445,24 @@
         .details-grid { grid-template-columns: 1fr; }
         .detail-card:last-child { grid-column: auto; }
     }
+
+    /* Responsive Chat Header */
+    @media (max-width: 768px) {
+        .chat-header {
+            padding: 10px 12px;
+            gap: 10px;
+        }
+        .header-user-avatar, .header-user-avatar .user-initials {
+            width: 38px;
+            height: 38px;
+            font-size: 16px;
+        }
+        .header-user-name {
+            font-size: 15px;
+        }
+        .message-filters button {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+    }
 </style>

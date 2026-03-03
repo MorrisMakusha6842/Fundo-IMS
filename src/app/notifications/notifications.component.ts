@@ -9,7 +9,7 @@ import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
 import { ToastService } from '../services/toast.service';
 import { Router } from '@angular/router';
-import { Bytes } from '@angular/fire/firestore';
+import { Bytes, Firestore, collection, doc, setDoc } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-notifications',
@@ -26,6 +26,7 @@ export class NotificationsComponent implements OnInit, AfterViewChecked {
   private authService = inject(AuthService);
   private toastService = inject(ToastService);
   private router = inject(Router);
+  private firestore = inject(Firestore);
 
   users: any[] = [];
   selectedUser: any = null;
@@ -271,6 +272,15 @@ Thank you for choosing our services.`;
       // 2. Process Policy Document for Firestore (Binary)
       const storageData = await this.processFileForFirestore(this.policyFile);
 
+      // --- NEW: Generate Credit Info ---
+      const creditId = `CRD-${doc(collection(this.firestore, '_')).id.substring(0, 8).toUpperCase()}`;
+      // --- END NEW ---
+
+      // --- NEW: Determine credit amount based on policy type ---
+      const isRenewal = this.selectedInvoice.policyType === 'renewal';
+      const creditAmount = isRenewal ? 1 : this.selectedInvoice.amount;
+      // --- END NEW ---
+
       // 3. Update Asset Document with Metadata
       const docData = {
         name: this.policyFile.name,
@@ -283,7 +293,11 @@ Thank you for choosing our services.`;
         verifiedAt: new Date().toISOString(),
         policyId: this.selectedInvoice.policyId,
         policyType: this.selectedInvoice.policyType,
-        policyName: this.selectedInvoice.policyName
+        policyName: this.selectedInvoice.policyName,
+        // --- NEW: Add credit info to the asset document ---
+        creditId: creditId,
+        creditAmount: creditAmount,
+        creditRemaining: creditAmount
       };
 
       await this.assetsService.updateAssetDocument(
@@ -295,7 +309,7 @@ Thank you for choosing our services.`;
 
       // 4. Update Invoice Status
       await this.invoiceService.updateInvoice(this.selectedInvoice.id, { status: 'Verified' }, this.selectedInvoice);
-      
+
       // 5. Send Notification with Attachment
       if (this.policyPreview) {
         await this.notificationService.sendMessage(

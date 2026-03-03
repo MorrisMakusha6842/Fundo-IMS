@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { AccountReceivableService } from '../financial-insight/account-receivable.service';
 import { BillingInformationService, BillingAccount } from '../financial-insight/billing-information.service';
@@ -15,7 +16,7 @@ export interface BillingTrend {
 @Component({
   selector: 'app-billing-overview',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   styleUrl: './billing-overview.component.scss',
   template: `
     <div class="billing-overview">
@@ -100,6 +101,7 @@ export interface BillingTrend {
     <div class="ledger-header">
       <h3>Premium Collection Summary</h3>
       <div class="header-actions">
+        <button class="btn-secondary" (click)="openTargetModal()">Set Target</button>
         <select class="filter-select">
             <option>This Month</option>
             <option>Last Month</option>
@@ -204,6 +206,26 @@ export interface BillingTrend {
     </div>
   </div>
 </div>
+
+<!-- SET TARGET MODAL -->
+<div class="modal-overlay" *ngIf="isTargetModalOpen">
+  <div class="modal-card" style="max-width: 400px;">
+    <div class="modal-header">
+      <h2>Set Monthly Target</h2>
+      <button class="btn-close" (click)="closeTargetModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: #1d1d1f;">Target Amount (USD)</label>
+        <input type="number" [(ngModel)]="tempTarget" class="filter-select" style="width: 100%; box-sizing: border-box;">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeTargetModal()">Cancel</button>
+      <button class="btn-secondary" style="background: #0071e3; color: white; border-color: #0071e3;" (click)="saveTarget()">Save Target</button>
+    </div>
+  </div>
+</div>
   `
 })
 export class BillingOverviewComponent implements OnInit, OnDestroy {
@@ -212,9 +234,11 @@ export class BillingOverviewComponent implements OnInit, OnDestroy {
   private billingService = inject(BillingInformationService);
 
   isActiveAccountsModalOpen = false;
+  isTargetModalOpen = false;
 
   // Data Model Properties
   monthlyTarget: number = 12393;
+  tempTarget: number = 12393;
   totalPremium: number = 0;
   activeAccountsCount: number = 0;
   activeAccountsList: BillingAccount[] = [];
@@ -262,5 +286,19 @@ export class BillingOverviewComponent implements OnInit, OnDestroy {
 
   closeActiveAccountsModal() {
     this.isActiveAccountsModalOpen = false;
+  }
+
+  openTargetModal() {
+    this.tempTarget = this.monthlyTarget;
+    this.isTargetModalOpen = true;
+  }
+
+  closeTargetModal() {
+    this.isTargetModalOpen = false;
+  }
+
+  saveTarget() {
+    this.monthlyTarget = this.tempTarget;
+    this.closeTargetModal();
   }
 }

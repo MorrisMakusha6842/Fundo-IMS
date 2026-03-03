@@ -18,7 +18,9 @@
                 </ng-template>
             </div>
             <div>
-                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Welcome, {{ displayName || 'User' }}</h1>
+                <h1 class="welcome-header font-bold tracking-tight text-gray-900">
+                    Welcome, <span class="lg:hidden">{{ (displayName || 'User').split(' ')[0] }}</span><span class="hidden lg:inline">{{ displayName || 'User' }}</span>
+                </h1>
                 <p class="mt-1 text-sm text-gray-600">Manage your policies, claims, and requests</p>
             </div>
         </div>

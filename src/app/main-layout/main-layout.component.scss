@@ -477,7 +477,7 @@
   background: #fff;
   transform: translateX(-110%);
   transition: transform .28s cubic-bezier(.2, .9, .2, 1);
-  z-index: 80;
+  z-index: 100;
   box-shadow: 4px 0 24px rgba(2, 6, 23, 0.12);
   display: flex;
   flex-direction: column;
@@ -491,7 +491,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.36);
-  z-index: 70
+  z-index: 95;
 }
 
 .mobile-drawer-header {
