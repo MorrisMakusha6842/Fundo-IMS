@@ -148,7 +148,7 @@ export class HomeComponent implements OnInit {
     try {
       const profile = await this.userService.getUserProfile(uid);
       if (profile) {
-        this.displayName = profile['displayName'];
+        this.displayName = (profile['displayName'] || '').trim();
         this.userPhotoUrl = profile['photoURL'] || profile['avatarDataUrl'];
       }
     } catch (error) {

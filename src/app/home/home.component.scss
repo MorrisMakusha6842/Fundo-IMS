@@ -373,3 +373,15 @@ section {
         grid-template-columns: 1fr !important;
     }
 }
+
+/* Responsive Display Name Logic */
+.full-name {
+    display: inline; /* Default: show full name on desktop */
+}
+.first-name {
+    display: none; /* Default: hide first name on desktop */
+}
+@media (max-width: 1023px) { /* On screens smaller than desktop (lg breakpoint), swap visibility */
+    .full-name { display: none; }
+    .first-name { display: inline; }
+}

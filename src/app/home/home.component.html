@@ -19,7 +19,9 @@
             </div>
             <div>
                 <h1 class="welcome-header font-bold tracking-tight text-gray-900">
-                    Welcome, <span class="lg:hidden">{{ (displayName || 'User').split(' ')[0] }}</span><span class="hidden lg:inline">{{ displayName || 'User' }}</span>
+                    Welcome, 
+                    <span class="first-name">{{ (displayName || 'User').split(' ')[0] }}</span>
+                    <span class="full-name">{{ displayName || 'User' }}</span>
                 </h1>
                 <p class="mt-1 text-sm text-gray-600">Manage your policies, claims, and requests</p>
             </div>
