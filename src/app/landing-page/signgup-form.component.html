@@ -53,13 +53,26 @@
           <small *ngIf="f['fullName'].errors?.['minlength']">Enter a valid name.</small>
         </div>
 
-        <label>
-          National ID
-          <input formControlName="nationalId" type="text" placeholder="Enter National ID" />
-        </label>
-        <div class="error" *ngIf="f['nationalId'].touched && f['nationalId'].invalid">
-          <small *ngIf="f['nationalId'].errors?.['required']">National ID is required.</small>
+        <div formArrayName="vehicleRegistrationNumbers">
+          <div *ngFor="let control of vehicleRegistrationNumbers.controls; let i = index" class="mb-3">
+            <label>
+              Vehicle Registration Number {{ i + 1 }}
+              <div style="display: flex; gap: 8px;">
+                <input [formControlName]="i" type="text" placeholder="Enter Vehicle Registration Number"
+                  style="flex: 1;" />
+                <button type="button" class="btn-secondary" *ngIf="vehicleRegistrationNumbers.length > 1"
+                  (click)="removeVehicleRegistrationNumber(i)" style="padding: 0 12px;">X</button>
+              </div>
+            </label>
+            <div class="error" *ngIf="control.touched && control.invalid">
+              <small *ngIf="control.errors?.['required']">Registration number is required.</small>
+              <small *ngIf="control.errors?.['minlength']">Must be at least 3 characters.</small>
+              <small *ngIf="control.errors?.['pattern']">Invalid format (A-Z, 0-9, space, -).</small>
+            </div>
+          </div>
         </div>
+        <button type="button" class="btn-secondary mb-4" (click)="addVehicleRegistrationNumber()"
+          style="width: 100%; margin-bottom: 16px; padding: 8px;">+ Add Asset</button>
 
         <label>
           Account Type

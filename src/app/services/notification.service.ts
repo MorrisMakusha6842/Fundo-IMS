@@ -367,7 +367,7 @@ export class NotificationService {
                 if (asset.id && !existingIds.has(asset.id)) {
                     const docRef = doc(this.firestore, 'notifications', userId, 'received', 'system', 'messages', asset.id);
                     const message: Message = {
-                        text: `New Asset Registration: ${asset.year} ${asset.make} (${asset.numberPlate})`,
+                        text: `New Asset Registration: ${asset.year} ${asset.make} (${asset.vehicleRegistrationNumber})`,
                         timestamp: new Date().toISOString(),
                         read: false,
                         senderId: 'system',

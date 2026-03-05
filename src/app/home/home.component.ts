@@ -179,7 +179,7 @@ export class HomeComponent implements OnInit {
             const policy = {
               policyId: doc.name, // Using filename as ID for now
               policyName: 'Insurance Policy',
-              asset: `${asset.make} ${asset.numberPlate}`,
+              asset: `${asset.make} ${asset.vehicleRegistrationNumber}`,
               expiryDate: doc.expiryDate,
               status: 'Active',
               docUrl: docUrl
@@ -354,7 +354,7 @@ export class HomeComponent implements OnInit {
         displayName: this.displayName || 'Unknown User',
         claimId: claimId,
         assetId: this.selectedAsset.id || this.selectedAsset.uid, // Fallback if id missing
-        assetDescription: `${this.selectedAsset.year} ${this.selectedAsset.make} (${this.selectedAsset.numberPlate})`,
+        assetDescription: `${this.selectedAsset.year} ${this.selectedAsset.make} (${this.selectedAsset.vehicleRegistrationNumber})`,
         policyId: this.selectedPolicyToClaim.policyId, // Use the actual policy template ID
         policyName: this.selectedPolicyToClaim.policyName || 'Insurance Policy',
         policyExpiryDate: this.selectedPolicyToClaim.expiryDate || null,

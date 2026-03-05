@@ -379,7 +379,7 @@ section {
     display: inline; /* Default: show full name on desktop */
 }
 .first-name {
-    display: none; /* Default: hide first name on desktop */
+    display: none; /* Default: hide first name on desktop *o/
 }
 @media (max-width: 1023px) { /* On screens smaller than desktop (lg breakpoint), swap visibility */
     .full-name { display: none; }

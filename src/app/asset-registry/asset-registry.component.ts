@@ -377,7 +377,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
         const newAsset: VehicleAsset = {
           garagingAddress: v.garagingAddress,
           make: v.make,
-          numberPlate: v.numberPlate,
+          vehicleRegistrationNumber: v.vehicleRegistrationNumber,
           primaryUse: v.primaryUse,
           uid: user.uid,
           userId: user.uid,
@@ -617,7 +617,7 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
       const updatedAsset: VehicleAsset = {
         garagingAddress: this.selectedAsset.garagingAddress,
         make: this.selectedAsset.make,
-        numberPlate: this.selectedAsset.numberPlate,
+        vehicleRegistrationNumber: this.selectedAsset.vehicleRegistrationNumber,
         primaryUse: this.selectedAsset.primaryUse,
         uid: this.selectedAsset.uid,
         userId: this.selectedAsset.userId,

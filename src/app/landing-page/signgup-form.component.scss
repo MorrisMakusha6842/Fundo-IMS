@@ -5,6 +5,7 @@
   background: #fff;
   border-radius: 8px;
 }
+
 /* Two-column container to match landing page layout */
 .signup-container {
   display: flex;
@@ -29,7 +30,10 @@
   max-width: 520px;
 }
 
-.illustration { max-width: 80%; margin: 18px 0 }
+.illustration {
+  max-width: 80%;
+  margin: 18px 0
+}
 
 
 label {
@@ -37,7 +41,9 @@ label {
   margin-bottom: 8px;
 }
 
-input[type="text"], input[type="email"], input[type="password"] {
+input[type="text"],
+input[type="email"],
+input[type="password"] {
   width: 100%;
   padding: 8px 10px;
   margin-top: 6px;
@@ -65,7 +71,7 @@ button[type="submit"] {
 
 /* Make the form visually match the landing page right-panel */
 .signup-details {
-  box-shadow: 0 6px 20px rgba(2,6,23,0.08);
+  box-shadow: 0 6px 20px rgba(2, 6, 23, 0.08);
   border: 1px solid #eef2ff;
 }
 
@@ -74,7 +80,9 @@ label {
   color: #374151;
 }
 
-input[type="text"], input[type="email"], input[type="password"] {
+input[type="text"],
+input[type="email"],
+input[type="password"] {
   border: 1px solid #e6eefc;
   background: #fbfdff;
 }
@@ -86,6 +94,7 @@ input[type="text"], input[type="email"], input[type="password"] {
   align-items: center;
   margin-bottom: 16px;
 }
+
 .avatar-preview.circular {
   width: 120px;
   height: 120px;
@@ -97,18 +106,21 @@ input[type="text"], input[type="email"], input[type="password"] {
   border: 2px dashed #e5e7eb;
   background: #fff;
 }
+
 .avatar-preview.circular img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
+
 .avatar-placeholder {
   width: 60px;
   height: 60px;
   border-radius: 50%;
   background: #f3f4f6;
 }
+
 .camera-video {
   position: absolute;
   inset: 0;
@@ -116,11 +128,13 @@ input[type="text"], input[type="email"], input[type="password"] {
   height: 100%;
   object-fit: cover;
 }
+
 .avatar-actions {
   display: flex;
   gap: 8px;
   margin-top: 10px;
 }
+
 .avatar-actions .btn {
   padding: 8px 12px;
   border-radius: 6px;
@@ -128,7 +142,11 @@ input[type="text"], input[type="email"], input[type="password"] {
   background: white;
   cursor: pointer;
 }
-.avatar-actions .inline-btn { display: inline-flex; align-items: center }
+
+.avatar-actions .inline-btn {
+  display: inline-flex;
+  align-items: center
+}
 
 /* Camera modal */
 .camera-modal {
@@ -139,13 +157,76 @@ input[type="text"], input[type="email"], input[type="password"] {
   justify-content: center;
   z-index: 99999;
 }
-.camera-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45) }
-.camera-dialog { position: relative; background: white; padding: 16px; border-radius: 8px; z-index: 2; width: 360px; max-width: 95%; }
-.camera-preview { position: relative; width: 100%; height: 260px; background: #000; overflow: hidden; border-radius: 8px; display:flex; align-items:center; justify-content:center }
-.camera-preview video { width: 100%; height: 100%; object-fit: cover }
-.capture-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover }
-.camera-controls { display:flex; gap:8px; justify-content:center; margin-top:12px }
-.camera-controls .btn { padding: 8px 12px; border-radius:6px; background:#fff; border:1px solid #e5e7eb }
+
+.camera-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45)
+}
+
+.camera-dialog {
+  position: relative;
+  background: white;
+  padding: 16px;
+  border-radius: 8px;
+  z-index: 2;
+  width: 360px;
+  max-width: 95%;
+}
+
+.camera-preview {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  background: #000;
+  overflow: hidden;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center
+}
+
+.camera-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover
+}
+
+.capture-preview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover
+}
+
+.camera-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 12px
+}
+
+.camera-controls .btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e5e7eb
+}
+
+.btn-secondary {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #e5e7eb;
+  }
+}
 
 .server-error {
   background: #fff1f2;
@@ -156,8 +237,21 @@ input[type="text"], input[type="email"], input[type="password"] {
 
 /* Mobile: hide left panel and make right panel full width for small screens */
 @media (max-width: 640px) {
-  .left-panel { display: none !important }
-  .right-panel { flex: 1; padding: 18px; max-width: 100%; }
-  .illustration { display: none }
-  .signup-container { min-height: auto }
+  .left-panel {
+    display: none !important
+  }
+
+  .right-panel {
+    flex: 1;
+    padding: 18px;
+    max-width: 100%;
+  }
+
+  .illustration {
+    display: none
+  }
+
+  .signup-container {
+    min-height: auto
+  }
 }

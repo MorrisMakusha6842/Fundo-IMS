@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { updateProfile } from 'firebase/auth';
 import { UserService } from '../services/user.service';
 import { ToastService } from '../services/toast.service';
 import { AuthService } from '../services/auth.service';
 import { firstValueFrom } from 'rxjs';
+import { AssetsService, VehicleAsset } from '../services/assets.service';
 
 @Component({
 	selector: 'app-signup-form',
@@ -20,54 +21,66 @@ export class SigngupFormComponent implements OnInit {
 	submitting = false;
 	error: string | null = null;
 	parentData: any = null;
-		isFromGoogle = false;
-  imageFile?: File | null = null;
-  imagePreview?: string | null = null;
+	isFromGoogle = false;
+	imageFile?: File | null = null;
+	imagePreview?: string | null = null;
 	mediaStream: MediaStream | null = null;
 	cameraActive = false;
 	cameraModalOpen = false;
 	tempImagePreview?: string | null = null;
 	tempFile?: File | null = null;
 
-			constructor(private fb: FormBuilder, private userService: UserService, private toast: ToastService, private auth: AuthService, private router: Router) {
-			this.form = this.fb.group({
-						fullName: ['', [Validators.required, Validators.minLength(2)]],
-						nationalId: ['', [Validators.required, Validators.minLength(5)]],
-						accountType: ['individual', [Validators.required]],
-						company: ['', []],
-						phoneNumber: ['', [Validators.required, Validators.pattern(/^\+?[0-9\s\-]{10,}$/)]],
-				location: ['', [Validators.required, Validators.minLength(2)]],
-				email: ['', [Validators.required, Validators.email]],
-				password: ['', [Validators.required, Validators.minLength(6)]],
-				confirmPassword: ['', [Validators.required]]
-			});
+	constructor(private fb: FormBuilder, private userService: UserService, private toast: ToastService, private auth: AuthService, private router: Router, private assetsService: AssetsService) {
+		this.form = this.fb.group({
+			fullName: ['', [Validators.required, Validators.minLength(2)]],
+			vehicleRegistrationNumbers: this.fb.array([this.fb.control('', [Validators.required, Validators.minLength(3), Validators.pattern('^[A-Z0-9\\s-]+$')])]),
+			accountType: ['individual', [Validators.required]],
+			company: ['', []],
+			phoneNumber: ['', [Validators.required, Validators.pattern(/^\+?[0-9\s\-]{10,}$/)]],
+			location: ['', [Validators.required, Validators.minLength(2)]],
+			email: ['', [Validators.required, Validators.email]],
+			password: ['', [Validators.required, Validators.minLength(6)]],
+			confirmPassword: ['', [Validators.required]]
+		});
 	}
 
-		ngOnInit(): void {
-			// Accept either parentData (from landing form) or Google flow (fromGoogle + googleData)
-			const st = history.state as any;
-			this.parentData = st?.parentData || null;
-			this.isFromGoogle = !!st?.fromGoogle;
-			if (!this.parentData && !this.isFromGoogle) {
-				// If no parent data and not a Google flow, redirect back to login (landing)
-				this.router.navigate(['/']);
-				return;
-			}
-			// Pre-fill email/password if available from parent form
-			if (this.parentData?.email) this.form.patchValue({ email: this.parentData.email });
-			if (this.parentData?.password) this.form.patchValue({ password: this.parentData.password, confirmPassword: this.parentData.confirmPassword });
-			// If coming from Google, pre-fill email from googleData and remove password requirement
-			if (this.isFromGoogle && st?.googleData?.email) {
-				this.form.patchValue({ email: st.googleData.email });
-				// make password optional for Google flow
-				this.form.get('password')?.clearValidators();
-				this.form.get('confirmPassword')?.clearValidators();
-				this.form.get('password')?.updateValueAndValidity();
-				this.form.get('confirmPassword')?.updateValueAndValidity();
-			}
+	ngOnInit(): void {
+		// Accept either parentData (from landing form) or Google flow (fromGoogle + googleData)
+		const st = history.state as any;
+		this.parentData = st?.parentData || null;
+		this.isFromGoogle = !!st?.fromGoogle;
+		if (!this.parentData && !this.isFromGoogle) {
+			// If no parent data and not a Google flow, redirect back to login (landing)
+			this.router.navigate(['/']);
+			return;
 		}
+		// Pre-fill email/password if available from parent form
+		if (this.parentData?.email) this.form.patchValue({ email: this.parentData.email });
+		if (this.parentData?.password) this.form.patchValue({ password: this.parentData.password, confirmPassword: this.parentData.confirmPassword });
+		// If coming from Google, pre-fill email from googleData and remove password requirement
+		if (this.isFromGoogle && st?.googleData?.email) {
+			this.form.patchValue({ email: st.googleData.email });
+			// make password optional for Google flow
+			this.form.get('password')?.clearValidators();
+			this.form.get('confirmPassword')?.clearValidators();
+			this.form.get('password')?.updateValueAndValidity();
+			this.form.get('confirmPassword')?.updateValueAndValidity();
+		}
+	}
 
 	get f() { return this.form.controls; }
+
+	get vehicleRegistrationNumbers() {
+		return this.form.get('vehicleRegistrationNumbers') as FormArray;
+	}
+
+	addVehicleRegistrationNumber() {
+		this.vehicleRegistrationNumbers.push(this.fb.control('', [Validators.required, Validators.minLength(3), Validators.pattern('^[A-Z0-9\\s-]+$')]));
+	}
+
+	removeVehicleRegistrationNumber(index: number) {
+		this.vehicleRegistrationNumbers.removeAt(index);
+	}
 
 	onFileSelected(event: Event) {
 		const input = event.target as HTMLInputElement;
@@ -86,7 +99,7 @@ export class SigngupFormComponent implements OnInit {
 			return;
 		}
 
-		const { fullName, nationalId, accountType, company, phoneNumber, location, email, password, confirmPassword } = this.form.value;
+		const { fullName, accountType, company, phoneNumber, location, email, password, confirmPassword } = this.form.value;
 		// Only validate password match for email/password signup
 		if (!this.isFromGoogle) {
 			if (password !== confirmPassword) {
@@ -97,7 +110,8 @@ export class SigngupFormComponent implements OnInit {
 
 		this.submitting = true;
 		try {
-			const profile = { company, location, nationalId, accountType, phoneNumber };
+			const profile = { company, location, accountType, phoneNumber };
+			let userIdForAssets: string | undefined;
 			if (this.isFromGoogle) {
 				// User has been authenticated via Google already — update Firestore profile and auth displayName/photoURL
 				const current = this.auth.currentUser;
@@ -112,14 +126,13 @@ export class SigngupFormComponent implements OnInit {
 				// update auth profile
 				try { await updateProfile(current, { displayName: fullName, photoURL: photoURL || current.photoURL || null }); } catch (e) { /* ignore */ }
 				// persist profile fields to Firestore
-				await this.userService.updateUserProfile(current.uid, { displayName: fullName, company, location, photoURL, nationalId, accountType, phoneNumber });
-				this.toast.show('Account information updated', 'success');
-				this.router.navigate(['/main-layout']);
-				return;
+				await this.userService.updateUserProfile(current.uid, { displayName: fullName, company, location, photoURL, accountType, phoneNumber });
+				userIdForAssets = current.uid;
 			} else {
 				// Regular email/password signup — create user then persist avatar and profile
 				const cred = await this.userService.createUser(email, password, fullName, profile);
 				this.toast.show('Account created successfully — check your email for verification', 'success');
+				userIdForAssets = cred.user?.uid;
 
 				if (this.imageFile && cred.user?.uid) {
 					try {
@@ -130,10 +143,31 @@ export class SigngupFormComponent implements OnInit {
 						console.warn('avatar upload failed', uploadErr);
 					}
 				}
+			}
+
+			// Create assets from vehicle registration numbers
+			if (userIdForAssets) {
+				const regNumbers = this.form.value.vehicleRegistrationNumbers as string[];
+				const assetPromises = regNumbers.map(regNum => {
+					if (!regNum) return Promise.resolve();
+					const asset: any = {
+						vehicleRegistrationNumber: regNum,
+						uid: userIdForAssets!,
+						createdAt: new Date(),
+					};
+					return this.assetsService.addVehicleAsset(asset);
+				});
+				await Promise.all(assetPromises);
+			}
+
+			if (this.isFromGoogle) {
+				this.toast.show('Account information updated', 'success');
+				this.router.navigate(['/main-layout']);
+			} else {
 				// Wait for auth state to update then navigate
 				try {
 					const user = await firstValueFrom(this.auth.user$);
-						if (user) { this.router.navigate(['/main-layout']); return; }
+					if (user) { this.router.navigate(['/main-layout']); return; }
 				} catch (e) { /* ignore */ }
 				setTimeout(() => this.router.navigate(['/main-layout']), 800);
 			}
@@ -244,7 +278,7 @@ export class SigngupFormComponent implements OnInit {
 			this.mediaStream.getTracks().forEach(t => t.stop());
 			this.mediaStream = null;
 		}
-			const video: HTMLVideoElement | null = document.querySelector('#signupCameraModalVideo');
+		const video: HTMLVideoElement | null = document.querySelector('#signupCameraModalVideo');
 		if (video) {
 			video.pause();
 			video.srcObject = null;
@@ -253,7 +287,7 @@ export class SigngupFormComponent implements OnInit {
 	}
 
 	async takePhoto() {
-			const video: HTMLVideoElement | null = document.querySelector('#signupCameraModalVideo');
+		const video: HTMLVideoElement | null = document.querySelector('#signupCameraModalVideo');
 		if (!video) return;
 		const canvas = document.createElement('canvas');
 		canvas.width = video.videoWidth || 640;
@@ -265,33 +299,33 @@ export class SigngupFormComponent implements OnInit {
 		// create a File object from dataUrl
 		const blob = await (await fetch(dataUrl)).blob();
 		const file = new File([blob], `capture_${Date.now()}.jpg`, { type: blob.type });
-			// set temporary preview (user can Save or Retake in modal)
-			this.tempImagePreview = dataUrl;
-			this.tempFile = file;
+		// set temporary preview (user can Save or Retake in modal)
+		this.tempImagePreview = dataUrl;
+		this.tempFile = file;
 	}
 
-		openCameraModal() {
-			this.cameraModalOpen = true;
-			this.tempImagePreview = null;
-			this.tempFile = null;
-			// Delay starting the camera slightly so the modal's video element is in the DOM
-			setTimeout(() => this.startCamera(), 50);
-		}
+	openCameraModal() {
+		this.cameraModalOpen = true;
+		this.tempImagePreview = null;
+		this.tempFile = null;
+		// Delay starting the camera slightly so the modal's video element is in the DOM
+		setTimeout(() => this.startCamera(), 50);
+	}
 
-		async savePhoto() {
-			if (!this.tempImagePreview || !this.tempFile) return;
-			this.imagePreview = this.tempImagePreview;
-			this.imageFile = this.tempFile;
-			this.tempImagePreview = null;
-			this.tempFile = null;
-			this.cameraModalOpen = false;
-			this.stopCamera();
-		}
+	async savePhoto() {
+		if (!this.tempImagePreview || !this.tempFile) return;
+		this.imagePreview = this.tempImagePreview;
+		this.imageFile = this.tempFile;
+		this.tempImagePreview = null;
+		this.tempFile = null;
+		this.cameraModalOpen = false;
+		this.stopCamera();
+	}
 
-		retake() {
-			this.tempImagePreview = null;
-			this.tempFile = null;
-			// keep camera running
-		}
+	retake() {
+		this.tempImagePreview = null;
+		this.tempFile = null;
+		// keep camera running
+	}
 
 }

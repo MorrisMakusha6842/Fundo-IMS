@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 export interface VehicleAsset {
     garagingAddress: string;
     make: string;
-    numberPlate: string;
+    vehicleRegistrationNumber: string;
     primaryUse: string;
     uid: string;
     userId: string;

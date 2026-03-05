@@ -181,7 +181,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }
 
         return {
-          id: asset.numberPlate || 'N/A',
+          id: asset.vehicleRegistrationNumber || 'N/A',
           vehicle: `${asset.year} ${asset.make}`,
           client: clientName,
           status: asset.status,

@@ -54,7 +54,7 @@ export class RemindersService {
                                     const expiry = new Date(doc.expiryDate);
                                     assetReminders.push({
                                         id: `expiry-${asset.id}-${doc.field}`,
-                                        title: `${doc.field}: ${asset.make} ${asset.numberPlate}`,
+                                        title: `${doc.field}: ${asset.make} ${asset.vehicleRegistrationNumber}`,
                                         description: `Document expiring`,
                                         dueDate: this.createTimestamp(expiry),
                                         type: 'asset_expiry',
