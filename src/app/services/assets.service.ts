@@ -31,6 +31,8 @@ export interface VehicleAsset {
     }[];
     status: 'Pending' | 'Approved' | 'Rejected' | 'Active';
     id?: string; // Add optional ID
+    approvedBy?: string;
+    approvedAt?: any;
 }
 
 @Injectable({

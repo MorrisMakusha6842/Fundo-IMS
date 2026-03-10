@@ -57,7 +57,11 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
 
   // Form for editing an existing asset
   editAssetForm: FormGroup = this.fb.group({
-    assetValue: ['', Validators.required],
+    vehicleRegistrationNumber: ['', Validators.required],
+    make: ['', Validators.required],
+    year: ['', Validators.required],
+    bodyType: ['', Validators.required],
+    vehicleClass: ['', Validators.required],
     safetyFeatures: [''],
     vehicleRegistrationBook: [null],
     vehicleRegistrationBookExpiry: [''],
@@ -426,7 +430,11 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
 
     // Patch the edit form with existing values
     this.editAssetForm.patchValue({
-      assetValue: asset.assetValue,
+      vehicleRegistrationNumber: asset.vehicleRegistrationNumber,
+      make: asset.make,
+      year: asset.year,
+      bodyType: asset.bodyType,
+      vehicleClass: asset.vehicleClass,
       safetyFeatures: asset.safetyFeatures,
       vehicleRegistrationBookExpiry: getDocExpiry('Vehicle Registration Book'),
       radioLicenseExpiry: getDocExpiry('Radio License'),
@@ -615,21 +623,21 @@ export class AssetRegistryComponent implements OnInit, OnDestroy {
       });
 
       const updatedAsset: VehicleAsset = {
-        garagingAddress: this.selectedAsset.garagingAddress,
-        make: this.selectedAsset.make,
-        vehicleRegistrationNumber: this.selectedAsset.vehicleRegistrationNumber,
-        primaryUse: this.selectedAsset.primaryUse,
+        garagingAddress: this.selectedAsset.garagingAddress ?? null,
+        make: formValues.make,
+        vehicleRegistrationNumber: formValues.vehicleRegistrationNumber,
+        primaryUse: this.selectedAsset.primaryUse ?? null,
         uid: this.selectedAsset.uid,
         userId: this.selectedAsset.userId,
-        vehicleClass: this.selectedAsset.vehicleClass,
-        vin: this.selectedAsset.vin,
-        year: this.selectedAsset.year,
-        bodyType: this.selectedAsset.bodyType,
+        vehicleClass: formValues.vehicleClass,
+        vin: this.selectedAsset.vin ?? null,
+        year: formValues.year,
+        bodyType: formValues.bodyType,
         createdAt: this.selectedAsset.createdAt,
         updatedAt: serverTimestamp(),
         status: this.selectedAsset.status,
         safetyFeatures: formValues.safetyFeatures,
-        assetValue: String(formValues.assetValue),
+        assetValue: this.selectedAsset.assetValue ?? null,
         documents: docsForStorage
       };
 

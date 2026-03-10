@@ -207,9 +207,7 @@ $ios-text-tertiary: #C6C6C8;
   .package-card {
     background: $ios-gray-bg;
     border-radius: 12px;
-    border: 2px solid transparent;
     position: relative;
-    cursor: pointer;
     transition: all 0.2s ease;
 
     .package-header {
@@ -242,90 +240,28 @@ $ios-text-tertiary: #C6C6C8;
       }
     }
 
+    .package-price-display {
+        text-align: right;
+        .amount {
+            font-size: 20px;
+            font-weight: 600;
+            color: $ios-text-primary;
+        }
+        .period {
+            font-size: 12px;
+            color: $ios-text-secondary;
+        }
+    }
+
     h4 {
       margin: 0;
       font-size: 15px;
       font-weight: 600;
     }
-
-    .package-chevron {
-      width: 18px;
-      height: 18px;
-      color: $ios-text-tertiary;
-      transition: transform 0.3s ease, color 0.3s ease;
-    }
-
     .package-description {
       margin: 2px 0 0;
       font-size: 12px;
       color: $ios-text-secondary;
-    }
-
-    &.selected {
-      border-color: $ios-blue;
-      background: color.adjust($ios-blue, $lightness: 40%);
-
-      .package-chevron {
-        transform: rotate(180deg);
-        color: $ios-blue;
-      }
-    }
-
-    .coverages-section {
-      border-top: 1px solid $ios-separator;
-      padding: 16px;
-
-      h5 {
-        font-size: 12px;
-        font-weight: 600;
-        color: $ios-text-secondary;
-        text-transform: uppercase;
-        margin: 0 0 8px 0;
-      }
-    }
-
-    .coverages-list {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 16px 0;
-      font-size: 14px;
-
-      li {
-        padding: 6px 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      &.optional li {
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 6px;
-
-        &:hover {
-          background: rgba(0, 0, 0, 0.05);
-        }
-      }
-
-      .coverage-price {
-        margin-left: auto;
-        font-size: 13px;
-        font-weight: 500;
-        color: $ios-text-secondary;
-      }
-
-      .checkbox {
-        width: 18px;
-        height: 18px;
-        border: 2px solid #c7c7cc;
-        border-radius: 50%;
-        transition: all 0.2s;
-
-        &.checked {
-          background: $ios-blue;
-          border-color: $ios-blue;
-        }
-      }
     }
   }
 }

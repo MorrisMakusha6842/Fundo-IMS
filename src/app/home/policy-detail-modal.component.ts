@@ -40,7 +40,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
 
     // Quote Form State
     isQuoteAccordionOpen = false;
-    selectedPackageId: string | null = null;
     selectedAssetId: string | null = null;
     paymentFrequency: 'monthly' | 'annually' = 'monthly';
 
@@ -81,6 +80,7 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         if (changes['policy'] && this.policy) {
             this.mapPolicyPackages();
             this.resetQuoteForm();
+            this.calculatePremium(); // Auto-calculate for the first package
         }
     }
 
@@ -128,20 +128,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         }
     }
 
-    selectPackage(pkgId: string) {
-        if (this.selectedPackageId === pkgId) {
-            // If already selected, maybe just keep it selected? 
-            // Or allow deselect? User said "selection feature" for coverages not needed, 
-            // but for packages it is.
-            return;
-        }
-
-        this.selectedPackageId = pkgId;
-        this.calculatePremium();
-    }
-
-    // Optional coverages removed as requested
-
     onAssetChange(assetId: any) {
         this.calculatePremium();
     }
@@ -177,7 +163,7 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
             total += assuredValue;
         }
 
-        const pkg = this.packages.find(p => p.id === this.selectedPackageId);
+        const pkg = this.packages.length > 0 ? this.packages[0] : null;
         if (pkg) {
             // Add base package price if it exists
             if (pkg.price) {
@@ -217,7 +203,7 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     }
 
     async purchasePackage() {
-        if (!this.selectedAssetId || !this.selectedPackageId) {
+        if (!this.selectedAssetId || !this.packages.length) {
             this.toast.show('Please select an asset and a package to proceed.', 'warn');
             return;
         }
@@ -244,7 +230,7 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     }
 
     executePurchase() {
-        const selectedPackage = this.packages.find(p => p.id === this.selectedPackageId);
+        const selectedPackage = this.packages.length > 0 ? this.packages[0] : null;
         const selectedAsset = this.availableAssets.find(a => a.id === this.selectedAssetId);
 
         if (!selectedPackage || !selectedAsset) {
@@ -342,7 +328,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     private resetQuoteForm() {
         this.isQuoteAccordionOpen = false;
         this.selectedAssetId = null;
-        this.selectedPackageId = null;
         this.paymentFrequency = 'monthly';
         this.quotePremium = 0;
     }

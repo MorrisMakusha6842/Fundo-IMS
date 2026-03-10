@@ -41,7 +41,7 @@
         <table class="asset-table">
             <thead>
                 <tr>
-                    <th>Asset</th>
+                    <th>V.R.N</th>
                     <th>Client</th>
                     <th>Status</th>
                     <th class="text-right">Actions</th>
@@ -58,8 +58,7 @@
                 <tr *ngFor="let asset of assets" [hidden]="isLoading">
                     <td>
                         <div class="asset-info">
-                            <div class="asset-avatar">{{ asset.assetName?.charAt(0) || 'A' }}</div>
-                            <span>{{ asset.assetName }} <span style="color: #86868b; font-size: 12px;">({{ asset.type
+                            <span>{{ asset.vehicleRegistrationNumber }} <span style="color: #86868b; font-size: 12px;">({{ asset.type
                                     }})</span></span>
                         </div>
                     </td>
@@ -111,33 +110,56 @@
             <div class="detail-section">
                 <h4>Basic Information</h4>
                 <div class="detail-grid">
-                    <div class="detail-item"><label>Make & Model</label>
-                        <p>{{ selectedAsset.make }}</p>
+                    <div class="field">
+                        <label>Make & Model</label>
+                        <input type="text" formControlName="make" class="form-input" />
                     </div>
-                    <div class="detail-item"><label>Year</label>
-                        <p>{{ selectedAsset.year }}</p>
+                    <div class="field">
+                        <label>Vehicle Registration Number</label>
+                        <input type="text" formControlName="vehicleRegistrationNumber" class="form-input" />
+                        <p class="field-hint" style="font-size: 11px; color: #86868b; margin-top: 4px;">
+                            VRN can be changed once every 6 months. <a href="#"
+                                style="text-decoration: underline; color: #0071e3; cursor: pointer;">Help</a>
+                        </p>
                     </div>
-                    <div class="detail-item"><label>Number Plate</label>
-                        <p>{{ selectedAsset.numberPlate }}</p>
+                    <div class="field">
+                        <label>Year</label>
+                        <input type="number" formControlName="year" class="form-input" />
                     </div>
-                    <div class="detail-item"><label>VIN</label>
-                        <p>{{ selectedAsset.vin }}</p>
+                    <div class="field">
+                        <label>Body Type</label>
+                        <select formControlName="bodyType" class="form-select">
+                            <option value="Sedan">Sedan</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Hatchback">Hatchback</option>
+                            <option value="Truck">Truck</option>
+                            <option value="Van">Van</option>
+                            <option value="Motorcycle">Motorcycle</option>
+                        </select>
                     </div>
-                    <div class="detail-item"><label>Body Type</label>
-                        <p>{{ selectedAsset.bodyType }}</p>
-                    </div>
-                    <div class="detail-item"><label>Vehicle Class</label>
-                        <p>{{ selectedAsset.vehicleClass }}</p>
-                    </div>
-                    <div class="detail-item"><label>Primary Use</label>
-                        <p>{{ selectedAsset.primaryUse }}</p>
-                    </div>
-                    <div class="detail-item"><label>Garaging Address</label>
-                        <p>{{ selectedAsset.garagingAddress }}</p>
+                    <div class="field">
+                        <label>Vehicle Class</label>
+                        <select formControlName="vehicleClass" class="form-select">
+                            <option value="Class 1">Class 1 (Buses/Omnibuses)</option>
+                            <option value="Class 2">Class 2 (Heavy Vehicles)</option>
+                            <option value="Class 3">Class 3 (Light Motor Vehicles)</option>
+                            <option value="Class 4">Class 4 (Motorcycles)</option>
+                            <option value="Class 5">Class 5 (Construction/Farm)</option>
+                        </select>
                     </div>
                     <div class="detail-item"><label>Status</label>
                         <span class="status" [ngClass]="selectedAsset.status?.toLowerCase()">{{ selectedAsset.status ||
                             'Pending' }}</span>
+                    </div>
+                    <div *ngIf="selectedAsset.status === 'Pending'"
+                        style="grid-column: span 2; margin-top: -10px; margin-bottom: 10px;">
+                        <p *ngIf="!selectedAsset.documents || selectedAsset.documents.length === 0" class="field-hint"
+                            style="color: #dc2626; font-size: 12px; margin-top: 5px;">
+                            &#9888; Action Required: Please upload the required documents for this asset to proceed with approval.
+                        </p>
+                        <p class="field-hint" style="color: #dc2626; font-size: 12px; margin-top: 5px;">
+                            &#9888; This asset is awaiting manual verification by one of our agents.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -145,10 +167,6 @@
             <div class="detail-section">
                 <h4>Compliance & Safety</h4>
                 <div class="detail-grid">
-                    <div class="field">
-                        <label>Asset Value ($)</label>
-                        <input type="number" formControlName="assetValue" class="form-input" />
-                    </div>
                     <div class="field">
                         <label>Safety Features</label>
                         <select formControlName="safetyFeatures" class="form-select">
@@ -161,34 +179,6 @@
                         </select>
                     </div>
                 </div>
-            </div>
-
-            <div class="detail-section">
-                <h4>Policies</h4>
-                <table class="asset-table" style="margin-top: 0;">
-                    <thead>
-                        <tr>
-                            <th>Policy ID</th>
-                            <th>Type</th>
-                            <th>Sum Assured</th>
-                            <th>Tenure</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let policy of selectedAsset.policies">
-                            <td>{{ policy.policyId }}</td>
-                            <td>{{ policy.policyType }}</td>
-                            <td>{{ policy.sumAssured | currency }}</td>
-                            <td>{{ policy.tenureMonths }} months</td>
-                            <td><span class="status" [ngClass]="policy.status?.toLowerCase()">{{ policy.status |
-                                    titlecase }}</span></td>
-                        </tr>
-                        <tr *ngIf="!selectedAsset.policies || selectedAsset.policies.length === 0">
-                            <td colspan="5" style="text-align: center; color: #86868b;">No policies found.</td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
 
             <!-- Asset Documentation Section -->

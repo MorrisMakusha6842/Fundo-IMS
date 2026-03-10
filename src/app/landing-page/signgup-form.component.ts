@@ -7,6 +7,7 @@ import { UserService } from '../services/user.service';
 import { ToastService } from '../services/toast.service';
 import { AuthService } from '../services/auth.service';
 import { firstValueFrom } from 'rxjs';
+import { serverTimestamp } from '@angular/fire/firestore';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
 
 @Component({
@@ -152,8 +153,12 @@ export class SigngupFormComponent implements OnInit {
 					if (!regNum) return Promise.resolve();
 					const asset: any = {
 						vehicleRegistrationNumber: regNum,
-						uid: userIdForAssets!,
-						createdAt: new Date(),
+						uid: userIdForAssets,
+						userId: userIdForAssets,
+						createdAt: serverTimestamp(),
+						status: 'Pending',
+						approvedBy: null,
+						approvedAt: null
 					};
 					return this.assetsService.addVehicleAsset(asset);
 				});

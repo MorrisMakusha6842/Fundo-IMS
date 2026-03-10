@@ -33,40 +33,19 @@
                         <h3>Available Packages</h3>
                         <p class="section-subtitle">Select a base package and add optional coverages.</p>
                         <div class="packages-grid">
-                            <div *ngFor="let pkg of packages" class="package-card"
-                                [class.selected]="selectedPackageId === pkg.id" (click)="selectPackage(pkg.id)">
+                            <div *ngFor="let pkg of packages" class="package-card">
                                 <div class="package-header">
                                     <div class="header-content-row">
-                                        <div class="radio-selection">
-                                            <input type="radio" [name]="'pkg-group'"
-                                                [checked]="selectedPackageId === pkg.id"
-                                                (change)="selectPackage(pkg.id); $event.stopPropagation()">
-                                        </div>
                                         <div class="header-text">
                                             <h4>{{ pkg.name }}</h4>
                                             <p class="package-description" *ngIf="pkg.description">{{ pkg.description }}
                                             </p>
                                         </div>
                                     </div>
-                                    <svg class="package-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                        fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-
-                                <div class="coverages-section" *ngIf="selectedPackageId === pkg.id">
-                                    <h5>Included Coverages</h5>
-                                    <ul class="coverages-list">
-                                        <li *ngFor="let cov of pkg.coverages">
-                                            <span>{{ cov.name }}</span>
-                                            <span *ngIf="cov.percentage" class="coverage-meta">{{ cov.percentage
-                                                }}%</span>
-                                            <span *ngIf="cov.price > 0" class="coverage-price">{{ cov.price | currency
-                                                }}</span>
-                                        </li>
-                                    </ul>
+                                    <div class="package-price-display">
+                                        <span class="amount">{{ pkg.price | currency:'USD':'symbol':'1.2-2' }}</span>
+                                        <span class="period" *ngIf="!isRenewalPolicy">/ total</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
