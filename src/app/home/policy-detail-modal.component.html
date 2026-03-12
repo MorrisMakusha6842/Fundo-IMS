@@ -42,8 +42,9 @@
                                             </p>
                                         </div>
                                     </div>
-                                    <div class="package-price-display">
-                                        <span class="amount">{{ pkg.price | currency:'USD':'symbol':'1.2-2' }}</span>
+                                    <div class="package-price-display" *ngIf="calculatePackageBasePrice(pkg) > 0">
+                                        <span class="amount">{{ calculatePackageBasePrice(pkg) |
+                                            currency:'USD':'symbol':'1.2-2' }}</span>
                                         <span class="period" *ngIf="!isRenewalPolicy">/ total</span>
                                     </div>
                                 </div>

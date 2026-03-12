@@ -132,6 +132,30 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         this.calculatePremium();
     }
 
+    calculatePackageBasePrice(pkg: any): number {
+        if (!pkg) {
+            return 0;
+        }
+
+        let total = pkg.price || 0;
+
+        // Sum up fixed-amount coverages.
+        if (pkg.coverages && Array.isArray(pkg.coverages)) {
+            pkg.coverages.forEach((cov: any) => {
+                if (cov && cov.price > 0 && !cov.percentage) {
+                    total += cov.price;
+                }
+            });
+        }
+
+        // For renewals, tax is applied on the total of package price and fixed coverages.
+        if (this.isRenewalPolicy && this.currentTaxRate > 0) {
+            total += total * (this.currentTaxRate / 100);
+        }
+
+        return total;
+    }
+
     calculatePremium() {
         let total = 0;
         let assuredValue = 0;

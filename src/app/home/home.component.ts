@@ -7,6 +7,7 @@ import { UserService } from '../services/user.service';
 import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { ToastService } from '../services/toast.service';
 import { ClaimsService } from '../services/claims.service';
+import { FinancialInsightService } from '../financial-insight/financial-insight.service';
 import { Observable, BehaviorSubject, of, combineLatest, firstValueFrom } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
@@ -30,32 +31,25 @@ export class HomeComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toast = inject(ToastService);
+  private financialService = inject(FinancialInsightService);
 
   displayName: string = '';
   userPhotoUrl: string | null = null;
   isLoadingProfile: boolean = true;
   subCategories$: Observable<any[]> | undefined;
-  filteredPolicies$: Observable<any[]> | undefined;
-  userAssets$: Observable<VehicleAsset[]> | undefined;
-  paginatedAssets: VehicleAsset[] = [];
-
-  // Pagination State
-  assetPage: number = 1;
-  assetPageSize: number = 8;
-  totalAssets: number = 0;
-  totalAssetPages: number = 0;
+  filteredPolicies$: Observable<any[]> | undefined;  
   isLoadingAssets: boolean = true;
 
   selectedCategorySubject = new BehaviorSubject<string | null>(null);
   selectedCategory$ = this.selectedCategorySubject.asObservable();
 
-  selectedAsset: VehicleAsset | null = null;
-  claimDescription: string = '';
-  claimType: string = 'Accident'; // Default
-  availablePoliciesForAsset: any[] = [];
-  selectedPolicyToClaim: any = null;
-  selectedPolicyHasNoCredits: boolean = false;
-  isSubmittingClaim: boolean = false;
+  // New properties for the overview table
+  overviewDocuments: any[] = [];
+  paginatedOverviewDocuments: any[] = [];
+  overviewPage = 1;
+  overviewPageSize = 5; // You can adjust this
+  totalOverviewDocs = 0;
+  totalOverviewPages = 0;
 
   // Accordion State
   isActiveExpanded: boolean = false;
@@ -72,6 +66,10 @@ export class HomeComponent implements OnInit {
   // 3. Add these new properties to your class
   isBillingDebitModalOpen = false;
   purchaseData: any = null;
+
+  // Financial Data for price calculation
+  currentTaxRate = 0;
+  currentFxRate = 0;
 
   // ... your existing methods
 
@@ -92,6 +90,7 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.loadFinancialData();
     this.subCategories$ = this.policyService.getSubCategories();
 
     this.filteredPolicies$ = this.selectedCategory$.pipe(
@@ -128,10 +127,7 @@ export class HomeComponent implements OnInit {
     ).subscribe(assets => {
       this.availableAssets = assets;
       this.processAssetsForPolicies(assets);
-      this.totalAssets = assets.length;
-      this.totalAssetPages = Math.ceil(this.totalAssets / this.assetPageSize);
-      this.userAssets$ = of(assets);
-      this.updateAssetPagination(assets);
+      this.processAssetsForOverview(assets);
       this.isLoadingAssets = false;
     });
 
@@ -141,6 +137,18 @@ export class HomeComponent implements OnInit {
         setTimeout(() => this.scrollToPolicies(), 600);
       }
     });
+  }
+
+  async loadFinancialData() {
+    try {
+      const record = await this.financialService.getLatestRecord();
+      if (record) {
+        this.currentTaxRate = record.currentTaxRate || 0;
+        this.currentFxRate = record.currentFxRate || 0;
+      }
+    } catch (error) {
+      console.error('Error fetching financial data for home component:', error);
+    }
   }
 
   async fetchUserProfile(uid: string) {
@@ -156,6 +164,51 @@ export class HomeComponent implements OnInit {
     } finally {
       this.isLoadingProfile = false;
     }
+  }
+
+  processAssetsForOverview(assets: VehicleAsset[]) {
+    const relevantDocTypes = ['Vehicle Registration Book', 'Radio License', 'Insurance Policy'];
+    const docs: any[] = [];
+    const now = new Date();
+
+    assets.forEach(asset => {
+      if (asset.documents && asset.documents.length > 0) {
+        asset.documents.forEach((doc: any) => {
+          if (relevantDocTypes.includes(doc.field)) {
+            let daysUntilExpiry: number | null = null;
+            let statusText = 'Valid';
+            let severity = 'green';
+
+            if (doc.expiryDate) {
+              const expiry = new Date(doc.expiryDate);
+              const diffTime = expiry.getTime() - now.getTime();
+              daysUntilExpiry = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+              if (daysUntilExpiry <= 0) {
+                statusText = 'Expired';
+                severity = 'red';
+              } else {
+                statusText = `Expires in ${daysUntilExpiry} days`;
+                if (daysUntilExpiry <= 7) {
+                  severity = 'red';
+                } else if (daysUntilExpiry <= 30) {
+                  severity = 'orange';
+                }
+              }
+            }
+
+            docs.push({ asset, document: doc, daysUntilExpiry, statusText, severity });
+          }
+        });
+      }
+    });
+
+    // Sort by expiry date, soonest first
+    this.overviewDocuments = docs.sort((a, b) => (a.daysUntilExpiry ?? 9999) - (b.daysUntilExpiry ?? 9999));
+
+    this.totalOverviewDocs = this.overviewDocuments.length;
+    this.totalOverviewPages = Math.ceil(this.totalOverviewDocs / this.overviewPageSize);
+    this.updateOverviewPagination();
   }
 
   processAssetsForPolicies(assets: VehicleAsset[]) {
@@ -205,24 +258,25 @@ export class HomeComponent implements OnInit {
   toggleActive() { this.isActiveExpanded = !this.isActiveExpanded; }
   toggleLapsed() { this.isLapsedExpanded = !this.isLapsedExpanded; }
 
-  updateAssetPagination(allAssets: VehicleAsset[]) {
-    const startIndex = (this.assetPage - 1) * this.assetPageSize;
-    const endIndex = startIndex + this.assetPageSize;
-    this.paginatedAssets = allAssets.slice(startIndex, endIndex);
+  updateOverviewPagination() {
+    const startIndex = (this.overviewPage - 1) * this.overviewPageSize;
+    const endIndex = startIndex + this.overviewPageSize;
+    this.paginatedOverviewDocuments = this.overviewDocuments.slice(startIndex, endIndex);
   }
 
-  nextAssetPage() {
-    if (this.assetPage < this.totalAssetPages) {
-      this.changeAssetPage(1);
+  nextOverviewPage() {
+    if (this.overviewPage < this.totalOverviewPages) {
+      this.overviewPage++;
+      this.updateOverviewPagination();
     }
   }
 
-  prevAssetPage() {
-    if (this.assetPage > 1) {
-      this.changeAssetPage(-1);
+  prevOverviewPage() {
+    if (this.overviewPage > 1) {
+      this.overviewPage--;
+      this.updateOverviewPagination();
     }
   }
-
   // Refactored Pagination Logic needed to access 'allAssets'
   public availableAssets: VehicleAsset[] = [];
 
@@ -235,147 +289,10 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  onSelectAsset(asset: VehicleAsset) {
-    this.selectedAsset = asset;
-    this.claimDescription = '';
-    this.claimType = 'Accident';
-    this.selectedPolicyHasNoCredits = false; // Reset on new asset selection
-
-    // Filter for active insurance policies on this asset
-    const now = new Date();
-    this.availablePoliciesForAsset = (asset.documents || []).filter((doc: any) => {
-      const isPolicy = doc.policyType === 'standard' || doc.policyType === 'renewal';
-      const isNotExpired = doc.expiryDate ? new Date(doc.expiryDate) > now : true;
-      return isPolicy && isNotExpired;
-    });
-
-    // Auto-select if there's only one policy
-    this.selectedPolicyToClaim = this.availablePoliciesForAsset.length === 1 ? this.availablePoliciesForAsset[0] : null;
-
-    // Also check credits for the auto-selected policy
-    this.onPolicyToClaimChange(this.selectedPolicyToClaim);
-  }
-
-  onPolicyToClaimChange(policy: any) {
-    if (policy) {
-      // A policy has no credits if creditRemaining is 0 or less.
-      // For renewal policies, this will be 1 if available, 0 if used.
-      this.selectedPolicyHasNoCredits = !(policy.creditRemaining > 0);
-    } else {
-      this.selectedPolicyHasNoCredits = false;
-    }
-  }
-
-  async rechargePolicy(policyToRecharge: any) {
-    if (!policyToRecharge || !policyToRecharge.policyId) {
-      this.toast.show('Could not identify policy to recharge.', 'error');
-      return;
-    }
-
-    try {
-      const allPolicies = await firstValueFrom(this.policyService.getAllPolicies());
-      const policyTemplate = allPolicies.find(p => p.id === policyToRecharge.policyId);
-
-      if (policyTemplate) {
-        this.openPolicyModal(policyTemplate);
-      } else {
-        this.toast.show(`Could not find policy details for '${policyToRecharge.policyName}'. Please browse available policies.`, 'error');
-      }
-    } catch (error) {
-      console.error('Error fetching policies for recharge:', error);
-      this.toast.show('An error occurred while trying to find policy details.', 'error');
-    }
-  }
-
-  // Placeholder Logic for Table Columns
-  hasAppliedPolicy(asset: VehicleAsset): boolean {
-    // Check if documents array contains an Insurance Policy that hasn't expired
-    const now = new Date();
-    return !!asset.documents?.some((doc: any) =>
-      (doc.policyType === 'standard' || doc.policyType === 'renewal') &&
-      (!doc.expiryDate || new Date(doc.expiryDate) > now));
-  }
-
-  getExpiryStatus(asset: VehicleAsset): 'UP TO DATE' | 'ATTENTION NEEDED' {
-    const policyDoc = asset.documents?.find((doc: any) => doc.field === 'Insurance Policy');
-
-    if (!policyDoc || !policyDoc.expiryDate) return 'ATTENTION NEEDED';
-
-    const expiry = new Date(policyDoc.expiryDate);
-    const today = new Date();
-    const diffTime = expiry.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    // Warning if less than 7 days remaining
-    return diffDays > 7 ? 'UP TO DATE' : 'ATTENTION NEEDED';
-  }
-
-  changeAssetPage(offset: number) {
-    const newPage = this.assetPage + offset;
-    if (newPage >= 1 && newPage <= this.totalAssetPages) {
-      this.assetPage = newPage;
-      this.updateAssetPagination(this.availableAssets);
-    }
-  }
-
   scrollToPolicies() {
     const policiesSection = document.getElementById('available-policies');
     if (policiesSection) {
       policiesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-
-  async onSubmitClaim() {
-    if (!this.selectedAsset) {
-      this.toast.show('Please select an asset to claim.', 'warn');
-      return;
-    }
-
-    if (!this.selectedPolicyToClaim) {
-      this.toast.show('Please select the active policy you wish to claim against.', 'warn');
-      return;
-    }
-
-    if (!this.claimDescription.trim()) {
-      this.toast.show('Please provide a description for your claim.', 'warn');
-      return;
-    }
-
-    try {
-      const user = this.authService.currentUser;
-      if (!user) return;
-
-      this.isSubmittingClaim = true;
-      // Generate a unique Claim ID (client-side generation for the payload)
-      const claimId = `CLM-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-      await this.claimsService.createClaim({
-        userId: user.uid,
-        displayName: this.displayName || 'Unknown User',
-        claimId: claimId,
-        assetId: this.selectedAsset.id || this.selectedAsset.uid, // Fallback if id missing
-        assetDescription: `${this.selectedAsset.year} ${this.selectedAsset.make} (${this.selectedAsset.vehicleRegistrationNumber})`,
-        policyId: this.selectedPolicyToClaim.policyId, // Use the actual policy template ID
-        policyName: this.selectedPolicyToClaim.policyName || 'Insurance Policy',
-        policyExpiryDate: this.selectedPolicyToClaim.expiryDate || null,
-        policy: this.selectedPolicyToClaim, // The full policy object from the asset
-        claimType: this.claimType,
-        description: this.claimDescription,
-      });
-
-      this.toast.show(`Claim submitted successfully for ${this.selectedAsset.make}`, 'success');
-
-      // Reset form
-      this.selectedAsset = null;
-      this.availablePoliciesForAsset = [];
-      this.selectedPolicyToClaim = null;
-      this.claimDescription = '';
-      this.claimType = 'Accident';
-    } catch (error) {
-      console.error('Error submitting claim:', error);
-      this.toast.show('Failed to submit claim. Please try again.', 'error');
-    } finally {
-      this.isSubmittingClaim = false;
     }
   }
 
@@ -394,5 +311,33 @@ export class HomeComponent implements OnInit {
 
   closePolicyModal() {
     this.selectedPolicy = null;
+  }
+
+  calculatePolicyPrice(policy: any): number {
+    if (!policy?.packages?.length) {
+      return 0;
+    }
+
+    const isRenewal = (policy.policyType || '').toLowerCase() === 'renewal';
+    // We'll calculate the price based on the first package, as that's what the card implies.
+    const pkg = policy.packages[0];
+
+    let total = pkg.price || 0;
+
+    // Sum up fixed-amount coverages. Percentage-based ones can't be calculated without an asset.
+    if (pkg.coverages && Array.isArray(pkg.coverages)) {
+      pkg.coverages.forEach((cov: any) => {
+        if (cov && typeof cov === 'object' && cov.amount) {
+          total += cov.amount;
+        }
+      });
+    }
+
+    // For renewals, tax is applied on the total of package price and fixed coverages.
+    if (isRenewal && this.currentTaxRate > 0) {
+      total += total * (this.currentTaxRate / 100);
+    }
+
+    return total;
   }
 }
