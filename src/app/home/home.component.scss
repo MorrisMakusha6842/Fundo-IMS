@@ -394,3 +394,24 @@ section {
     color: #1d1d1f;
     line-height: 1;
 }
+
+.animate-slide-up {
+    animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slide-up {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Ensure modal doesn't clash with bottom main layout nav on mobile */
+@media (max-width: 640px) {
+    .animate-slide-up {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+

@@ -217,6 +217,7 @@
   flex: 1;
   min-width: 0; /* Critical: prevents flex item from overflowing horizontally */
   width: 100%;
+  position: relative;
 }
 
 /* Centered search box */

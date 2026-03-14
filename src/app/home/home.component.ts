@@ -8,8 +8,8 @@ import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { ToastService } from '../services/toast.service';
 import { ClaimsService } from '../services/claims.service';
 import { FinancialInsightService } from '../financial-insight/financial-insight.service';
-import { Observable, BehaviorSubject, of, combineLatest, firstValueFrom } from 'rxjs';
-import { switchMap, catchError, map } from 'rxjs/operators';
+import { Observable, BehaviorSubject, of, combineLatest, firstValueFrom, map } from 'rxjs';
+import { switchMap, catchError, take } from 'rxjs/operators';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
 import { PolicyDetailModalComponent } from './policy-detail-modal.component';
@@ -57,6 +57,11 @@ export class HomeComponent implements OnInit {
   isLapsedExpanded: boolean = false;
 
   // Policy Data
+  isDocumentRenewalModalOpen: boolean = false;
+  selectedAssetDocument: any = null;
+  selectedRenewalPolicyId: string | null = null;
+  renewalPackages$: Observable<any[]> | undefined;
+  isLoadingPackages: boolean = false;
   activePolicies: any[] = [];
   lapsedPolicies: any[] = [];
 
@@ -340,4 +345,61 @@ export class HomeComponent implements OnInit {
 
     return total;
   }
+
+  async openDocumentRenewalModal(item: any) {
+    this.selectedAssetDocument = item;
+    this.selectedRenewalPolicyId = null;
+    this.isDocumentRenewalModalOpen = true;
+    this.isLoadingPackages = true;
+
+    const bodyType = item.asset.bodyType;
+
+    try {
+      if (bodyType) {
+        const subCategories = await firstValueFrom(this.policyService.getSubCategories().pipe(take(1)));
+        const matchedCategory = subCategories.find(s => s.name?.toLowerCase() === bodyType.toLowerCase());
+
+        if (matchedCategory) {
+          const policies = await firstValueFrom(this.policyService.getPoliciesBySubCategory(matchedCategory.id).pipe(take(1)));
+          this.renewalPackages$ = of(policies);
+        } else {
+          this.renewalPackages$ = of([]);
+        }
+      } else {
+        this.renewalPackages$ = of([]);
+      }
+    } catch (error) {
+      console.error('Error fetching renewal packages:', error);
+      this.renewalPackages$ = of([]);
+    } finally {
+      this.isLoadingPackages = false;
+    }
+  }
+
+  async proceedToPolicyDetails() {
+    if (this.selectedRenewalPolicyId && this.renewalPackages$) {
+      const packages = await firstValueFrom(this.renewalPackages$);
+      const policy = packages.find(p => p.id === this.selectedRenewalPolicyId);
+      if (policy) {
+        this.closeDocumentRenewalModal();
+        this.openPolicyModal(policy);
+      }
+    }
+  }
+
+  closeDocumentRenewalModal() {
+    this.isDocumentRenewalModalOpen = false;
+    this.selectedAssetDocument = null;
+  }
+
+  // Helper function to get user display name, default to 'Unknown' if not available
+  getUserDisplayName(userId: string): string {
+    if (!userId) {
+      return 'Unknown';
+    }
+    const user = this.availableAssets.find(asset => asset.userId === userId);
+    return user ? this.displayName : 'Unknown';
+  }
+
+
 }
