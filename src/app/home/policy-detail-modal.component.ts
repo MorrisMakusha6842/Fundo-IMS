@@ -1,7 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, inject, OnInit, HostBinding } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AssetsService, VehicleAsset } from '../services/assets.service';
 import { AuthService } from '../services/auth.service';
 import { FinancialInsightService } from '../financial-insight/financial-insight.service';
 import { BillingInformationService, BillingAccount } from '../financial-insight/billing-information.service';
@@ -27,7 +26,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         return !!this.policy;
     }
 
-    private assetsService = inject(AssetsService);
     private authService = inject(AuthService);
     private financialService = inject(FinancialInsightService);
     private billingService = inject(BillingInformationService);
@@ -36,11 +34,9 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
 
     isLoading = false;
     packages: any[] = [];
-    availableAssets: VehicleAsset[] = [];
 
     // Quote Form State
     isQuoteAccordionOpen = false;
-    selectedAssetId: string | null = null;
     paymentFrequency: 'monthly' | 'annually' = 'monthly';
 
     quotePremium = 0;
@@ -65,7 +61,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     }
 
     ngOnInit() {
-        this.loadUserAssets();
         this.loadFinancialData();
     }
 
@@ -125,18 +120,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         }
     }
 
-    loadUserAssets() {
-        const user = this.authService.currentUser;
-        if (user) {
-            this.assetsService.getUserVehicles(user.uid).subscribe(assets => {
-                this.availableAssets = assets;
-            });
-        }
-    }
-
-    onAssetChange(assetId: any) {
-        this.calculatePremium();
-    }
 
     calculatePackageBasePrice(pkg: any): number {
         if (!pkg) {
@@ -166,32 +149,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         let total = 0;
         let assuredValue = 0;
         const isRenewal = this.isRenewalPolicy;
-
-        // 1. Get Assured Value from selected asset
-        if (this.selectedAssetId) {
-            const asset = this.availableAssets.find(a => a.id === this.selectedAssetId);
-            if (asset && asset.assetValue) {
-                const val = parseFloat(asset.assetValue);
-                if (!isNaN(val)) {
-                    assuredValue = val;
-                }
-            }
-        } else {
-            // If no asset selected, we can't calculate meaningful premium yet
-            this.quotePremium = 0;
-            return;
-        }
-
-        // For renewals, the asset value is ignored for calculation
-        if (isRenewal) {
-            assuredValue = 0;
-        }
-
-        // Base Premium starts with the Assured Value itself (per specific request)
-        // Only add assuredValue to total if it is NOT a renewal policy
-        if (!isRenewal) {
-            total += assuredValue;
-        }
 
         const pkg = this.packages.length > 0 ? this.packages[0] : null;
         if (pkg) {
@@ -233,8 +190,18 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
     }
 
     async purchasePackage() {
-        if (!this.selectedAssetId || !this.packages.length) {
+        if (!this.packages.length) {
             this.toast.show('Please select an asset and a package to proceed.', 'warn');
+            return;
+        }
+
+        // Validate Payment Method Fields
+        if (this.selectedPaymentMethod === 'cash' && !this.visitDate) {
+            this.toast.show('Please select a preferred visit date.', 'warn');
+            return;
+        }
+        if (this.selectedPaymentMethod === 'ecocash' && (!this.ecocashNumber || !this.ecocashName)) {
+            this.toast.show('Please enter your EcoCash details.', 'warn');
             return;
         }
 
@@ -261,19 +228,17 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
 
     executePurchase() {
         const selectedPackage = this.packages.length > 0 ? this.packages[0] : null;
-        const selectedAsset = this.availableAssets.find(a => a.id === this.selectedAssetId);
 
-        if (!selectedPackage || !selectedAsset) {
-            console.error('Selected package or asset not found.');
+        if (!selectedPackage) {
+            console.error('Selected package not found.');
             return;
         }
 
         // --- Calculate Breakdown for Billing Modal ---
         const isRenewal = this.isRenewalPolicy;
-        const assetValue = parseFloat(selectedAsset.assetValue) || 0;
+        const assetValue = 0; // Asset selection removed, defaulting base value to 0
 
-        // Base Premium is asset value for new policies, 0 for renewals
-        const basePremium = !isRenewal ? assetValue : 0;
+        const basePremium = 0;
         const packagePrice = selectedPackage.price || 0;
 
         let coveragesTotal = 0;
@@ -306,7 +271,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
             userId: this.authService.currentUser?.uid,
             policy: this.policy,
             selectedPackage: selectedPackage,
-            selectedAsset: selectedAsset,
             premium: this.quotePremium,
             paymentFrequency: this.isRenewalPolicy ? 'once' : this.paymentFrequency,
             isRenewal: isRenewal,
@@ -357,7 +321,6 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
 
     private resetQuoteForm() {
         this.isQuoteAccordionOpen = false;
-        this.selectedAssetId = null;
         this.paymentFrequency = 'monthly';
         this.quotePremium = 0;
         this.visitDate = '';

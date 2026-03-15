@@ -493,3 +493,38 @@ $ios-text-tertiary: #C6C6C8;
     transform: rotate(360deg);
   }
 }
+
+.payment-tabs {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  margin-bottom: 24px;
+
+  .tab-btn {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid $ios-separator;
+    background: $ios-white;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: $ios-text-secondary;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      background: lighten($ios-gray-bg, 2%);
+      border-color: rgba(0, 0, 0, 0.2);
+    }
+
+    &.active {
+      background: #eef2ff; // Light indigo background
+      border-color: $ios-blue;
+      color: $ios-blue;
+      box-shadow: 0 0 0 1px $ios-blue;
+    }
+  }
+}

@@ -67,29 +67,20 @@
                 </div>
 
                 <div class="quote-form-body">
-                    <div class="form-group">
-                        <label>1. Select Asset to Insure</label>
-                        <select [(ngModel)]="selectedAssetId" (ngModelChange)="onAssetChange($event)"
-                            class="asset-select">
-                            <option [ngValue]="null" disabled>Choose a vehicle...</option>
-                            <option *ngFor="let asset of availableAssets" [value]="asset.id">
-                                {{ asset.year }} {{ asset.make }} - {{ asset.assetValue | currency }}
-                            </option>
-                        </select>
-                        <p class="hint" *ngIf="availableAssets.length === 0">No registered assets found.</p>
-                    </div>
-
                     <div class="payment-tabs-container">
-                        <label>2. Select Payment Method</label>
+                        <label>Payment Method</label>
                         <div class="payment-tabs">
-                            <button class="tab-btn" [class.active]="selectedPaymentMethod === 'cash'" (click)="selectedPaymentMethod = 'cash'">
+                            <button class="tab-btn" [class.active]="selectedPaymentMethod === 'cash'"
+                                (click)="selectedPaymentMethod = 'cash'">
                                 <span>Cash</span>
                             </button>
-                            <button class="tab-btn" [class.active]="selectedPaymentMethod === 'ecocash'" (click)="selectedPaymentMethod = 'ecocash'">
-                                <img src="src/ass" alt="EcoCash">
+                            <button class="tab-btn" [class.active]="selectedPaymentMethod === 'ecocash'"
+                                (click)="selectedPaymentMethod = 'ecocash'">
+                                <span>EcoCash</span>
                             </button>
-                            <button class="tab-btn" [class.active]="selectedPaymentMethod === 'zimswitch'" (click)="selectedPaymentMethod = 'zimswitch'">
-                                <img src="assets/images/zimswitch-logo-png_seeklogo-322046.png" alt="ZimSwitch">
+                            <button class="tab-btn" [class.active]="selectedPaymentMethod === 'zimswitch'"
+                                (click)="selectedPaymentMethod = 'zimswitch'">
+                                <span>ZimSwitch</span>
                             </button>
                         </div>
                     </div>
@@ -99,12 +90,16 @@
                         <div *ngSwitchCase="'cash'" class="payment-view animate-fade-in">
                             <div class="cash-info">
                                 <div class="info-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                                     </svg>
                                 </div>
-                                <p>Please visit our local branch at <strong>123 Main Road, Harare</strong> to complete your payment and submit physical documents for renewal.</p>
+                                <p>Please visit our local branch at <strong>123 Main Road, Harare</strong> to complete
+                                    your payment and submit physical documents for renewal.</p>
                             </div>
 
                             <div class="form-group mt-6">
@@ -114,7 +109,7 @@
                             </div>
 
                             <div class="view-footer">
-                                <button class="btn-primary w-full" [disabled]="!selectedAssetId || !visitDate">Confirm Booking</button>
+                                <button class="btn-primary w-full" [disabled]="!visitDate">Confirm Booking</button>
                             </div>
                         </div>
 
@@ -126,7 +121,8 @@
                             </div>
                             <div class="form-group">
                                 <label>EcoCash Number</label>
-                                <input type="tel" [(ngModel)]="ecocashNumber" placeholder="077XXXXXXX" class="text-input">
+                                <input type="tel" [(ngModel)]="ecocashNumber" placeholder="077XXXXXXX"
+                                    class="text-input">
                             </div>
 
                             <div class="purchase-summary-focal">
@@ -138,7 +134,8 @@
                             </div>
 
                             <div class="view-footer">
-                                <button class="btn-primary w-full" (click)="purchasePackage()" [disabled]="!selectedAssetId || !ecocashNumber">
+                                <button class="btn-primary w-full" (click)="purchasePackage()"
+                                    [disabled]="!ecocashNumber">
                                     Confirm and Pay
                                 </button>
                             </div>
