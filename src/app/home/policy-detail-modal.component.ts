@@ -45,6 +45,12 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
 
     quotePremium = 0;
 
+    // Payment Method State
+    selectedPaymentMethod: 'cash' | 'ecocash' | 'zimswitch' = 'ecocash';
+    visitDate: string = '';
+    ecocashName: string = '';
+    ecocashNumber: string = '';
+
     // Billing Modal State
     showBillingPassword = false;
     hasBillingAccount = false;
@@ -354,5 +360,8 @@ export class PolicyDetailModalComponent implements OnInit, OnChanges {
         this.selectedAssetId = null;
         this.paymentFrequency = 'monthly';
         this.quotePremium = 0;
+        this.visitDate = '';
+        this.ecocashName = '';
+        this.ecocashNumber = '';
     }
 }
